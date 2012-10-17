@@ -1,0 +1,30 @@
+{
+	"name":"springbokjs",
+	"description":"Springbok JS Framework",
+	"version":"0.0.1",
+	"homepage":"www.springbokjs.com",
+	"repository":{
+		"type": "git",
+		"url": "git://github.com/christophehurpeau/springbokjs.git"
+	},
+	"author": "Christophe Hurpeau",
+	
+	"bin":{ "sJs":"bin/sJs.js","sJsCore":"bin/sJsCore.js" },
+	
+	"dependencies":{
+		"springboktools":">=0.0.3",
+		"argumentum":">=0.6.0",
+        "connect":">=2.6.0",
+        "validator":">=0.4.11",
+        "async":">=0.1.22",
+        "mkdirp":">=0.3.4",
+        "stylus":">=0.29.0",
+        "jade":">=0.27.6",
+        "springbokejs":">=0.0.1",
+        "jshint":">=0.9.1"
+	},
+	"devDependencies": {
+        "diveSync": "0.2.0",
+        "chokidar":">=0.4.0"
+	}
+}

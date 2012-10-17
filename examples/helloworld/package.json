@@ -1,0 +1,19 @@
+{
+	"name":"springbokjs-Hello-World",
+	"description":"Springbok JS - Hello World Sample",
+	"version":"0.0.1",
+	"homepage":"www.springbokjs.com",
+	"repository":{
+		"type": "git",
+		"url": ""
+	},
+	"author": "Christophe Hurpeau",
+	
+	"scripts":{ "start":"node start.js" },
+	
+	"dependencies":{
+    	"springbokjs": "/home/christophe/Travail/ProgrammationWEB/springbok/springbok/core/nodejs/springbokjs/"
+	},
+	"devDependencies": {
+	}
+}
