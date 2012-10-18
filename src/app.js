@@ -1,5 +1,5 @@
-var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'),
-	connect=require('connect'),
+var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), util=require('util'),
+	connect=require('connect'), httpSendFile=require('send'),
 	ejs=require('springbokejs'), ejsUtils=require('springbokejs/lib/utils');
 
 require('springboktools');
@@ -89,13 +89,34 @@ App.start=function(port){
 	console.log(views,t.views);
 	
 	t.datastores = [];
+	
+	var webDir=t.appDir+'web';
+	
 	app = connect()
 		/* DEV */.use(connect.errorHandler())/* /DEV */
 		.use(connect.compress())
 		.use(connect.favicon('web/favicon.ico'))
 		/* DEV */.use(connect.logger('dev'))/* /DEV */
 		/* PROD */.use(connect.logger())/* /PROD */
-		.use(connect['static']('web',{/*redirect:false,*/maxAge:86400000}))
+		.use(function(req,res,next){
+			if('GET' != req.method && 'HEAD' != req.method) return next();
+			var path=req._parsedUrl.pathname;
+			if(path.substr(0,5)!=='/web/') return next();
+			httpSendFile(req,path.substr(5))
+				.maxage(86400000)
+				.root(webDir)
+				.on('error',function(err){
+					res.statusCode=404;
+					res.end("Not Found");
+				})
+				.on('directory',function directory(){
+					res.statusCode=404;
+					res.end("Not Found");
+				})
+				.pipe(res);
+				
+			//connect['static'](t.appDir+'web',{/*redirect:false,*/maxAge:86400000}
+		})
 		.use(connect.query())
 		.use(function(req,res){
 			var route=req.route=Router.find(req._parsedUrl.pathname,'en');
