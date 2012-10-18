@@ -1,5 +1,5 @@
-var fs=require('fs'),sysPath=require('path'),
-	stylus=require('stylus'),StylusSprite=require("stylus-sprite");
+var fs=require('fs'),sysPath=require('path'), mkdirp=require('mkdirp'),
+	stylus=require('stylus'),StylusSprite=require('node-sprite');
 
 module.exports={
 	type:'stylesheet',
@@ -13,21 +13,27 @@ module.exports={
 		
 		//includes
 		this.includes(data,file.dirname,function(data,includes){
+			var path=file.rootPath+'dev/'+file.dirname;
+			mkdirp.sync(path);
 			
+			StylusSprite.stylus({path:path,httpPath:'',watch:false,padding:0},function(err,sprite){
+				
+			/*
 			var sprite = new StylusSprite({
 				image_root:file.dirname,
 				output_file:file.basename+".png",
 				pngcrush:"pngcrush"
 			}),
-
-			compiler=stylus(data)
+*/
+			var compiler=stylus(data)
+				.set('filename',file.path)
 				.set('compress',false)
 				.set('firebug',false)
 				//.include(file.fileList.rootPath)
 				//.include(file.dirname)
 				//.use(nib())s
-				.define('sprite',function(filename,optionVal){
-					return sprite.spritefunc(filename,optionVal);
+				.define('sprite',function(name, image, dimensions){
+					return sprite.fn(name, image, dimensions);
 			});
 		
 			//render
@@ -47,9 +53,11 @@ module.exports={
 						return sysPath.join(parent,path);
 					});*/
 				
-				sprite.build(result,function(err,result){
+				//sprite.build(result,function(err,result){
 					callback(null,result,result,includes['']);
-				});
+				//});
+			});
+			
 			});
 		});
 	},

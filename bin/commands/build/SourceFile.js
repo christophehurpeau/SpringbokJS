@@ -95,17 +95,17 @@ SourceFile.prototype={
 	},
 	copy:function(callback){
 		var t=this,srcPath=this.srcPath,
-			closed={'dev/':false,'prod/':false},
+			closed={'dev':false,'prod':false},
 			closeCallback=function(dir){
 				return function(){
 					closed[dir]=true;
-					if(closed['dev/']&&closed['prod/']) callback();
+					if(closed['dev']&&closed['prod']) callback();
 				};
 			};
-		['dev/','prod/'].forEach(function(dir){
-			t._write(t.rootPath+dir+t.dirname,function(){
+		['dev','prod'].forEach(function(dir){
+			t._write(t.rootPath+dir+'/'+t.dirname,function(){
 				var input=fs.createReadStream(srcPath),
-					output=fs.createWriteStream(t.rootPath+dir+t.compiledPath);
+					output=fs.createWriteStream(t.rootPath+dir+'/'+t.compiledPath);
 				var request=input.pipe(output);
 				request.on('close',closeCallback(dir));
 			});
