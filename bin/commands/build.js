@@ -1,8 +1,8 @@
-S=require('springboktools');
+S=require('springboktools'),sysPath=require('path');
 var build=require('./build/'),rootPath=process.cwd()+'/';
 
-global.CORE_SRC=__dirname+'/../../src/';
-global.CORE_INCLUDES=__dirname+'/../../includes/';
+global.CORE_SRC=sysPath.join(__dirname,'/../../src/');
+global.CORE_INCLUDES=sysPath.join(__dirname,'/../../includes/');
 
 module.exports={
 	core:function(persistent){
