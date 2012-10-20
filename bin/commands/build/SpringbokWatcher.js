@@ -74,9 +74,9 @@ http.createServer(reqHandlerClosure).listen(8000);
 		var compile=function(startTime){
 			console.log("Compiled in "+(Date.now() - startTime)+"ms");
 			if(!persistent){
-				wartcher.close();
+				watcher.close();
 				process.on('exit',function(previousCode){
-					process.exit(logger.errorHappened?1:previousCode);
+					process.exit(false&&logger.errorHappened?1:previousCode);
 				})
 			}
 		},reload=function(){

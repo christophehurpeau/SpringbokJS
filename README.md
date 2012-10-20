@@ -1,5 +1,5 @@
 ## Dependencies
 
-  * **libgd** - in debian based distribution install with
+  * **imagemagick** - in debian based distribution install with
   
-        apt-get install libgd2-xpm-dev
+        apt-get install imagemagick

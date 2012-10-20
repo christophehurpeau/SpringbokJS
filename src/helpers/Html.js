@@ -30,6 +30,6 @@ module.exports={
 	},
 	
 	link:function(){
-		return '[LINK]';
+		return '<a href="#">[LINK]</a>';
 	}
 }

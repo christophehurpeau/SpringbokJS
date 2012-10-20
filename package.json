@@ -20,7 +20,7 @@
         "async":">=0.1.22",
         "mkdirp":">=0.3.4",
         "stylus":">=0.30.1",
-        "stylus-sprite":">=0.1.7",
+        "node-sprite":">=0.1.1",
         "jade":">=0.27.6",
         "springbokejs":">=0.0.1",
         "jshint":">=0.9.1"
