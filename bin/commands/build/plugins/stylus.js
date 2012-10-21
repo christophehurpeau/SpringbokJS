@@ -1,18 +1,24 @@
 var fs=require('fs'),sysPath=require('path'), mkdirp=require('mkdirp'),
-	stylus=require('stylus'),StylusSprite=require('node-sprite');
+	stylus=require('stylus'),stylusF=stylus.functions,StylusSprite=require('node-sprite');
+
+function findBestFgColor(backgroundColor,blackColor,whiteColor){
+	return stylusF.hsl(backgroundColor).l > 60 ? (blackColor||stylus.nodes.RGBA(51,51,51,1/*'#333'*/))
+							: (whiteColor||stylus.nodes.RGBA(25,250,250,1/*'#fafafa'*/));
+	//return stylus.functions.lightness(backgroundColor) > stylus.functions.lightness('#999999'),$blackColor,$whiteColor);
+}
+
 
 module.exports={
 	type:'stylesheet',
 	extension:'styl',
 	compiledExtension:'css',
-	_dependencyRegExp: /^ *@import ['"](.*)['"]/,
 	
 	compile:function(file,data,callback){
 		var t=this;
 		//defines
 		
 		//includes
-		this.includes(data,file.dirname,function(data,includes){
+		this.includes("@includeCore 'index';\n"+data,file.dirname,function(data,includes){
 			var path=file.rootPath+'dev/'+file.dirname;
 			mkdirp.sync(path);
 			
