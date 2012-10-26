@@ -14,15 +14,15 @@
 	"dependencies":{
 		"springboktools":">=0.0.3",
 		"argumentum":">=0.6.0",
-        "connect":">=2.6.0",
+        "connect":">=2.6.1",
         "send":">=0.1.0",
         "validator":">=0.4.11",
         "async":">=0.1.22",
         "mkdirp":">=0.3.4",
         "stylus":">=0.30.1",
-        "node-sprite":">=0.1.1",
         "jade":">=0.27.6",
         "springbokejs":">=0.0.1",
+        "springbok-stylus-sprites":">=0.0.1",
         "jshint":">=0.9.1"
 	},
 	"devDependencies": {

@@ -1,5 +1,6 @@
 var fs=require('fs'),sysPath=require('path'), mkdirp=require('mkdirp'),
-	stylus=require('stylus'),stylusF=stylus.functions,StylusSprite=require('node-sprite');
+	stylus=require('stylus'),stylusF=stylus.functions,
+	StylusSprites=require('springbok-stylus-sprites');
 
 function findBestFgColor(backgroundColor,blackColor,whiteColor){
 	return stylusF.hsl(backgroundColor).l > 60 ? (blackColor||stylus.nodes.RGBA(51,51,51,1/*'#333'*/))
@@ -19,11 +20,10 @@ module.exports={
 		
 		//includes
 		this.includes("@includeCore 'index';\n"+data,file.dirname,function(data,includes){
-			var path=file.rootPath+'dev/'+file.dirname;
-			mkdirp.sync(path);
+			var pathDev=file.rootPath+'dev/'+file.dirname+'/',pathProd=file.rootPath+'prod/'+file.dirname+'/';
+			mkdirp.sync(pathDev);
+			mkdirp.sync(pathProd);
 			
-			StylusSprite.stylus({path:path,httpPath:'',watch:false,padding:0},function(err,sprite){
-				
 			/*
 			var sprite = new StylusSprite({
 				image_root:file.dirname,
@@ -31,6 +31,12 @@ module.exports={
 				pngcrush:"pngcrush"
 			}),
 */
+			var sprites=new StylusSprites({
+				prefix:file.basename==='main'?'':file.basename,
+				path:file.rootPath+'src/'+file.dirname,
+				outputPath:[pathDev,pathProd]
+			}),spritesfn=sprites.stylus();
+			
 			var compiler=stylus(data)
 				.set('filename',file.path)
 				.set('compress',false)
@@ -38,8 +44,9 @@ module.exports={
 				//.include(file.fileList.rootPath)
 				//.include(file.dirname)
 				//.use(nib())s
-				.define('sprite',function(name, image, dimensions){
-					return sprite.fn(name, image, dimensions);
+				.define('sprite',function(name,image,options){
+					if(image.string.substr(0,8)==='COREIMG/') image.string=CORE_INCLUDES+'img/'+image.string.substr(8);
+					return spritesfn.call(this,name,image,options);
 			});
 		
 			//render
@@ -59,11 +66,11 @@ module.exports={
 						return sysPath.join(parent,path);
 					});*/
 				
-				//sprite.build(result,function(err,result){
+				sprites.build(result,function(err,result){
+					console.log(err,result);
+					if(err) return callback(err);
 					callback(null,result,result,includes['']);
-				//});
-			});
-			
+				});
 			});
 		});
 	},

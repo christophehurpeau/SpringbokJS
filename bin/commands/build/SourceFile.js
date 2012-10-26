@@ -1,4 +1,4 @@
-var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp');
+var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=require('async');
 
 var SourceFile=module.exports=function(fileList,path,compiler,linters,optimizers){
 	this.fileList=fileList;
@@ -94,22 +94,15 @@ SourceFile.prototype={
 		});
 	},
 	copy:function(callback){
-		var t=this,srcPath=this.srcPath,
-			closed={'dev':false,'prod':false},
-			closeCallback=function(dir){
-				return function(){
-					closed[dir]=true;
-					if(closed['dev']&&closed['prod']) callback();
-				};
-			};
-		['dev','prod'].forEach(function(dir){
+		var t=this,srcPath=this.srcPath;
+		async.forEach(['dev','prod'],function(dir,callback){
 			t._write(t.rootPath+dir+'/'+t.dirname,function(){
 				var input=fs.createReadStream(srcPath),
 					output=fs.createWriteStream(t.rootPath+dir+'/'+t.compiledPath);
 				var request=input.pipe(output);
-				request.on('close',closeCallback(dir));
+				request.on('close',callback);
 			});
-		});
+		},callback);
 	},
 	
 	_write:function(parent,callback){
