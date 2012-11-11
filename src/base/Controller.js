@@ -15,6 +15,7 @@ Controller.prototype={
 	notFound:function(){ httpException.notFound(); },
 	
 	render:function(data,fileName,folderName){
+		this.res.setHeader('Content-Type','text/html; charset=UTF-8');
 		this._render('views/'+(folderName||this.req.route.controller)+'/'+(fileName||this.req.route.action),data);
 	},
 	_render:function(template,data){console.log(template);

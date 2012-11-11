@@ -67,7 +67,6 @@ module.exports={
 					});*/
 				
 				sprites.build(result,function(err,result){
-					console.log(err,result);
 					if(err) return callback(err);
 					callback(null,result,result,includes['']);
 				});
