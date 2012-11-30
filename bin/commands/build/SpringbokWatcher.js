@@ -26,7 +26,7 @@ function changeFileList(plugins, fileList, path){
 	fileList.emit('change', path, compiler, currentLinters, currentOptimizers);
 }
 
-function initialize(fileList,persistent,pluginsDir,callback){
+function initialize(fileList,persistent,startServer,pluginsDir,callback){
 	var plugins={all:[],compilers:[],linters:[],optimizers:[]},callbacks=[];
 	diveSync(pluginsDir || __dirname + '/plugins',function(err,path){
 		if(err) console.error(err.stack);
@@ -49,7 +49,7 @@ function initialize(fileList,persistent,pluginsDir,callback){
 	
 	
 	//start Server
-	var server=persistent ? require('./Server') : null;
+	var server=persistent && startServer ? require('./Server') : null;
 	/*
 	 * var requestHandler = require('./myRequestHandler');
 
@@ -76,7 +76,7 @@ http.createServer(reqHandlerClosure).listen(8000);
 		if(err) return callback(err);
 		var compile=function(startTime){
 			console.log("Compiled in "+(Date.now() - startTime)+"ms");
-			if(persistent) server.restart();
+			if(persistent) server && server.restart();
 			else{
 				watcher.close();
 				process.on('exit',function(previousCode){
@@ -114,9 +114,9 @@ Exiting."
 
 
 module.exports={
-	init:function(fileList,persistent,pluginsDir){
+	init:function(fileList,persistent,startServer,pluginsDir){
 		var t=this;
-		initialize(fileList,persistent,pluginsDir,function(err, watcher, server, plugins, compile, reload){
+		initialize(fileList,persistent,startServer,pluginsDir,function(err, watcher, server, plugins, compile, reload){
 			if(err) return console.error(err);
 			bindWatcherEvents(fileList, plugins, watcher, reload, function(){
 				if(t._start==null) t._start=Date.now();

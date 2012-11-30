@@ -6,9 +6,9 @@ module.exports={
 	restarting: false,
 	
 	"restart": function() {
-		this.restarting = true;
 		if(this.process){
 			sys.debug('Server: Stopping server for restart');
+			this.restarting = true;
 			this.process.kill();
 		}else this.start();
 	},
@@ -16,6 +16,7 @@ module.exports={
 	"start": function() {
 		sys.debug('Server: Starting');
 		var t=this;
+		t.restarting=false;
 		
 		t.process = child_process.spawn('node',['start.js']);
 		t.process.stdout.addListener('data', function (data) {

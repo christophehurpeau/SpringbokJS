@@ -29,8 +29,16 @@ module.exports={
 	},*/
 	
 	compile:function(file,data,callback){
-		if(file.isBrowser) data.replace(/\/\*\s+NODE\s+\*\/.*\/\*\s+\/NODE\s+\*\//g,'').replace('/* BROWSER */','').replace('/* /BROWSER */','');
-		else data.replace(/\/\*\s+BROWSER\s+\*\/.*\/\*\s+\/BROWSER\s+\*\//g,'').replace('/* NODE */','').replace('/* /NODE */','');
+		if(file.isBrowser)
+			data=data.replace(/\/\*\s+NODE\s+\*\/.*\/\*\s+\/NODE\s+\*\//g,'')
+				.replace('/* BROWSER */','').replace('/* /BROWSER */','')
+				.replace(/\(\/\* NODE\|\|BROWSER \*\/([^)|]+)||([^)]+)\)/g,'$2');
+		else
+			data=data.replace(/\/\*\s+BROWSER\s+\*\/.*\/\*\s+\/BROWSER\s+\*\//g,'')
+				.replace('/* NODE */','').replace('/* /NODE */','')
+				.replace(/\(\/\*\s+NODE\|\|BROWSER\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$1')
+				.replace(/\(\/\*\s+NODE\|\|BROWSER\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$1');
+		
 		data.replace(/\/\*\s+(RM|HIDE|REMOVE|NONE)\s+\*\/.*\/\*\s+\/(RM|HIDE|REMOVE|NONE)\s+\*\//g,'');
 		
 		var devResult=data,prodResult=data;

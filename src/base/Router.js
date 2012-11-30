@@ -8,91 +8,93 @@ Route.prototype={
 	
 };
 
-global.Router={
-	init:function(r,rl){
-		var t=this;
-		t.routes = {}; t.routesLangs = {};
-		if(r===undefined){
-			r=JSON.parse(fs.readFileSync(App.appDir + 'config/routes.json')),
-			rl=JSON.parse(fs.readFileSync(App.appDir + 'config/routesLangs.json'));
-		}
+
+var Router=module.exports=function(r,rl){
+	var t=this;
+	t.routes = {}; t.routesLangs = {};
+	/* NODE */
+	if(r===undefined){
+		r=JSON.parse(fs.readFileSync(App.appDir + 'config/routes.json')),
+		rl=JSON.parse(fs.readFileSync(App.appDir + 'config/routesLangs.json'));
+	}
+	/* /NODE */
+	
+	//console.log(this.routes);
+	if(!r.index) r={index:r};
+	for(var entry in r){
+		var entryRoutes=r[entry];
+		t.routes[entry]={};
 		
-		//console.log(this.routes);
-		if(!r.index) r={index:r};
-		for(var entry in r){
-			var entryRoutes=r[entry];
-			t.routes[entry]={};
-			
-			if(entryRoutes.includesFromEntry){
-				if(S.isStr(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
-				for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
-					var ife=entryRoutes.includesFromEntry[iife];
-					if(S.isStr(ife)) S.oUnion(entryRoutes,routes[ife]);
-					else{
-						for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
-							var includeRouteFromEntry=ife[iirfe];
-							entryRoutes[includeRouteFromEntry]=routes[ife][includeRouteFromEntry];
-						}
+		if(entryRoutes.includesFromEntry){
+			if(S.isStr(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
+			for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
+				var ife=entryRoutes.includesFromEntry[iife];
+				if(S.isStr(ife)) S.oUnion(entryRoutes,routes[ife]);
+				else{
+					for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
+						var includeRouteFromEntry=ife[iirfe];
+						entryRoutes[includeRouteFromEntry]=routes[ife][includeRouteFromEntry];
 					}
 				}
-				delete entryRoutes.includesFromEntry;
 			}
-			
-			for (var url in entryRoutes){
-				var route=entryRoutes[url], finalRoute=t.routes[entry][url]={ 0: route[0] };
-				var paramsDef = route[1] || null,ext;
-				//langs=route[2] || null
-				if (route.ext) ext = finalRoute.ext = route.ext;
-				route = route[2] || {};
-				route._ = url;
-			
-				for(var lang in route){
-					var routeLang=route[lang],paramsNames=[],specialEnd,specialEnd2,routeLangPreg;
-					
-					if(specialEnd=S.sEndsWith(routeLang,'/*')) routeLangPreg=routeLang.substr(0,-2);
-					else if(specialEnd2=S.sEndsWith(routeLang,'/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.substr(routeLang.length-2);
-					else routeLangPreg=routeLang;
-					
-					routeLangPreg=routeLangPreg.replace('/','\/').replace('-','\-').replace('*','(.*)').replace('(','(?:');
-					if(specialEnd) routeLangPreg+='(?:\/(.*))?';
-					else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.substr(routeLangPreg.length-2);
-					
-					finalRoute[lang]=[new RegExp("^"+routeLangPreg.replace(/(\(\?)?\:([a-zA-Z_]+)/g,function(str,p1,p2){
-						if(p1) return str;
-						paramsNames.push(p2);
-						if(paramsDef && paramsDef[p2]){
-							var paramDefVal=S.isArray(paramsDef[p2]) ? paramsDef[p2][lang] : paramsDef[p2];
-							return paramDefVal==='id' ? '([0-9]+)' : '('+paramDefVal+')';
-						}
-						if(S.aHas(['id'],p2)) return '([0-9]+)';
-						return '([^\/]+)';
-					}) + (ext ? (ext==='html' ? '(?:\.html)?':'\.'+ext) : '')+"$"),
-						S.sRtrim(routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s'))];
-					if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=S.sRtrim(finalRoute[lang][1],'/')
-					if(paramsNames) finalRoute[':']=paramsNames;
-				}
-				finalRoute.paramsCount=finalRoute._[1].split('%s').length-1;
-			}
+			delete entryRoutes.includesFromEntry;
 		}
-		//console.log(this.routes);
 		
-		//Langs
-		//console.log(rl);
-		var s,tr,lang,s2;
-		for (s in rl) {
-			tr = rl[s];
-			for (lang in tr) {
-				s2 = tr[lang];
-				if (!t.routesLangs['->' + lang]) {
-					t.routesLangs['->' + lang] = {};
-					t.routesLangs[lang + '->'] = {};
-				}
-				t.routesLangs['->' + lang][s] = s2;
-				t.routesLangs[lang + '->'][s2] = s;
+		for (var url in entryRoutes){
+			var route=entryRoutes[url], finalRoute=t.routes[entry][url]={ 0: route[0] };
+			var paramsDef = route[1] || null,ext;
+			//langs=route[2] || null
+			if (route.ext) ext = finalRoute.ext = route.ext;
+			route = route[2] || {};
+			route._ = url;
+		
+			for(var lang in route){
+				var routeLang=route[lang],paramsNames=[],specialEnd,specialEnd2,routeLangPreg;
+				
+				if(specialEnd=S.sEndsWith(routeLang,'/*')) routeLangPreg=routeLang.substr(0,-2);
+				else if(specialEnd2=S.sEndsWith(routeLang,'/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.substr(routeLang.length-2);
+				else routeLangPreg=routeLang;
+				
+				routeLangPreg=routeLangPreg.replace('/','\/').replace('-','\-').replace('*','(.*)').replace('(','(?:');
+				if(specialEnd) routeLangPreg+='(?:\/(.*))?';
+				else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.substr(routeLangPreg.length-2);
+				
+				finalRoute[lang]=[new RegExp("^"+routeLangPreg.replace(/(\(\?)?\:([a-zA-Z_]+)/g,function(str,p1,p2){
+					if(p1) return str;
+					paramsNames.push(p2);
+					if(paramsDef && paramsDef[p2]){
+						var paramDefVal=S.isArray(paramsDef[p2]) ? paramsDef[p2][lang] : paramsDef[p2];
+						return paramDefVal==='id' ? '([0-9]+)' : '('+paramDefVal+')';
+					}
+					if(S.aHas(['id'],p2)) return '([0-9]+)';
+					return '([^\/]+)';
+				}) + (ext ? (ext==='html' ? '(?:\.html)?':'\.'+ext) : '')+"$"),
+					S.sRtrim(routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s'))];
+				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=S.sRtrim(finalRoute[lang][1],'/')
+				if(paramsNames) finalRoute[':']=paramsNames;
 			}
+			finalRoute.paramsCount=finalRoute._[1].split('%s').length-1;
 		}
-	},
+	}
+	//console.log(this.routes);
 	
+	//Langs
+	//console.log(rl);
+	var s,tr,lang,s2;
+	for (s in rl) {
+		tr = rl[s];
+		for (lang in tr) {
+			s2 = tr[lang];
+			if (!t.routesLangs['->' + lang]) {
+				t.routesLangs['->' + lang] = {};
+				t.routesLangs[lang + '->'] = {};
+			}
+			t.routesLangs['->' + lang][s] = s2;
+			t.routesLangs[lang + '->'][s2] = s;
+		}
+	}
+};
+Router.prototype={
 	find:function(all,lang,entry){
 		var t = this,route = false,m,r,routes=t.routes[entry||'index'];
 		all=t.all='/'+S.sTrim(all, '/');

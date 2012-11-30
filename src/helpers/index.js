@@ -1,16 +1,5 @@
-module.exports=function(req,res){this.req=req;this.res=res;};
+module.exports=function(app,req,res){this.req=req;this.res=res;this.router=app.router;};
 S.extObjs(module.exports.prototype,{
-	escape:function(html){
-		return String(html)
-			.replace(/&(?!\w+;)/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;');
-	},
-	escapeUrl:function(html){
-		return html.replace('&','&amp;');
-	},
-	
 	/* https://github.com/jed/locale/blob/master/src/index.coffee */
 	locale:function(){
 		var locale,accept=this.req.headers['accept-language'];

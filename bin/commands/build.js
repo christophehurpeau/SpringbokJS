@@ -7,10 +7,10 @@ global.CORE_INCLUDES=sysPath.join(__dirname,'/../../includes/');
 module.exports={
 	core:function(persistent){
 		var fileList=new build.FileListSpringbokJS(rootPath);
-		build.SpringbokWatcher.init(fileList,persistent);
+		build.SpringbokWatcher.init(fileList,persistent,false);
 	},
 	project:function(persistent){
 		var fileList=new build.FileList(rootPath);
-		build.SpringbokWatcher.init(fileList,persistent);
+		build.SpringbokWatcher.init(fileList,persistent,true);
 	}
 }

@@ -2,7 +2,7 @@ var httpException=require('./HttpException.js'),
 	helpers=require('../helpers'),
 	Controller = function(app,req,res){
 		this.req=req; this.res=res;
-		this.H=new helpers(req,res);
+		this.H=new helpers(app,req,res);
 	};
 
 Controller.prototype={

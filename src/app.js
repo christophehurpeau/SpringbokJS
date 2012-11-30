@@ -20,7 +20,7 @@ process.on('uncaughtException', function (err){
 
 
 require('./base/HttpRequest');
-require('./base/Router');
+var Router=require('./base/Router');
 var HttpException=require('./base/HttpException.js');
 
 global.App={
@@ -29,7 +29,7 @@ global.App={
 		App.env = fs.readFileSync(dir + 'env');
 		App.appDir = dir+='dev/';
 		App.config = JSON.parse(fs.readFileSync(dir + 'config/_' + App.env + '.json'));
-		Router.init();
+		App.router=new Router();
 		App.controllers={}; App.PControllers={};
 		App.views={};
 	}
@@ -52,7 +52,7 @@ App.start=function(port){
 	if(t.config.plugins){
 		t.config.pluginsPaths||(t.config.pluginsPaths={});
 		t.config.pluginsPaths.Springbok=__dirname+'/plugins/';
-		S.oForeach(t.config.plugins,function(k,v){
+		S.oForEach(t.config.plugins,function(k,v){
 			var pluginPath=t.config.pluginsPaths[v[0]]+v[1];
 			if(fs.existsSync(pluginPath+'/controllers')) controllers[v[0]]=pluginPath+'/controllers';
 			if(fs.existsSync(pluginPath+'/views')) views[v[0]+'v']=pluginPath+'/views';
@@ -60,7 +60,7 @@ App.start=function(port){
 		});
 	}
 	
-	S.oForeach(controllers,function(pluginName,dir){
+	S.oForEach(controllers,function(pluginName,dir){
 		diveSync(dir,function(err,path){
 			if(err) console.error(err.stack);
 			else if(/\.js$/.test(path)) {
@@ -72,7 +72,7 @@ App.start=function(port){
 		});
 	});
 	
-	S.oForeach(views,function(pluginName,dir){
+	S.oForEach(views,function(pluginName,dir){
 		diveSync(dir,function(err,path){
 			if(err) console.error(err.stack);
 			else if(/\.ejs$/.test(path)) {
@@ -119,7 +119,7 @@ App.start=function(port){
 		})
 		.use(connect.query())
 		.use(function(req,res){
-			var route=req.route=Router.find(req._parsedUrl.pathname,'en');
+			var route=req.route=t.router.find(req._parsedUrl.pathname,'en');
 			try{
 				var controller=t.controllers[route.controller];
 				if(!controller)
