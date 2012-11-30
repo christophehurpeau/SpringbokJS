@@ -46,7 +46,10 @@ function initialize(fileList,persistent,pluginsDir,callback){
 	var callCompileCallbacks=function(generatedFiles){
 		callbacks.forEach(function(callback){ callback(generatedFiles); });
 	}
+	
+	
 	//start Server
+	var server=persistent ? require('./Server') : null;
 	/*
 	 * var requestHandler = require('./myRequestHandler');
 
@@ -73,7 +76,8 @@ http.createServer(reqHandlerClosure).listen(8000);
 		if(err) return callback(err);
 		var compile=function(startTime){
 			console.log("Compiled in "+(Date.now() - startTime)+"ms");
-			if(!persistent){
+			if(persistent) server.restart();
+			else{
 				watcher.close();
 				process.on('exit',function(previousCode){
 					process.exit(false&&logger.errorHappened?1:previousCode);
@@ -81,7 +85,7 @@ http.createServer(reqHandlerClosure).listen(8000);
 			}
 		},reload=function(){
 			console.log("RELOAD");
-		},server;
+		};
 		callback(null,watcher, server, plugins, compile, reload);
 	});
 }
