@@ -1,5 +1,3 @@
-module.exports=function(Controller){
-	return Controller.extend({
-	
-	});
-}
+module.exports=App.Controller.extend({
+
+});

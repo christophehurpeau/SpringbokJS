@@ -35,4 +35,23 @@ Controller.prototype={
 
 Controller.extend=S.extThis;
 
-module.exports = Controller;
+module.exports = (function(){
+	var createF=function createF(Controller){
+		var f=function(actions){ return Controller.extend(actions); };
+		f.Controller=Controller;
+		f.Action=function(args,route,action){
+			if(S.isFunc(args)){ action=args; args={}; }
+			else if(S.isFunc(route)){ action=route; route=undefined; }
+			
+			if(route===undefined) route='/:controller/:action/*';
+			
+			return { route:function(){ return '?'; }, call:function(controller,req,resp){ action.call(controller,req,resp) }}
+		};
+		f.extend=function(){
+			var c=Controller.extend.apply(Controller,arguments);
+			return createF(c);
+		}
+		return f;
+	}
+	return createF(Controller);
+})();

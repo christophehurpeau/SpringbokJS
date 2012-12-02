@@ -46,7 +46,7 @@ require('./base/i18n');
 
 App.start=function(port){
 	var t=this,dir=t.appDir;
-	t.Controller=require(dir+'AppController')(App.Controller);
+	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
 	//todo : foreach entries
 	var controllers={_:dir+'controllers'},views={v:dir+'views',vl:dir+'viewsLayouts'};
 	if(t.config.plugins){
@@ -65,7 +65,7 @@ App.start=function(port){
 			if(err) console.error(err.stack);
 			else if(/\.js$/.test(path)) {
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
-				if(S.isFunc(c)) c=c(t);
+				//if(S.isFunc(c)) c=c(t);
 				if(t.controllers[name]===undefined) t.controllers[name]=c;
 				else t.PControllers[name]=c;
 			}
@@ -126,7 +126,7 @@ App.start=function(port){
 					/* DEV */HttpException.internalServerError('Controller Not Found: '+route.controller);/* /DEV */
 					/* PROD */HttpException.notFound();/* /PROD */
 				controller=new controller(t,req,res);
-				controller[route.action](req,res);
+				controller[route.action].call(controller,req,res);
 			}catch(err){
 				if(err instanceof HttpException){
 				}else{
