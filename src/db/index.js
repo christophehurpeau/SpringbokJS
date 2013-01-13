@@ -13,7 +13,7 @@ S.Db=(function(){
 					.createConnection('mongodb://localhost/'+dbCondig.dbName);
 			db.on('error',console.error.bind(console,'connection error:'));
 			db.once('open',function(){
-				S.log('connection to '+key+' [ok]')
+				S.log('connection to '+key+' [ok]');
 				onEnd();
 			});
 			/* /NODE */
