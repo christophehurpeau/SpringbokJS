@@ -1,4 +1,4 @@
-module.exports={
+S.extProto(S.Helpers,{
 	staticUrl:function(url,folder){
 		if(!url) url=WEB_URL+(folder?folder+'/':'');
 		if(url.indexOf('://')!==-1) return S.escapeUrl(url);
@@ -6,4 +6,4 @@ module.exports={
 		else if(url.charAt(0)==='/') url=WEB_URL+(folder?folder+'/':'')+url.substr(1);
 		return S.escapeUrl(url);
 	}
-}
+});

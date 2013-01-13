@@ -4,6 +4,8 @@ var util=require("util"), sysPath=require('path'),fs=require("fs"), EventEmitter
 
 var RESET_TIME=65;
 var FileList=S.extClass(EventEmitter,{
+	config:{}, isCore:false,
+	
 	ctor:function(rootPath){
 		EventEmitter.call(this);
 		this.files=[];
@@ -12,6 +14,14 @@ var FileList=S.extClass(EventEmitter,{
 		this.on('change',this._change);
 		this.on('unlink',this._unlink);
 		this.cleanDirectories();
+		
+		if(fs.existsSync(rootPath+'src/config/_.json')){
+			this.config=JSON.parse(fs.readFileSync(rootPath+'src/config/_.json','UTF-8'));
+			this.config.plugins=this.config.plugins||{};
+			this.config.pluginsPaths=this.config.pluginsPaths||{};
+			this.config.pluginsPaths.Springbok=CORE_SRC+'plugins/';
+			this.config.plugins.SpringbokBase=['Springbok','base'];
+		}
 	},
 
 	filesToWatch:function(){
@@ -46,33 +56,36 @@ var FileList=S.extClass(EventEmitter,{
 		if(path.substr(0,11)==='src/config/') return false;
 		return S.sStartsWith(sysPath.basename(path),'_');
 	},
-	//Called every time any file was changed. Emits `ready` event after `RESET_TIME`.
-	_resetTimer:function(){
-		var t=this;
-		if(t._timer) clearTimeout(t._timer);
-		t._timer=setTimeout(function(){
-			t.compiling.length===0 ? t.emit('ready') : t._resetTimer();
-		},RESET_TIME);
+	//Called every time any file was changed. Emits `ready` event
+	_checkReady:function(){
+		if(this._timer) clearTimeout(this._timer);
+		if(this.compiling.length===0){
+			this._timer=setTimeout((function(){
+				this.compiling.length===0 ? this.emit('ready') : this._checkReady();
+			}).bind(this),RESET_TIME);
+		}
 	},
 	_compileDependentFiles:function(path){
 		this.files
 			.filter(function(dependent){ return dependent.cache.dependencies 
 													&& dependent.cache.dependencies.length > 0 })
 			.filter(function(dependent){ return path in dependent.cache.dependencies })
-			.forEach(this._compile);
+			.forEach(this._compile.bind(this));
 	},
 	_compile:function(file){
 		var t=this;
 		t.compiling.push(file);
+		console.log("Compiling file: "+file.path);
 		file.compile(function(error){
 			t.compiling.splice(t.compiling.indexOf(file),1);
-			t._resetTimer();
 			if(error){
 				console.log('ERROR: file: '+file.path+': '+error);
+				t._checkReady();
 				return false;
 			}
 			console.log("Compiled file: "+file.path);
 			t._compileDependentFiles(file.path);
+			t._checkReady();
 		})
 	},
 	_findByPath:function(path){
@@ -101,7 +114,7 @@ var FileList=S.extClass(EventEmitter,{
 			var file=this._findByPath(path);
 			this.files.splice(this.files.indexOf(file),1);
 		}
-		this._resetTimer();
+		this._checkReady();
 	}
 });
 module.exports=FileList;

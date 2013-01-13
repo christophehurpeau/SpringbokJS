@@ -1,5 +1,4 @@
-var fs = require('fs'),
-	DEFAULT = { controller: 'Site', action: 'Index' };
+var DEFAULT = { controller: 'Site', action: 'Index' };
 
 var Route=function(attrs){
 	S.extObj(this,attrs);
@@ -14,13 +13,13 @@ var Router=module.exports=function(r,rl){
 	t.routes = {}; t.routesLangs = {};
 	/* NODE */
 	if(r===undefined){
-		r=JSON.parse(fs.readFileSync(App.appDir + 'config/routes.json')),
-		rl=JSON.parse(fs.readFileSync(App.appDir + 'config/routesLangs.json'));
+		r=App.config('routes'),
+		rl=App.config('routesLangs');
 	}
 	/* /NODE */
 	
-	//console.log(this.routes);
-	if(!r.index) r={index:r};
+	console.log(r);
+	if(!r.main) r={main:r};
 	for(var entry in r){
 		var entryRoutes=r[entry];
 		t.routes[entry]={};
@@ -96,7 +95,7 @@ var Router=module.exports=function(r,rl){
 };
 Router.prototype={
 	find:function(all,lang,entry){
-		var t = this,route = false,m,r,routes=t.routes[entry||'index'];
+		var t = this,route = false,m,r,routes=t.routes[entry];
 		all=t.all='/'+S.sTrim(all, '/');
 		console.log('router: find: "'+all+'"');
 		for (var i in routes){
@@ -117,7 +116,7 @@ Router.prototype={
 						var v=cAndA[k];
 						if(c_a[k]==='!'){
 							if(params[v]){
-								c_a[k]=S.sUcFirst(t.untranslate(params[v],lang));
+								c_a[k]=S.sUcFirst(t.untranslate(lang,params[v]));
 								delete params[v];
 							}else c_a[k]=DEFAULT[v];
 						}
@@ -137,23 +136,30 @@ Router.prototype={
 		}
 		return route;
 	},
-	getLink:function(url){
-		return S.isStr(url) ? this.getStringLink(url) : this.getArrayLink(url);
+	getLink:function(lang,entry,url){
+		return S.isStr(url) ? this.getStringLink(lang,entry,url) : this.getArrayLink(lang,entry,url);
 	},
-	getArrayLink:function(params){},
-	getStringLink:function(params){
-		var route = S.sTrim(params, '\/').split('/', 3),
+	getArrayLink:function(lang,entry,params){},
+	getStringLink:function(lang,entry,params){
+		S.log([lang,entry,params,S.sTrim(params, '\/').split('/',3)]);
+		var route = S.sTrim(params, '\/').split('/',3),
 			controller = route[0],
 			action = route[1] || DEFAULT.action,
-			params = route[2];
-		route = this.routes['/:controller(/:action/*)?'];
-		var froute = action === DEFAULT.action ? '/' + this.translate(controller) : S.sFormat(route.en[1], this.translate(controller), this.translate(action), params ? '/' + params : '');
+			params = route[2] || '';
+		S.log([route,controller,action,params]);
+		route = this.routes[entry]['/:controller(/:action/*)?'];
+		S.log(route);
+		var froute = action === DEFAULT.action ? '/' + this.translate(lang,controller) : S.sFormat((route[lang]||route._)[1], this.translate(lang,controller), this.translate(lang,action), params ? '/' + params : '');
 		return froute + (route.ext && !S.sEndsWith(froute, '.' + route.ext) ? '.' + route.ext : '');
 	},
-	translate:function(string,lang){
+	translate:function(lang,string){
 		return this.routesLangs['->' + lang][string] || string;
 	},
-	untranslate:function(string,lang){
+	untranslate:function(lang,string){
+		/* DEV */
+		if(!this.routesLangs[lang + '->']) throw new Error('Missing lang "'+lang+'"');
+		if(!this.routesLangs[lang + '->'][string]) throw new Error('Missing translation for string "'+string+'"');
+		/* /DEV */
 		return this.routesLangs[lang + '->'][string] || string;
 	}
 };

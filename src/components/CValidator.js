@@ -25,11 +25,15 @@ var ParamValueStrValidator=S.extClass(ParamValueValidator,{
 	}
 });
 
+var ParamValueModelValidator=S.extClass(ParamValueValidator,{});
+
 ParamValidator.prototype={
-	_error:function(name,key,value){console.log(arguements);this._errors[name]={error:key,value:value};},
+	_error:function(name,key,value){S.log(arguments);this._errors[name]={error:key,value:value};},
 	
 	str:function(name,num){ return new ParamValueStrValidator(this,name,this.req.sParam(name,num)); },
-	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); }
+	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); },
+	model:function(modelName,name){ name=name||S.sLcFirst(modelName);
+		return new ParamValueModelValidator(this,name,this.req.query[name]); }
 };
 
 var ParamValidatorValid=S.extClass(ParamValidator,{

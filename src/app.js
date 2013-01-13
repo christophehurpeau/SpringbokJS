@@ -1,8 +1,13 @@
-var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), util=require('util'),
+var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), async=require('async'), util=require('util'),
 	connect=require('connect'), httpSendFile=require('send'),
 	ejs=require('springbokejs'), ejsUtils=require('springbokejs/lib/utils');
 
 require('springboktools');
+require('./base/async');
+S.log=console.log;//todo use CLogger
+require('./utils');
+require('./helpers');
+require('./db/');
 
 require.extensions['.ejs']=require.extensions['.js'];
 
@@ -14,30 +19,47 @@ require.extensions['.ejs']=require.extensions['.js'];
 // https://github.com/glesperance/node-rocket/blob/master/lib/loader.js 
 // https://github.com/jaredhanson/locomotive/blob/master/bin/lcm.js
 // https://github.com/MaxaGfeller/mongee/blob/master/app.js
-process.on('uncaughtException', function (err){
+process.on('uncaughtException',function(err){
 	console.error(err.stack);
 });
 
 
 require('./base/HttpRequest');
-var Router=require('./base/Router');
-var HttpException=require('./base/HttpException.js');
+var Router=require('./base/Router'), HttpException=require('./base/HttpException.js');
 
 global.App={
 	init:function(dir){
 		dir += '/';
 		App.env = fs.readFileSync(dir + 'env');
 		App.appDir = dir+='dev/';
-		App.config = JSON.parse(fs.readFileSync(dir + 'config/_' + App.env + '.json'));
+		global.Config=this.config('_' + App.env);
 		App.router=new Router();
-		App.controllers={}; App.PControllers={};
-		App.views={};
+		
+		var t=['controllers','PControllers','views','models','PModels'];
+		t.forEach(function(v){ App[v]={}; });
+		global.M=App.models;
+		
+		App.entries={};
+		App.entriesList=Object.keys(Config.entries);
+		App.entriesList.forEach(function(entry){
+			App.entries[entry]=entry==='main' ? {prefix:'',suffix:''} : {prefix:entry+'.',suffix:'.'+entry};
+			App.entries[entry].host=Config.entries[entry];
+			t.forEach(function(v){ App[v][entry]={}; });
+		});
+		App.views.layouts={};
+		
+		Config.helpers && Config.helpers.forEach(function(helperName){
+				require('./helpers/'+helperName); })
+	},
+	config:function(path){
+		return U.Files.getJsonSync(this.appDir+'config/'+path+'.json');
 	}
 };
 global.WEB_URL='/web/';
 global.WEB_FOLDER='./';
 
-App.Controller=require('./base/Controller');
+App.BasicController=App.Controller=require('./base/Controller');
+App.Model=require('./base/Model');
 //App.View=require('./base/View');
 App.CValidator=require('./components/CValidator');
 
@@ -47,99 +69,175 @@ require('./base/i18n');
 App.start=function(port){
 	var t=this,dir=t.appDir;
 	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
-	//todo : foreach entries
-	var controllers={_:dir+'controllers'},views={v:dir+'views',vl:dir+'viewsLayouts'};
-	if(t.config.plugins){
-		t.config.pluginsPaths||(t.config.pluginsPaths={});
-		t.config.pluginsPaths.Springbok=__dirname+'/plugins/';
-		S.oForEach(t.config.plugins,function(k,v){
-			var pluginPath=t.config.pluginsPaths[v[0]]+v[1];
-			if(fs.existsSync(pluginPath+'/controllers')) controllers[v[0]]=pluginPath+'/controllers';
-			if(fs.existsSync(pluginPath+'/views')) views[v[0]+'v']=pluginPath+'/views';
-			if(fs.existsSync(pluginPath+'/viewsLayouts')) views[v[0]+'vL']=pluginPath+'/viewsLayouts';
-		});
-	}
 	
-	S.oForEach(controllers,function(pluginName,dir){
-		diveSync(dir,function(err,path){
-			if(err) console.error(err.stack);
-			else if(/\.js$/.test(path)) {
+	App.entriesList.forEach(function(entry){
+		if(entry!=='main'){
+			var ucFirstEntry=S.sUcFirst(entry);
+			t[ucFirstEntry+'Controller']=require(dir+'App'+ucFirstEntry+'Controller');
+		}
+	});
+	
+	
+	var controllers={_:dir+'controllers'},models={_:dir+'models'},views={_:dir+'views'},viewsLayouts={_:dir+'viewsLayouts'};
+	
+	Config.plugins||(Config.plugins={})
+	Config.pluginsPaths||(Config.pluginsPaths={});
+	Config.pluginsPaths.Springbok=__dirname+'/plugins/';
+	Config.plugins.SpringbokBase=['Springbok','base'];
+	S.oForEach(Config.plugins,function(k,v){
+		var pluginPath=Config.pluginsPaths[v[0]]+v[1];
+		controllers[k]=pluginPath+'/controllers';
+		models[k]=pluginPath+'/models';
+		views[k]=pluginPath+'/views';
+		viewsLayouts[k]=pluginPath+'/viewsLayouts';
+	});
+	
+	
+	var forEachDir=function(o,ext,onEnd,callback,entries){
+		ext=ext||'js';
+		test=new RegExp('\.'+ext+'$');
+		async.forEachSeries(Object.keys(o),function(pluginName,onEnd){
+			var dir_=o[pluginName];
+			S.oForEach(entries||App.entries,function(entryName,entry){
+				var dir=dir_+entry.suffix;
+				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
+					if(err) console.error(err.stack);
+					else if(test.test(path)){
+						callback(dir,path,entryName);
+					}
+				});
+			});
+			onEnd();
+		},onEnd);
+	};
+	
+	async.series([
+		function(onEnd){
+			console.log('Loading controllers...');
+			forEachDir(controllers,null,onEnd,function(dir,path,entryName){
+				var name = path.slice(dir.length+1,-3), c = require(path);
+				//if(S.isFunc(c)) c=c(t);
+				if(t.controllers[entryName][name]===undefined) t.controllers[entryName][name]=c;
+				else t.PControllers[entryName][name]=c;
+			})
+		},
+		function(onEnd){
+			console.log('Loading views...');
+			forEachDir(views,'ejs',onEnd,function(dir,path,entryName){
+				var name=name = path.slice(dir.length+1,-4);
+				if(t.views[entryName][name]===undefined){
+					var fn=require(path);
+					t.views[entryName][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
+				}
+			});
+		},
+		function(onEnd){
+			console.log('Loading layouts...');
+			forEachDir(viewsLayouts,'ejs',onEnd,function(dir,path,entryName){
+				var name=name=path.slice(dir.length+1,-4);
+				console.log(name);
+				if(t.views['layouts'][name]===undefined){
+					var fn=require(path);
+					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
+				}
+			},{layouts:{prefix:'',suffix:''}});
+		},
+		function(onEnd){
+			console.log('Creating db connections...');
+			S.Db.init(onEnd);
+		},
+		function(onEnd){
+			console.log('Loading models...');
+			forEachDir(models,null,onEnd,function(dir,path){
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
 				//if(S.isFunc(c)) c=c(t);
-				if(t.controllers[name]===undefined) t.controllers[name]=c;
-				else t.PControllers[name]=c;
-			}
-		});
-	});
-	
-	S.oForEach(views,function(pluginName,dir){
-		diveSync(dir,function(err,path){
-			if(err) console.error(err.stack);
-			else if(/\.ejs$/.test(path)) {
-				var name = path.slice(sysPath.dirname(dir).length+1,-4);
-				if(t.views[name]===undefined){
-					var fn=require(path);
-					t.views[name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
-				}
-			}
-		});
-	});
-	delete controllers;
-	delete views;
-	console.log(views,t.views);
-	
-	t.datastores = [];
-	
-	var webDir=t.appDir+'web';
-	
-	app = connect()
-		/* DEV */.use(connect.errorHandler())/* /DEV */
-		.use(connect.compress())
-		.use(connect.favicon('web/favicon.ico'))
-		/* DEV */.use(connect.logger('dev'))/* /DEV */
-		/* PROD */.use(connect.logger())/* /PROD */
-		.use(function(req,res,next){
-			if('GET' != req.method && 'HEAD' != req.method) return next();
-			var path=req._parsedUrl.pathname;
-			if(path.substr(0,5)!=='/web/') return next();
-			httpSendFile(req,path.substr(5))
-				.maxage(86400000)
-				.root(webDir)
-				.on('error',function(err){
-					res.statusCode=404;
-					res.end("Not Found");
+				if(t.models[name]===undefined) t.models[name]=c;
+				else t.PModels[name]=c;
+			});
+		},
+		
+		function(onEnd){
+			console.log(views,t.views);
+			console.log(t.controllers);
+			controllers=views=models=undefined;
+			
+			
+			var webDir=t.appDir+'web';
+		
+			app = connect()
+				/* DEV */.use(connect.errorHandler())/* /DEV */
+				.use(connect.compress())
+				.use(connect.favicon('web/favicon.ico'))
+				/* DEV */.use(connect.logger('dev'))/* /DEV */
+				/* PROD */.use(connect.logger())/* /PROD */
+				.use(function(req,res,next){
+					if('GET' != req.method && 'HEAD' != req.method) return next();
+					var path=req._parsedUrl.pathname;
+					if(path.substr(0,5)!=='/web/') return next();
+					httpSendFile(req,path.substr(5))
+						.maxage(86400000)
+						.root(webDir)
+						.on('error',function(err){
+							res.statusCode=404;
+							res.end("Not Found");
+						})
+						.on('directory',function directory(){
+							res.statusCode=404;
+							res.end("Not Found");
+						})
+						.pipe(res);
+						
+					//connect['static'](t.appDir+'web',{/*redirect:false,*/maxAge:86400000}
 				})
-				.on('directory',function directory(){
-					res.statusCode=404;
-					res.end("Not Found");
-				})
-				.pipe(res);
-				
-			//connect['static'](t.appDir+'web',{/*redirect:false,*/maxAge:86400000}
-		})
-		.use(connect.query())
-		.use(function(req,res){
-			var route=req.route=t.router.find(req._parsedUrl.pathname,'en');
-			try{
-				var controller=t.controllers[route.controller];
-				if(!controller)
-					/* DEV */HttpException.internalServerError('Controller Not Found: '+route.controller);/* /DEV */
-					/* PROD */HttpException.notFound();/* /PROD */
-				controller=new controller(t,req,res);
-				controller[route.action].call(controller,req,res);
-			}catch(err){
-				if(err instanceof HttpException){
-				}else{
-					/* DEV */console.log(err.stack);/* /DEV */
-					err=HttpException.newInternalServerError();
-				}
-				res.statusCode=err.code;
-				res.end(err.details);
-			}
-			//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(t.config));
-		}).listen(port=(port||3000));
-	console.log("Listening on port "+port);
-	
+				.use(connect.query())
+				.use(function(req,res){
+					try{
+						var pathname=req._parsedUrl.pathname, host=req.headers.host.split(':')[0];
+					
+						/* DEV */
+						if(host==='localhost'){
+							if(pathname && pathname.charAt(1)==='~'){ //0:'/',1:'~'
+								var e_p=S.sSplitLeft(pathname.substr(1),'/');
+								if(e_p){
+									pathname='/'+e_p[1];
+									req.entry=e_p[0].substr(1);
+								}else req.entry='main';
+							}else req.entry='main';
+						}else{
+						
+						/* /DEV */
+						req.entry=Config.reversedEntries[host];
+						/* DEV */
+						}
+						
+						if(!Config.entries[req.entry]) throw new Error('This entry doesn\'t exists : "'+req.entry+'"');
+						/* /DEV */
+						
+						var route=req.route=t.router.find(pathname,'en',req.entry);
+						req.currentUrl=pathname;//window.location.pathname
+						
+						var controller=t.controllers[req.entry][route.controller];
+						if(!controller)
+							/* DEV */HttpException.internalServerError('Controller Not Found: '+route.controller);/* /DEV */
+							/* PROD */HttpException.notFound();/* /PROD */
+						controller=new controller(t,req,res);
+						if(controller.beforeDispatch(req,res)!==false)
+							controller[route.action](req,res);
+					}catch(err){
+						if(err instanceof HttpException){
+						}else{
+							/* DEV */console.log(err.stack);/* /DEV */
+							err=HttpException.newInternalServerError(/* DEV */err.stack/* /DEV */);
+						}
+						res.statusCode=err.code;
+						res.end(err.details);
+					}
+					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
+				}).listen(port=(port||3000));
+			console.log("Listening on port "+port);
+			onEnd();
+		}
+	]);
 	/* http://www.sitepen.com/blog/2010/07/14/multi-node-concurrent-nodejs-http-server/ */
 	/* better : http://nodejs.org/api/cluster.html  + graceful restart : http://stackoverflow.com/questions/8933982/how-to-gracefully-restart-a-nodejs-server */
 };

@@ -69,8 +69,7 @@ SourceFile.prototype={
 								t.cache.dependencies=dependencies;
 								t.cache.compilationTime=Date.now();
 								t.cache.error=null;
-								t.write(devResultOptimized,prodResultOptimized);
-								callback(null);
+								t.write(devResultOptimized,prodResultOptimized,callback);
 							});
 						})
 					}catch(err){
@@ -83,15 +82,18 @@ SourceFile.prototype={
 		}
 	},
 	
-	write:function(devResultOptimized,prodResultOptimized){
-		var t=this;
-		['dev/','prod/'].forEach(function(dir){
-			t._write(t.rootPath+dir+t.dirname,function(){
-				fs.writeFile(t.rootPath+dir+t.compiledPath,dir==='dev/'?devResultOptimized:prodResultOptimized,function(err){
+	write:function(devResultOptimized,prodResultOptimized,callback){
+		var t=this, results={'dev':devResultOptimized,'prod':prodResultOptimized};
+		async.forEach(['dev','prod'],function(dir,callback){
+			var result=results[dir];
+			if(result===null) return callback();
+			t._write(t.rootPath+dir+'/'+t.dirname,function(){
+				fs.writeFile(t.rootPath+dir+'/'+t.compiledPath,result,function(err){
 					if(err!=null) console.error(err.stack);
-				})
-			})
-		});
+					callback()
+				});
+			});
+		},callback);
 	},
 	copy:function(callback){
 		var t=this,srcPath=this.srcPath;

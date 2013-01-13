@@ -34,6 +34,7 @@ function initialize(fileList,persistent,startServer,pluginsDir,callback){
 			var /*name=path.slice(dir.length + 19,-3), */
 				plugin=require(path);
 			plugin.fileList=fileList;
+			plugin.isCore=fileList.isCore;
 			if(plugin.init) plugin.init();
 			if(S.isFunc(plugin.compile)) plugins.compilers.push(plugin);
 			if(S.isFunc(plugin.lint)) plugins.linters.push(plugin);
@@ -72,12 +73,14 @@ http.createServer(reqHandlerClosure).listen(8000);
 		changeFileList(plugins, fileList, path, true);
 	});
 	*/
+	if(persistent && server) fileList.on('ready',function(){ server.restart(); });
 	initWatcher(fileList.filesToWatch(),persistent,function(err,watcher){
 		if(err) return callback(err);
 		var compile=function(startTime){
 			console.log("Compiled in "+(Date.now() - startTime)+"ms");
-			if(persistent) server && server.restart();
-			else{
+			if(persistent){
+				fileList.emit('done');
+			}else{
 				watcher.close();
 				process.on('exit',function(previousCode){
 					process.exit(false&&logger.errorHappened?1:previousCode);
@@ -111,7 +114,6 @@ Exiting."
 			fileList.emit('unlink', path);
 		})
 }
-
 
 module.exports={
 	init:function(fileList,persistent,startServer,pluginsDir){
