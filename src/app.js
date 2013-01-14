@@ -24,7 +24,7 @@ process.on('uncaughtException',function(err){
 });
 
 
-require('./base/HttpRequest');
+require('./base/HttpRequest'); require('./base/HttpResponse');
 var Router=require('./base/Router'), HttpException=require('./base/HttpException.js');
 
 global.App={
@@ -59,7 +59,8 @@ global.WEB_URL='/web/';
 global.WEB_FOLDER='./';
 
 App.BasicController=App.Controller=require('./base/Controller');
-App.Model=require('./base/Model');
+require('./base/Model');
+App.Model=S.Model;
 //App.View=require('./base/View');
 App.CValidator=require('./components/CValidator');
 

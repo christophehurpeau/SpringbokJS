@@ -1,3 +1,4 @@
+var http=require('http');
 S.Helpers=function(app,controller){ this.controller=controller; this.req=controller.req;this.res=controller.res;this.router=app.router; };
 S.extProto(S.Helpers,{
 	/* https://github.com/jed/locale/blob/master/src/index.coffee */
@@ -20,6 +21,24 @@ S.extProto(S.Helpers,{
 		return locale;
 	},
 	
+	
+	redirect:function(to,entry,status){
+		status=status||302;
+		var body,url=this.url(to, entry);
+		if(this.req.accepts('html')){
+			this.res.setHeader('Content-Type','text/html');
+			var escapedUrl=S.escapeUrl(url);
+			body='<html><body><p>'+http.STATUS_CODES[status]+'.'
+				+'Redirecting to <a href="'+escapedUrl+'">'+escapedUrl+'</a></p></body></html>';
+		}else if(this.req.accepts('text')){
+			this.res.setHeader('Content-Type','text/plain');
+			body=http.STATUS_CODES[status] + '. Redirecting to ' + url;
+		}
+		this.res.setHeader('Location',url);
+		this.res.statusCode = status;
+		S.log(body);
+		this.res.end(body);
+	},
 	
 	
 	render:function(template,data,entry){

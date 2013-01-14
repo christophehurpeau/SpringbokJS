@@ -6,5 +6,6 @@ module.exports=global.U={
 	
 	/* /DEV */
 	
+	Strings:require('./UStrings'),
 	Files:require('./UFiles'),
 };

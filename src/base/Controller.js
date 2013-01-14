@@ -8,8 +8,8 @@ var Controller = function(app,req,res){
 Controller.prototype={
 	beforeDispatch:function(){},
 	
-	redirect:function(to, entry, status) {
-		this.res.redirect(this.app.url(to, entry), status);
+	redirect:function(to, entry, status){
+		this.H.redirect(to,entry,status);
 	},
 	redirectPermanent:function(to, entry) {
 		this.redirect(to, entry, 301);

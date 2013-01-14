@@ -33,7 +33,7 @@ ParamValidator.prototype={
 	str:function(name,num){ return new ParamValueStrValidator(this,name,this.req.sParam(name,num)); },
 	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); },
 	model:function(modelName,name){ name=name||S.sLcFirst(modelName);
-		return new ParamValueModelValidator(this,name,this.req.query[name]); }
+		return new ParamValueModelValidator(this,name,new M[modelName](this.req.query[name])); }
 };
 
 var ParamValidatorValid=S.extClass(ParamValidator,{

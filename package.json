@@ -21,10 +21,10 @@
 		"diveSync":">=0.2.0",
 		"mkdirp":">=0.3.4",
 		"stylus":">=0.32.0",
-		"jade":">=0.27.7",
+		"jade":">=0.28.1",
 		"springbokejs":">=0.0.1",
 		"springbok-stylus-sprites":">=0.0.1",
-		"mongoose":">=3.5.3",
+		"mongoose":">=3.5.4",
 		"jshint":">=0.9.1"
 	},
 	"devDependencies": {
