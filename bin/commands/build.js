@@ -29,7 +29,9 @@ module.exports={
 		
 		fileList.on('ready',function(){
 			console.log('sending reload to '+clients.length+' clients');
-			clients.forEach(function(stream){ stream.write('reload'); });
+			clients.forEach(function(stream){
+				stream.writable && stream.write('reload');
+			});
 		});
 	},
 	project:function(persistent){

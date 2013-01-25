@@ -1,0 +1,9 @@
+module.exports=App.Model('Searchable',{
+	Fields:{
+		name:[String],
+		slug:[String],
+		normalized:[String],
+		visible:[Boolean]
+	},
+},{
+});

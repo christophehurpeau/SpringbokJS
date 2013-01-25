@@ -28,6 +28,7 @@ require('./base/HttpRequest'); require('./base/HttpResponse');
 var Router=require('./base/Router'), HttpException=require('./base/HttpException.js');
 
 global.App={
+	behaviours:[],
 	init:function(dir){
 		dir += '/';
 		App.env = fs.readFileSync(dir + 'env');
@@ -35,8 +36,7 @@ global.App={
 		global.Config=this.config('_' + App.env);
 		App.router=new Router();
 		
-		var t=['controllers','PControllers','views','models','PModels'];
-		t.forEach(function(v){ App[v]={}; });
+		['controllers','PControllers','views','models','PModels'].forEach(function(v){ App[v]={}; });
 		global.M=App.models;
 		
 		App.entries={};
@@ -44,7 +44,7 @@ global.App={
 		App.entriesList.forEach(function(entry){
 			App.entries[entry]=entry==='main' ? {prefix:'',suffix:''} : {prefix:entry+'.',suffix:'.'+entry};
 			App.entries[entry].host=Config.entries[entry];
-			t.forEach(function(v){ App[v][entry]={}; });
+			['controllers','PControllers','views'].forEach(function(v){ App[v][entry]={}; });
 		});
 		App.views.layouts={};
 		
@@ -85,6 +85,15 @@ App.start=function(port){
 	Config.pluginsPaths||(Config.pluginsPaths={});
 	Config.pluginsPaths.Springbok=__dirname+'/plugins/';
 	Config.plugins.SpringbokBase=['Springbok','base'];
+	
+	for(var keys=Object.keys(Config.plugins),i=0;i<keys.length;i++){
+		var v=Config.plugins[keys[i]],pluginPath=Config.pluginsPaths[v[0]]+v[1];
+		try{
+			var dependencies=U.Files.getJsonSync(pluginPath+'/config/dependencies.json');
+			dependencies && S.oForEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
+		}catch(err){}
+	}
+		
 	S.oForEach(Config.plugins,function(k,v){
 		var pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		controllers[k]=pluginPath+'/controllers';
@@ -123,7 +132,7 @@ App.start=function(port){
 			})
 		},
 		function(onEnd){
-			console.log('Loading views...');
+			S.log('Loading views...');
 			forEachDir(views,'ejs',onEnd,function(dir,path,entryName){
 				var name=name = path.slice(dir.length+1,-4);
 				if(t.views[entryName][name]===undefined){
@@ -133,10 +142,10 @@ App.start=function(port){
 			});
 		},
 		function(onEnd){
-			console.log('Loading layouts...');
+			S.log('Loading layouts...');
 			forEachDir(viewsLayouts,'ejs',onEnd,function(dir,path,entryName){
 				var name=name=path.slice(dir.length+1,-4);
-				console.log(name);
+				S.log('Loading layout: '+name);
 				if(t.views['layouts'][name]===undefined){
 					var fn=require(path);
 					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
@@ -144,16 +153,24 @@ App.start=function(port){
 			},{layouts:{prefix:'',suffix:''}});
 		},
 		function(onEnd){
-			console.log('Creating db connections...');
+			S.log('Creating db connections...');
 			S.Db.init(onEnd);
 		},
 		function(onEnd){
-			console.log('Loading models...');
+			S.log('Loading models...');
 			forEachDir(models,null,onEnd,function(dir,path){
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
+				S.log('Loading model: '+name);
 				//if(S.isFunc(c)) c=c(t);
 				if(t.models[name]===undefined) t.models[name]=c;
 				else t.PModels[name]=c;
+			});
+		},
+		function(onEnd){
+			S.log('Initializing models...');
+			S.oForEach(t.models,function(modelName,model){
+				S.log('Initialize model: '+modelName);
+				model.init();
 			});
 		},
 		
@@ -231,7 +248,7 @@ App.start=function(port){
 							err=HttpException.newInternalServerError(/* DEV */err.stack/* /DEV */);
 						}
 						res.statusCode=err.code;
-						res.end(err.details);
+						res.end('<pre>'+err.details+'</pre>');
 					}
 					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
 				}).listen(port=(port||3000));
