@@ -48,10 +48,10 @@ S.extProto(S.Helpers,{
 		//TODO : find a way to do it natively
 		data.layout=function(title,name){ data.layoutTitle=title; layout=name; };
 		data.element=function(template,data){
-			/* DEV */ if(!App.views[entry][template]) throw new Error('Element does not exists : '+entry+'..'+template); /* /DEV */
+			/* DEV */ if(!App.views[entry][template]) throw new Error('ViewElement does not exists : '+entry+'..'+template); /* /DEV */
 			return App.views[entry][template](H,data);
 		};
-		/* DEV */ if(!App.views[entry][template]) throw new Error('Element does not exists : '+entry+'..'+template); /* /DEV */
+		/* DEV */ if(!App.views[entry][template]) throw new Error('ViewElement does not exists : '+entry+'..'+template); /* /DEV */
 		var content=App.views[entry][template](H,data);
 		if(layout===false) this.res.end(content);
 		else{

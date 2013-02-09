@@ -1,7 +1,8 @@
 S.extObj(S,{
 	nextTick:((/* NODE||BROWSER */process.nextTick||function(fn){ setTimeout(fn,0); })),
 	asyncForEach:function(arr, iterator, callback){
-		if(!arr.length) return callback();
+		/* DEV */ if(!S.isFunc(callback)) throw new Error('asyncForEach: callback must be a function !'); /* /DEV */
+		if(!arr || !arr.length) return callback();
 		
 		var l=arr.length,completed=0;
 		arr.forEach(function(x){

@@ -168,9 +168,12 @@ App.start=function(port){
 		},
 		function(onEnd){
 			S.log('Initializing models...');
-			S.oForEach(t.models,function(modelName,model){
+			S.asyncObjForEach(t.models,function(modelName,model,onEnd){
 				S.log('Initialize model: '+modelName);
-				model.init();
+				model.init(onEnd);
+			},function(){
+				S.log('Models initialized');
+				onEnd();
 			});
 		},
 		
@@ -255,7 +258,7 @@ App.start=function(port){
 			console.log("Listening on port "+port);
 			onEnd();
 		}
-	]);
+	]/*,function(err){ if(err){ console.err(err); throw err; } }*/);
 	/* http://www.sitepen.com/blog/2010/07/14/multi-node-concurrent-nodejs-http-server/ */
 	/* better : http://nodejs.org/api/cluster.html  + graceful restart : http://stackoverflow.com/questions/8933982/how-to-gracefully-restart-a-nodejs-server */
 };

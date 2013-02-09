@@ -16,8 +16,7 @@ module.exports=App.AdminController({
 	}),
 	Edit:App.Controller.Action(function(req,res){
 		var v=req.validParams(), slug=v.str('slug',1).notEmpty().val;
-		var page=M.Page.ById(slug)
-		req.notFoundIfFalse(page);
-		this.render([page]);
+		var page=M.Page.find.byId(slug).notFoundIfFalse();
+		this.render({page:page});
 	})
 });
