@@ -25,7 +25,8 @@ process.on('uncaughtException',function(err){
 
 
 require('./base/HttpRequest'); require('./base/HttpResponse');
-var Router=require('./base/Router'), HttpException=require('./base/HttpException.js');
+require('./base/HttpException.js')
+var Router=require('./base/Router');
 
 global.App={
 	behaviours:[],
@@ -239,19 +240,15 @@ App.start=function(port){
 						
 						var controller=t.controllers[req.entry][route.controller];
 						if(!controller)
-							/* DEV */HttpException.internalServerError('Controller Not Found: '+route.controller);/* /DEV */
-							/* PROD */HttpException.notFound();/* /PROD */
-						controller=new controller(t,req,res);
-						if(controller.beforeDispatch(req,res)!==false)
-							controller[route.action](req,res);
-					}catch(err){
-						if(err instanceof HttpException){
-						}else{
-							/* DEV */console.log(err.stack);/* /DEV */
-							err=HttpException.newInternalServerError(/* DEV */err.stack/* /DEV */);
+							/* DEV */res.exception(HttpException.newInternalServerError('Controller Not Found: '+route.controller));/* /DEV */
+							/* PROD */res.notFound();/* /PROD */
+						else{
+							controller=new controller(t,req,res);
+							if(controller.beforeDispatch(req,res)!==false)
+								controller[route.action](req,res);
 						}
-						res.statusCode=err.code;
-						res.end('<pre>'+err.details+'</pre>');
+					}catch(err){
+						res.exception(err);
 					}
 					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
 				}).listen(port=(port||3000));

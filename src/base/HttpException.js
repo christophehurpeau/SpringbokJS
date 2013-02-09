@@ -1,4 +1,4 @@
-var HttpException=function(code,error,details){
+global.HttpException=function(code,error,details){
 	this.code=code;
 	this.error=error;
 	this.details=details;
@@ -9,7 +9,5 @@ HttpException.prototype={
 	getDetails:function(){return this.details;}
 };
 HttpException.newInternalServerError=function(details){ return new HttpException(500,'Internal Server Error',details); };
-HttpException.notFound=function(){ throw new HttpException(404,'Not Found'); };
+HttpException.notFound=function(){ return new HttpException(404,'Not Found'); };
 HttpException.internalServerError=function(details){ throw HttpException.newInternalServerError(details); };
-
-module.exports=HttpException;

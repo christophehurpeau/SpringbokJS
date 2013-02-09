@@ -1,11 +1,11 @@
-var app=require('../app.js'),httpException=require('../base/HttpException.js'),
+var app=require('../app.js'),
 	http = require('http'),
 	Validator = require('validator').Validator;
 
 /* https://gist.github.com/752126 */
 
 S.extProto(Validator,{
-	validParams:function(){this.error=function(){app.HttpException.notFound();};},
+	validParams:function(){this.error=function(){ throw HttpException.notFound();};},
 	error:function(msg){this._errors.push(msg);},
 	getErrors:function(){return this._errors;},
 	hasErrors:function(){return !!this._errors;}

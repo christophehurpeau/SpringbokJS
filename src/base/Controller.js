@@ -1,5 +1,3 @@
-var httpException=require('./HttpException.js');
-	
 var Controller = function(app,req,res){
 	this.req=req; this.res=res;
 	this.H=new S.Helpers(app,this);
@@ -8,13 +6,15 @@ var Controller = function(app,req,res){
 Controller.prototype={
 	beforeDispatch:function(){},
 	
+	findOne:function(modelName){ return M[modelName].find.one(this.H); },
+	
 	redirect:function(to, entry, status){
 		this.H.redirect(to,entry,status);
 	},
 	redirectPermanent:function(to, entry) {
 		this.redirect(to, entry, 301);
 	},
-	notFound:function(){ httpException.notFound(); },
+	notFound:function(){ throw HttpException.notFound(); },
 	
 	render:function(data,fileName,folderName){
 		this.res.setHeader('Content-Type','text/html; charset=UTF-8');

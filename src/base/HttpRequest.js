@@ -15,11 +15,5 @@ S.extProto(http.IncomingMessage,{
 				acceptTypes[k]=accept.split(';',1)[0];
 		});
 		return S.isStr(type) ? S.aHas(acceptTypes,type) : S.aHasAmong(acceptTypes,type)
-	},
-	
-	
-	/* utils */
-	notFoundIfFalse:function(o){
-		if(o===false) HttpException.notFound();
 	}
 });

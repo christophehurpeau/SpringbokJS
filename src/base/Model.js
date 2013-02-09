@@ -1,11 +1,41 @@
-var mongodb=require('mongodb');
+var mongodb=require('mongodb'); /* https://github.com/kissjs/node-mongoskin/blob/master/lib/mongoskin/collection.js */
 S.Model=(function(){
-	var Model=function(){},Find=function(model){ this.model=model; };
+	var Model=function(){},Find=function(model){ this.model=model; },QFind=function(model,H){ this.model=model; this.H=H; };
+	
+	QFind.prototype={
+		fields:function(fields){ this._fields=fields; return this; },
+	};
+	
+	var QFindOne=S.extClass(QFind,{
+		fetch:function(callback){
+			if(this.H){
+				var truecallback=callback;
+				callback=function(err,doc){ err!==null ? this.H.res.exception(HttpException.newInternalServerError(err)) : truecallback(doc); };
+			}
+			this._fields ? this.model.collection.findOne(this._query,this._fields,callback)
+				: this.model.collection.findOne(this._query,callback) ;
+		},
+		byId:function(id){ this._query={_id:id}; return this; },
+		byIdNotNull:function(id,callback){ return this.byId(id).notNull(callback); },
+		notNull:function(callback){ var t=this; this.fetch(function(doc){ doc===null ? t.H.res.notFound() : callback(doc); }); },
+	});
+	var QFindAll=S.extClass(QFind,{
+		cursor:function(){ return this.model.collection.find(this._query,this._fields); },
+		each:function(callback){ return this.cursor().each(callback); },
+		fetch:function(callback){ return this.cursor().toArray(callback); }
+	});
+	
 	
 	Find.prototype={
-		byId:function(id){ arguments[0]={_id:arguments[0]};
-			return this.model.collection.findOne.apply(this.model.collection,arguments); }
+		//get one(){ return new QFindOne(this.model,this.H) },
+		one:function(H){ return new QFindOne(this.model,H) },
+		
+		//byId:function(id,callback){ return this.one.byId(id).fetch(callback); },
+		//byIdNotNull:function(id,callback){ return this.one.byId(id).notNull(callback); }
+		//	return this.model.collection.findOne.apply(this.model.collection,arguments); }
 	};
+	
+	
 	
 	Model.prototype={
 		insert:function(callback){ this.self.collection.insert(this.data,{w:1},callback); },
@@ -44,7 +74,7 @@ S.Model=(function(){
 			model.displayField=model.displayField||(model.Fields.title?'title':'name');
 			if(!model.db){
 				model.db=S.Db.get(model.dbName=model.dbName||'default');
-				model.db.createCollection(model.modelName,{w:1},function(err,collection){
+				model.db.collection(model.modelName,{w:1},function(err,collection){
 					if(err) return onEnd(err);
 					model.collection=collection;
 					onEnd();
