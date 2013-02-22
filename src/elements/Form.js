@@ -7,6 +7,8 @@ S.extProto(S.Helpers,{
 });
 
 S.Form=S.extClass(S.Elt.WithContent,{
+	tagName:'form',
+	
 	ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
 	
 	action:function(url,entry,full){ this.attr('action',this.H.url(url,entry,full)); return this; },
@@ -43,13 +45,12 @@ S.Form=S.extClass(S.Elt.WithContent,{
 		return this.toString();
 	},
 	
-	toString:function(){ return S.Form.super_.toString.call(this,'form'); },
-	
 	_getValue:function(name){ return this._value && this._value[name]; }
 });
 
 S.Form.Container=S.extClass(S.Elt.WithContent,{
 	ctor:function(contained,defaultClass){
+		this.tagName=contained._form._tagContainer||'div';
 		S.Elt.WithContent.call(this);
 		this._form=contained._form;
 		defaultClass && this.attrClass(defaultClass);
@@ -62,7 +63,7 @@ S.Form.Container=S.extClass(S.Elt.WithContent,{
 	//error:function($message){ $this._error=message; return this; },
 	//noError:function(){ $this->error=false; return this; },
 	
-	end:function(){ return this._form.aHtml(S.Form.Container.super_.toString.call(this,this._form._tagContainer||'div')); }
+	end:function(){ return this._form.aHtml(this.toString()); }
 });
 
 S.Form.Containable=S.extClass(S.Elt,{

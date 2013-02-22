@@ -9,10 +9,10 @@ S.Elt=(function(){
 		});
 		return res;
 	};
-	Elt.toString=function(tag,attrs,content){
+	Elt.toString=function(tagName,attrs,content){
 		//console.log('Elt.toString',tag,attrs,content);
-		return '<'+tag+(attrs?Elt._attrs(attrs):'')
-				+(content===null?'/>':('>'+content+'</'+tag+'>'));
+		return '<'+tagName+(attrs?Elt._attrs(attrs):'')
+				+(content===null?'/>':('>'+content+'</'+tagName+'>'));
 	};
 	Elt.prototype={
 		attrs:function(attrs){ S.extObj(this._attributes,attrs); return this; },
@@ -36,17 +36,26 @@ S.Elt=(function(){
 		html:function(content){ this.content=content; return this; },
 		aText:function(content){ this.content+=S.escape(content); return this; },
 		aHtml:function(content){ this.content+=content; return this; },
-		toString:function(tag){ return Elt.toString(tag,this._attributes,this.content); }
+		toString:function(){ return Elt.toString(this.tagName,this._attributes,this.content); }
 	});
 	
 	
 	Elt.Basic=S.extClass(Elt.WithContent,{
-		ctor:function(tag){ this.tag=tag; this._attributes={}; },
-		toString:function(){ return Elt.Basic.super_.toString.call(this,this.tag); }
+		ctor:function(tagName){ this.tagName=tagName; this._attributes={}; },
+		toString:function(){ return Elt.Basic.super_.toString.call(this,this.tagName); }
 	});
 	
 	S.createElt=function(tag){ return new Elt.Basic(tag); };
 	Elt.div=function(){ return S.createElt('div'); };
 	
 	return Elt;
+	
+	
+	/* DOM */
+	//test if elt is DOMElement : elt.nodeType
+	Elt.createDom=function(html){
+		
+	}
+	
+	
 })();
