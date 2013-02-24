@@ -46,7 +46,7 @@ S.Model=(function(){
 
 	Model.extend=function(modelName,classProps,protoProps){
 		classProps.modelName=modelName;
-		protoProps.ctor=function(data){ this.data=data; /*S.extObj(this,data);*/ };
+		protoProps.ctor=function(data){ this.data=data; /*UObj.extend(this,data);*/ };
 		
 		/* */
 		protoProps.beforeInsert=protoProps.beforeInsert||[];

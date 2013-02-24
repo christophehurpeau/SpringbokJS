@@ -3,7 +3,7 @@ Listenable.prototype={
 	on:function(event,listener){
 		var events = this._events || (this._events = {}),callbacks=events[event];
 		if(!callbacks) callbacks=/*this._events*/events[event]=[];
-		else if(S.aHas(callbacks,listener)) return this;
+		else if(UArray.has(callbacks,listener)) return this;
 		callbacks.push(listener);
 		return this;
 	},
@@ -16,7 +16,7 @@ Listenable.prototype={
 	},
 	off:function(event,listener){
 		var callbacks=this.getListeners(event),i;
-		if(callbacks && (i=S.aIdxOf(callbacks,listener))){
+		if(callbacks && (i=callbacks.indexOf(listener))){
 			callbacks.splice(i,1);
 			if(callbacks.length === 0) delete this._events[evt];
 		}
@@ -30,7 +30,7 @@ Listenable.prototype={
 		}*/
 		var callbacks=this.getListeners(event);
 		if(callbacks && callbacks.length!==0){
-			var i = callbacks.length,response,args=S.aSlice1(arguments);
+			var i = callbacks.length,response,args=UArray.slice1(arguments);
 			while(i--){
 				response = callbacks[i].apply(this,args);
 				if(response===false) break;

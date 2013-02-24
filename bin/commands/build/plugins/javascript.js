@@ -43,8 +43,10 @@ module.exports={
 			
 			var devResult=data,prodResult=data;
 			devResult=devResult.replace(/\/\*\s+PROD\s+\*\/.*\/\*\s+\/PROD\s+\*\//g,'').replace('/* DEV */','').replace('/* /DEV */','')
+					.replace(/\(\(\/\* DEV\|\|PROD \*\/(.+)||(.+)\)\)/g,'$1')
 					.replace(/\(\/\*\s+DEV\|\|PROD\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$1');
 			prodResult=prodResult.replace(/\/\*\s+DEV\s+\*\/.*\/\*\s+\/DEV\s+\*\//g,'').replace('/* PROD */','').replace('/* PROD */','')
+					.replace(/\(\(\/\* DEV\|\|PROD \*\/(.+)||(.+)\)\)/g,'$2')
 					.replace(/\(\/\*\s+DEV\|\|PROD\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$2');
 			
 			callback(null,devResult,prodResult,includes['']);
@@ -55,12 +57,13 @@ module.exports={
 	includesNode:function(data,dirname,callback,includes){
 		var t=this,dataNode;
 		data=data.replace(/^include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+			if(inclPath.slice(-1)==='/') inclPath+=UString.substrLast(inclPath.slice(0,-1),'/');
 			if(from==='Core') inclPath=t.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
 			else if(from==='Plugin'){
 				inclPath='TODO';
 			}else if(incluPath[0]!=='.') inclPath='./'+inclPath;
 			
-			if(inclPath[0]==='/') inclPath=(S.sRepeat('../',dirname.split('/').length)||'./')+inclPath.substr(1);
+			if(inclPath[0]==='/') inclPath=('../'.repeat(dirname.split('/').length)||'./')+inclPath.substr(1);
 			return 'require("'+inclPath+'");';
 		});
 		callback(data,{});
@@ -69,6 +72,7 @@ module.exports={
 		var t=this,dataNode;
 		if(!includes) includes={'':{},Core:{},'Plugin':{}};
 		dataBrowser=dataBrowser.replace(/^@include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+			if(inclPath.slice(-1)==='/') inclPath+=UString.substrLast(inclPath.slice(0,-1),'/');
 			if(includes[from][inclPath]) return '';
 			includes[from][inclPath]=1;
 			var path;

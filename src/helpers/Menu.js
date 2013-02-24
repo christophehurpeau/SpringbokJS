@@ -19,14 +19,14 @@ S.extProto(S.Helpers,{
 			links=options;
 			options={};
 		}
-		options=S.extObj({
+		options=UObj.extend({
 				menuAttributes:{'class':type},lioptions:{},linkoptions:{},startsWith:false,
 				tagName:'nav',separator:'-'
 			},options);
 		var t=this,ul=S.createElt('ul').html('');
 		links.forEach(function(item){
 			if(!item[0]){ ul.aHtml(S.createElt('li',{'class':'separator'},this.separator,1)); return; }
-			var linkOptions=S.extObj(options.linkoptions,item[2]);
+			var linkOptions=UObj.extend(options.linkoptions,item[2]);
 			
 			if(linkOptions.visible===false) return;
 			delete linkOptions.visible;

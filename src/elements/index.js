@@ -3,7 +3,7 @@ S.Elt=(function(){
 
 	Elt._attrs=function(attrs){
 		var res='';
-		S.oForEach(attrs,function(k,v){
+		UObj.forEach(attrs,function(k,v){
 			res+=' '+k;
 			if(v!==null) res+='="'+S.escape(v)+'"';
 		});
@@ -15,7 +15,7 @@ S.Elt=(function(){
 				+(content===null?'/>':('>'+content+'</'+tagName+'>'));
 	};
 	Elt.prototype={
-		attrs:function(attrs){ S.extObj(this._attributes,attrs); return this; },
+		attrs:function(attrs){ UObj.extend(this._attributes,attrs); return this; },
 		setAttrs:function(attrs){ this._attributes=attrs; return this; },
 		attr:function(attrName,value){ this._attributes[attrName]=value; return this; },
 		id:function(id){ this._attributes.id=id; return this; },

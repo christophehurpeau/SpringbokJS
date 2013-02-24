@@ -20,7 +20,7 @@ ParamValueValidator.prototype={
 
 var ParamValueStrValidator=S.extClass(ParamValueValidator,{
 	notEmpty:function(){
-		if(this.val==null || S.sIsEmpty(this.val)) this._error('notEmpty');
+		if(this.val==null || UString.isEmpty(this.val)) this._error('notEmpty');
 		return this;
 	}
 });
@@ -32,7 +32,7 @@ ParamValidator.prototype={
 	
 	str:function(name,num){ return new ParamValueStrValidator(this,name,this.req.sParam(name,num)); },
 	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); },
-	model:function(modelName,name){ name=name||S.sLcFirst(modelName);
+	model:function(modelName,name){ name=name||UString.lcFirst(modelName);
 		return new ParamValueModelValidator(this,name,new M[modelName](this.req.query[name])); }
 };
 

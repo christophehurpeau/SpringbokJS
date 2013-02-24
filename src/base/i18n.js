@@ -14,20 +14,20 @@ module.exports=function(_options){
 				return dictionnaries[lang]['t'][string]||string;
 			},
 			translateFormat:function(string){
-				return this.translateVFormat(S.aSlice1(arguments));
+				return this.translateVFormat(UArray.slice1(arguments));
 			},
 			translateVFormat:function(string,args){
-				return S.sVFormat(this.translate(string),args);
+				return UString.vformat(this.translate(string),args);
 			},
 			
 			count:function(string,count){
 				return dictionnaries[lang][this.isPlural(count)?'p':'s'][string]||string;
 			},
 			countFormat:function(string,count){
-				return this.countVFormat(string,count,S.ASlice.call(arguments,2));
+				return this.countVFormat(string,count,UArray.slice.call(arguments,2));
 			},
 			countVFormat:function(string,count,args){
-				return S.sVFormat(this.count(string,count),args).replace(/%d/,count);
+				return UString.vformat(this.count(string,count),args).replace(/%d/,count);
 			}
 			/* DEV */,sync:sync/* /DEV */
 		};

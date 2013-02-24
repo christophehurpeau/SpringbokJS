@@ -54,7 +54,7 @@ var FileList=S.extClass(EventEmitter,{
 	_ignored:function(path){
 		if(path==='package.json') return true;
 		if(path.substr(0,11)==='src/config/') return false;
-		return S.sStartsWith(sysPath.basename(path),'_');
+		return sysPath.basename(path).startsWith('_');
 	},
 	//Called every time any file was changed. Emits `ready` event
 	_checkReady:function(){

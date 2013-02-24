@@ -13,7 +13,7 @@ S.Form=S.extClass(S.Elt.WithContent,{
 	
 	action:function(url,entry,full){ this.attr('action',this.H.url(url,entry,full)); return this; },
 	setModelName:function(modelName,name,value){
-		if(!name && modelName!=null) name=S.sLcFirst(modelName);
+		if(!name && modelName!=null) name=UString.lcFirst(modelName);
 		this._modelName=modelName; this._name=name; this._value=value;
 		return this;
 	},
@@ -90,7 +90,7 @@ S.Form.Containable=S.extClass(S.Elt,{
 		if(value != null) this.val(value);
 	},
 	_setAttrId:function(){
-		this.id(this._form._modelName != null ? this._form._modelName+S.sUcFirst(this._name) : this._name);
+		this.id(this._form._modelName != null ? this._form._modelName+UString.ucFirst(this._name) : this._name);
 	},
 	_setAttrName:function(){
 		this.attr('name',this._attrName());

@@ -1,4 +1,4 @@
-S.extObj(S,{
+UObj.extend(S,{
 	nextTick:((/* NODE||BROWSER */process.nextTick||function(fn){ setTimeout(fn,0); })),
 	asyncForEach:function(arr, iterator, callback){
 		/* DEV */ if(!S.isFunc(callback)) throw new Error('asyncForEach: callback must be a function !'); /* /DEV */

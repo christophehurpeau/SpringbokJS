@@ -95,8 +95,8 @@ S.extProto(S.Helpers,{
 			if(url) url=url.trim();
 			if(!url || url==='/') return full+ '/';
 			else{
-				if(S.sHas(url,'://')) return url;
-				if(S.sStartsWith(url,'\\/')) return url.substr(1);
+				if(url.contains('://')) return url;
+				if(url.startsWith('\\/')) return url.substr(1);
 				if(url.substr(0,1)==='/') return full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
 			}
 		}else{

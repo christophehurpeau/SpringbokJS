@@ -1,7 +1,7 @@
 var DEFAULT = { controller: 'Site', action: 'Index' };
 
 var Route=function(attrs){
-	S.extObj(this,attrs);
+	UObj.extend(this,attrs);
 };
 Route.prototype={
 	
@@ -28,7 +28,7 @@ var Router=module.exports=function(r,rl){
 			if(S.isStr(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
 			for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
 				var ife=entryRoutes.includesFromEntry[iife];
-				if(S.isStr(ife)) S.oUnion(entryRoutes,routes[ife]);
+				if(S.isStr(ife)) UObj.union(entryRoutes,routes[ife]);
 				else{
 					for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
 						var includeRouteFromEntry=ife[iirfe];
@@ -50,13 +50,13 @@ var Router=module.exports=function(r,rl){
 			for(var lang in route){
 				var routeLang=route[lang],paramsNames=[],specialEnd,specialEnd2,routeLangPreg;
 				
-				if(specialEnd=S.sEndsWith(routeLang,'/*')) routeLangPreg=routeLang.substr(0,-2);
-				else if(specialEnd2=S.sEndsWith(routeLang,'/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.substr(routeLang.length-2);
+				if(specialEnd=routeLang.endsWith('/*')) routeLangPreg=routeLang.substr(0,-2);
+				else if(specialEnd2=routeLang.endsWith('/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.slice(-2);
 				else routeLangPreg=routeLang;
 				
 				routeLangPreg=routeLangPreg.replace('/','\/').replace('-','\-').replace('*','(.*)').replace('(','(?:');
 				if(specialEnd) routeLangPreg+='(?:\/(.*))?';
-				else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.substr(routeLangPreg.length-2);
+				else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.slice(-2);
 				
 				finalRoute[lang]=[new RegExp("^"+routeLangPreg.replace(/(\(\?)?\:([a-zA-Z_]+)/g,function(str,p1,p2){
 					if(p1) return str;
@@ -65,11 +65,11 @@ var Router=module.exports=function(r,rl){
 						var paramDefVal=S.isArray(paramsDef[p2]) ? paramsDef[p2][lang] : paramsDef[p2];
 						return paramDefVal==='id' ? '([0-9]+)' : '('+paramDefVal+')';
 					}
-					if(S.aHas(['id'],p2)) return '([0-9]+)';
+					if(UArray.has(['id'],p2)) return '([0-9]+)';
 					return '([^\/]+)';
 				}) + (ext ? (ext==='html' ? '(?:\.html)?':'\.'+ext) : '')+"$"),
-					S.sRtrim(routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s'))];
-				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=S.sRtrim(finalRoute[lang][1],'/')
+					routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s').trimRight()];
+				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=UString.trimRight(finalRoute[lang][1],'/')
 				if(paramsNames) finalRoute[':']=paramsNames;
 			}
 			finalRoute.paramsCount=finalRoute._[1].split('%s').length-1;
@@ -96,7 +96,7 @@ var Router=module.exports=function(r,rl){
 Router.prototype={
 	find:function(all,lang,entry){
 		var t = this,route = false,m,r,routes=t.routes[entry];
-		all=t.all='/'+S.sTrim(all, '/');
+		all=t.all='/'+UString.trim(all,'/');
 		console.log('router: find: "'+all+'"');
 		for (var i in routes){
 			r = routes[i];
@@ -116,7 +116,7 @@ Router.prototype={
 						var v=cAndA[k];
 						if(c_a[k]==='!'){
 							if(params[v]){
-								c_a[k]=S.sUcFirst(t.untranslate(lang,params[v]));
+								c_a[k]=UString.ucFirst(t.untranslate(lang,params[v]));
 								delete params[v];
 							}else c_a[k]=DEFAULT[v];
 						}
@@ -141,16 +141,16 @@ Router.prototype={
 	},
 	getArrayLink:function(lang,entry,params){},
 	getStringLink:function(lang,entry,params){
-		S.log([lang,entry,params,S.sTrim(params, '\/').split('/',3)]);
-		var route = S.sTrim(params, '\/').split('/',3),
+		S.log([lang,entry,params,UString.split(UString.trim(params,'/'),'/',3)]);
+		var route = UString.split(UString.trim(params,'/'),'/',3),
 			controller = route[0],
 			action = route[1] || DEFAULT.action,
 			params = route[2] || '';
 		S.log([route,controller,action,params]);
 		route = this.routes[entry]['/:controller(/:action/*)?'];
 		S.log(route);
-		var froute = action === DEFAULT.action ? '/' + this.translate(lang,controller) : S.sFormat((route[lang]||route._)[1], this.translate(lang,controller), this.translate(lang,action), params ? '/' + params : '');
-		return froute + (route.ext && !S.sEndsWith(froute, '.' + route.ext) ? '.' + route.ext : '');
+		var froute = action === DEFAULT.action ? '/' + this.translate(lang,controller) : UString.format((route[lang]||route._)[1], this.translate(lang,controller), this.translate(lang,action), params ? '/' + params : '');
+		return froute + (route.ext && !froute.endsWith('.' + route.ext) ? '.' + route.ext : '');
 	},
 	translate:function(lang,string){
 		return this.routesLangs['->' + lang][string] || string;

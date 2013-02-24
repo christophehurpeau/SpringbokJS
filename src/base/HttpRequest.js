@@ -11,9 +11,9 @@ S.extProto(http.IncomingMessage,{
 		if(!accept) return false;
 		var acceptTypes=accept.split(',');
 		acceptTypes.forEach(function(acceptType,k){
-			if(S.sHas(acceptType,';'))
+			if(acceptType.contains(';'))
 				acceptTypes[k]=accept.split(';',1)[0];
 		});
-		return S.isStr(type) ? S.aHas(acceptTypes,type) : S.aHasAmong(acceptTypes,type)
+		return S.isStr(type) ? UArray.has(acceptTypes,type) : UArray.hasAmong(acceptTypes,type)
 	}
 });

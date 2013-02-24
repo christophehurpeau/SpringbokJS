@@ -9,10 +9,10 @@ module.exports=function(file,data,callback){
 		var data=fs.readFileSync(file.rootPath+'src/'+file.dirname+'/_.json','UTF-8');
 		//if(err) return callback(err);
 		var config_=JSON.parse(data);
-		config=S.oUnion(config,config_);
+		config=UObj.union(config,config_);
 		if(!config.entries) return callback('config.entries must be set in your config file "'+configname+'"');
 		config.reversedEntries={};
-		S.oForEach(config.entries,function(k,v){ config.reversedEntries[v]=k });
+		UObj.forEach(config.entries,function(k,v){ config.reversedEntries[v]=k });
 		
 		var result=t.appConfig=JSON.stringify(config);
 		callback(null,result,result,['config/_.json']);
@@ -24,7 +24,7 @@ module.exports=function(file,data,callback){
 				pluginPathConfig=dir+'/config/'+configname+'.json';
 			console.log(pluginPathConfig);
 			if(fs.existsSync(pluginPathConfig))
-				result=S.oUnion(result,JSON.parse(fs.readFileSync(pluginPathConfig)));
+				result=UObj.union(result,JSON.parse(fs.readFileSync(pluginPathConfig)));
 			onEnd();
 		},function(){
 			result=JSON.stringify(result);

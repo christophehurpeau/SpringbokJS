@@ -3,6 +3,10 @@ var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), asy
 	ejs=require('springbokejs'), ejsUtils=require('springbokejs/lib/utils');
 
 require('springboktools');
+require('springboktools/UObj');
+require('springboktools/UArray');
+require('springboktools/UString/UString');
+
 require('./base/async');
 S.log=console.log;//todo use CLogger
 require('./utils');
@@ -74,7 +78,7 @@ App.start=function(port){
 	
 	App.entriesList.forEach(function(entry){
 		if(entry!=='main'){
-			var ucFirstEntry=S.sUcFirst(entry);
+			var ucFirstEntry=UString.ucFirst(entry);
 			t[ucFirstEntry+'Controller']=require(dir+'App'+ucFirstEntry+'Controller');
 		}
 	});
@@ -91,11 +95,11 @@ App.start=function(port){
 		var v=Config.plugins[keys[i]],pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		try{
 			var dependencies=U.Files.getJsonSync(pluginPath+'/config/dependencies.json');
-			dependencies && S.oForEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
+			dependencies && UObj.forEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
 		}catch(err){}
 	}
 		
-	S.oForEach(Config.plugins,function(k,v){
+	UObj.forEach(Config.plugins,function(k,v){
 		var pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		controllers[k]=pluginPath+'/controllers';
 		models[k]=pluginPath+'/models';
@@ -109,7 +113,7 @@ App.start=function(port){
 		test=new RegExp('\.'+ext+'$');
 		async.forEachSeries(Object.keys(o),function(pluginName,onEnd){
 			var dir_=o[pluginName];
-			S.oForEach(entries||App.entries,function(entryName,entry){
+			UObj.forEach(entries||App.entries,function(entryName,entry){
 				var dir=dir_+entry.suffix;
 				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
 					if(err) console.error(err.stack);
@@ -219,7 +223,7 @@ App.start=function(port){
 						/* DEV */
 						if(host==='localhost'){
 							if(pathname && pathname.charAt(1)==='~'){ //0:'/',1:'~'
-								var e_p=S.sSplitLeft(pathname.substr(1),'/');
+								var e_p=UString.splitLeft(pathname.substr(1),'/');
 								if(e_p){
 									pathname='/'+e_p[1];
 									req.entry=e_p[0].substr(1);

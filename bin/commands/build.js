@@ -1,4 +1,9 @@
-S=require('springboktools'),sysPath=require('path'),net=require('net');
+require('springboktools');
+require('springboktools/UObj');
+require('springboktools/UArray');
+require('springboktools/UString/UString');
+
+var sysPath=require('path'),net=require('net');
 var build=require('./build/'),rootPath=process.cwd()+'/';
 
 global.CORE_SRC=sysPath.join(__dirname,'/../../src/');
@@ -20,7 +25,7 @@ module.exports={
 			
 			stream.addListener("end",function(){
 				console.log('[socket] client has left');
-				clients=S.aRemove(clients,stream);
+				clients=UArray.remove(clients,stream);
 				stream.end();
 			});
 		});
