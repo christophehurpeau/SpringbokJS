@@ -21,6 +21,7 @@ S.Model=(function(){
 	});
 	var QFindAll=S.extClass(QFind,{
 		cursor:function(){ return this.model.collection.find(this._query,this._fields); },
+		exec:function(callback){ callback(this.cursor()); },
 		each:function(callback){ return this.cursor().each(callback); },
 		fetch:function(callback){ return this.cursor().toArray(callback); }
 	});
@@ -29,6 +30,7 @@ S.Model=(function(){
 	Find.prototype={
 		//get one(){ return new QFindOne(this.model,this.H) },
 		one:function(H){ return new QFindOne(this.model,H) },
+		docs:function(H){ return new QFindAll(this.model,H) }
 		
 		//byId:function(id,callback){ return this.one.byId(id).fetch(callback); },
 		//byIdNotNull:function(id,callback){ return this.one.byId(id).notNull(callback); }

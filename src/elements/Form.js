@@ -68,6 +68,7 @@ S.Form.Container=S.extClass(S.Elt.WithContent,{
 
 S.Form.Containable=S.extClass(S.Elt,{
 	ctor:function(form,name){
+		///* DEV */if(!name) throw new Error;/* /DEV */
 		S.Elt.call(this);
 		this._form=form; this._name=name;
 	},
@@ -90,7 +91,7 @@ S.Form.Containable=S.extClass(S.Elt,{
 		if(value != null) this.val(value);
 	},
 	_setAttrId:function(){
-		this.id(this._form._modelName != null ? this._form._modelName+UString.ucFirst(this._name) : this._name);
+		if(this._name) this.id(this._form._modelName != null ? this._form._modelName+UString.ucFirst(this._name) : this._name);
 	},
 	_setAttrName:function(){
 		this.attr('name',this._attrName());

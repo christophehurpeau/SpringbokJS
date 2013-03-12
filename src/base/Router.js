@@ -141,8 +141,8 @@ Router.prototype={
 	},
 	getArrayLink:function(lang,entry,params){},
 	getStringLink:function(lang,entry,params){
-		S.log([lang,entry,params,UString.split(UString.trim(params,'/'),'/',3)]);
-		var route = UString.split(UString.trim(params,'/'),'/',3),
+		S.log([lang,entry,params,UString.explode(UString.trim(params,'/'),'/',3)]);
+		var route = UString.explode(UString.trim(params,'/'),'/',3),
 			controller = route[0],
 			action = route[1] || DEFAULT.action,
 			params = route[2] || '';

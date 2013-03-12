@@ -57,7 +57,10 @@ module.exports={
 	includesNode:function(data,dirname,callback,includes){
 		var t=this,dataNode;
 		data=data.replace(/^include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
-			if(inclPath.slice(-1)==='/') inclPath+=UString.substrLast(inclPath.slice(0,-1),'/');
+			if(inclPath.slice(-1)==='/'){
+				var slicedInclPath=inclPath.slice(0,-1);
+				inclPath+=slicedInclPath.contains('/') ? UString.substrLast(slicedInclPath,'/') : slicedInclPath;
+			}
 			if(from==='Core') inclPath=t.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
 			else if(from==='Plugin'){
 				inclPath='TODO';

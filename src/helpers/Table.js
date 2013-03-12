@@ -20,7 +20,7 @@ includeCore('elements/Form');
 			if(add){
 				if(S.isStr(add)) add={action:add};
 				//if(!isset($add['form']['action'])) $add['form']['action']='/'.lcfirst($add['modelName']::$__pluralized).'/add';
-				if(!add.fields) add.fields=[[this.model.__displayField,H.tF(this.modelName,'New')+' :']];
+				if(!add.fields) add.fields=[[this.model.displayField,H.tF(this.modelName,'New')+' :']];
 				
 				/*$form=HForm::create($add['modelName'],$add['form'],$add['formContainer']);
 				foreach($add['fields'] as $field=>$label)
@@ -32,12 +32,14 @@ includeCore('elements/Form');
 				content.aHtml(form.end(H.tC('Add')));
 			}
 			
-			this.model.find({}).exec(function(err,result){
-				if(err) table.html('<tr><td>Error occured</td></tr>');
-				else{
-					table.html('<tr><td>result='+JSON.stringify(result)+'</td></tr>');
-				}
-				content.aHtml(table)
+			this.model.find.docs(H).exec(function(c){
+				c.each(function(err,result){
+					if(err) table.aHtml('<tr><td>Error occured</td></tr>');
+					else{
+						table.aHtml('<tr><td>result='+JSON.stringify(result)+'</td></tr>');
+					}
+				});
+				content.aHtml(table);
 				H.renderLayout(t.layout,{layoutTitle:layoutTitle,layoutContent:content.toString()});
 			});
 		}

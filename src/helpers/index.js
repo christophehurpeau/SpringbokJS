@@ -71,7 +71,7 @@ S.extProto(S.Helpers,{
 	tC:function(string){ return string; },
 	tF:function(modelName,string){ return string; }
 });
-require('./Url'),
-require('./Html'),
-require('./Menu')
+require('./Url');
+require('./Html');
+require('./Menu');
 /*global.H=S.extObjs({},require('./Html'));*/

@@ -33,7 +33,7 @@ module.exports=App.Model('Page',{
 		//VPage::destroy($this->id);
 		if(this.oldSlug) M.PageSlugRedirect.create(this.oldSlug,this.data.slug);
 	},
-	title:{type:String, index:true, set:function(v){ this.slug=U.Strings.slugify(v); console.log(v,this.slug); return v;}},
+	title:{type:String, index:true, set:function(v){ this.slug=UString.slugify(v); console.log(v,this.slug); return v;}},
 	slug:{type:String, index:{unique:true}},
 	content:{type:String}
 },{

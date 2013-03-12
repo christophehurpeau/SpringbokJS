@@ -6,10 +6,10 @@ require('springboktools');
 require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
+require('springboktools/UFiles');
 
 require('./base/async');
 S.log=console.log;//todo use CLogger
-require('./utils');
 require('./helpers');
 require('./db/');
 
@@ -57,7 +57,7 @@ global.App={
 				require('./helpers/'+helperName); })
 	},
 	config:function(path){
-		return U.Files.getJsonSync(this.appDir+'config/'+path+'.json');
+		return UFiles.getJsonSync(this.appDir+'config/'+path+'.json');
 	}
 };
 global.WEB_URL='/web/';
@@ -94,7 +94,7 @@ App.start=function(port){
 	for(var keys=Object.keys(Config.plugins),i=0;i<keys.length;i++){
 		var v=Config.plugins[keys[i]],pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		try{
-			var dependencies=U.Files.getJsonSync(pluginPath+'/config/dependencies.json');
+			var dependencies=UFiles.getJsonSync(pluginPath+'/config/dependencies.json');
 			dependencies && UObj.forEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
 		}catch(err){}
 	}
