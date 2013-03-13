@@ -7,11 +7,13 @@ module.exports=App.AdminController({
 			.layout('admin/cms').render('Pages','/Cms/add');//TODO : routes = CMS.add
 	}),
 	Add:App.Controller.Action(function(req,res){
-		var c=this,v=req.validParams(), page=v.model('Page').val;
+		var c=this,v=req.validParams(), page=v.model('Page').required().val;
 		/*if(!page.title) c.redirect('/Cms');
-		else */page.save(function(err,page){
+		else */page.insertNoWait(function(err,page){
+			S.log(page);
 			if(err) res.end(err.err);
-			else c.redirect('/Cms/edit/'+page.slug);
+			//else c.redirect('/Cms/edit/'+page.slug);
+			else res.end(UDebug.dump(page));
 		});
 	}),
 	Edit:App.Controller.Action(function(req,res){

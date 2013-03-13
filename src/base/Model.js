@@ -20,7 +20,8 @@ S.Model=(function(){
 		notNull:function(callback){ var t=this; this.fetch(function(doc){ doc===null ? t.H.res.notFound() : callback(doc); }); },
 	});
 	var QFindAll=S.extClass(QFind,{
-		cursor:function(){ return this.model.collection.find(this._query,this._fields); },
+		cursor:function(){ return this._fields ? this.model.collection.find(this._query,this._fields)
+													: this.model.collection.find(this._query); },
 		exec:function(callback){ callback(this.cursor()); },
 		each:function(callback){ return this.cursor().each(callback); },
 		fetch:function(callback){ return this.cursor().toArray(callback); }
@@ -38,12 +39,25 @@ S.Model=(function(){
 	};
 	
 	
+	var insert=function(model,data,options,callback){
+		console.log(model.beforeInsert);
+		UArray.forEachSeries(model.beforeInsert,function(c,onEnd){ c(data,onEnd); },
+			function(err){
+				if(err) return callback('beforeInsert failed');
+				model.collection.insert(data,options,callback);
+			});
+	};
 	
 	Model.prototype={
-		insert:function(callback){ this.self.collection.insert(this.data,{w:1},callback); },
-		insertAsync:function(callback){ this.self.collection.insert(this.data); },
-		update:function(callback){ this.self.collection.update(this.data._id,{w:1},callback); },
-		updateAsync:function(callback){ this.self.collection.update(this.data._id,this.data); },
+		_insert:function(options,callback){
+			var onEnd=insert.bind(null,this.self,this.data,options,callback);
+			if(this.beforeInsert) this.beforeInsert(onEnd);
+			else onEnd();
+		},
+		insertWait:function(callback){ this._insert({w:1},callback); },
+		insertNoWait:function(callback){ this._insert({},callback); },
+		updateWait:function(callback){ throw new Error; this.self.collection.update(this.data._id,{w:1},callback); },
+		updateNoWait:function(callback){ throw new Error; this.self.collection.update(this.data._id,this.data,callback); },
 	};
 
 	Model.extend=function(modelName,classProps,protoProps){
@@ -51,8 +65,9 @@ S.Model=(function(){
 		protoProps.ctor=function(data){ this.data=data; /*UObj.extend(this,data);*/ };
 		
 		/* */
-		protoProps.beforeInsert=protoProps.beforeInsert||[];
-		classProps.beforeFind=classProps.beforeFind||[];
+		'beforeInsert,beforeUpdate,beforeFind'.split(',').forEach(function(cName){
+			if(!classProps[cName]) classProps[cName]=[];
+		})
 		
 		var newModel=S.extClass(this,protoProps,classProps);
 		newModel.init=function(onEnd){ Model.init(newModel,onEnd); };
@@ -65,17 +80,28 @@ S.Model=(function(){
 		if(model._initialized) return onEnd();
 		model._initialized=true;
 		
-		S.asyncForEach(model.behaviour,function(behaviour,onEnd){
-			console.log(model.modelName+' [behaviour] : '+behaviour)
+		UArray.forEachSeries(model.behaviours,function(behaviour,onEnd){
+			S.log(model.modelName+' [behaviour] : '+behaviour);
+			/*var prevOnEnd=onEnd;
+			onEnd=function(){
+				console.log(model.modelName+' [behaviour] : '+behaviour+' ended');
+				prevOnEnd.apply(null,arguments);
+			};*/
+			
 			/* NODE */
 			if(!App.behaviours[behaviour]) App.behaviours[behaviour]=require('../behaviours/'+behaviour);
-			App.behaviours[behaviour](model);
+			App.behaviours[behaviour](model,onEnd);
 			/* /NODE */
-			/* BROWSER */behaviour(model);/* /BROWSER */
-		},function(){
+			/* BROWSER */behaviour(model,onEnd);/* /BROWSER */
+		},function(err){
+			//S.log(model.modelName+' end foreach behaviours');
+			if(err){ console.err(err); throw new Error(err); }
 			model.displayField=model.displayField||(model.Fields.title?'title':'name');
-			if(!model.db){
+			//S.log(model.modelName+' displayField='+model.displayField);
+			if(model.db) onEnd();
+			else{
 				model.db=S.Db.get(model.dbName=model.dbName||'default');
+				//S.log(model.modelName+' dbName='+model.dbName);
 				model.db.collection(model.modelName,{w:1},function(err,collection){
 					if(err) return onEnd(err);
 					model.collection=collection;

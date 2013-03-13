@@ -21,5 +21,8 @@ UObj.extend(S,{
 	asyncObjForEach:function(obj,iterator,callback){
 		S.asyncForEach(Object.keys(obj),
 			function(k,onEnd){ iterator(k,obj[k],onEnd); },callback);
-	}
+	},
+	
+	
+	
 });

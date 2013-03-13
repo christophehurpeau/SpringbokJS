@@ -15,7 +15,7 @@ includeCore('elements/Form');
 		layout:function(layout){ this.layout=layout; return this; },
 		
 		render:function(layoutTitle,add){
-			var t=this,H=this.H,content=S.Elt.div().html(''),table=S.createElt('table');
+			var t=this,H=this.H,content=S.Elt.div().html(''),table=S.createElt('table').html('');
 			
 			if(add){
 				if(S.isStr(add)) add={action:add};
@@ -33,12 +33,15 @@ includeCore('elements/Form');
 			}
 			
 			this.model.find.docs(H).exec(function(c){
+				var hasResult=false;
 				c.each(function(err,result){
+					hasResult=true;
 					if(err) table.aHtml('<tr><td>Error occured</td></tr>');
 					else{
 						table.aHtml('<tr><td>result='+JSON.stringify(result)+'</td></tr>');
 					}
 				});
+				if(!hasResult) table.aHtml('<tr><td>'+H.tC('No results')+'</td></tr>');
 				content.aHtml(table);
 				H.renderLayout(t.layout,{layoutTitle:layoutTitle,layoutContent:content.toString()});
 			});

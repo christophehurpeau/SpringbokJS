@@ -7,6 +7,7 @@ require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
 require('springboktools/UFiles');
+require('springboktools/UDebug');
 
 require('./base/async');
 S.log=console.log;//todo use CLogger
@@ -173,9 +174,14 @@ App.start=function(port){
 		},
 		function(onEnd){
 			S.log('Initializing models...');
-			S.asyncObjForEach(t.models,function(modelName,model,onEnd){
+			//series because Parent/Child
+			UObj.forEachSeries(t.models,function(modelName,model,onEnd){
 				S.log('Initialize model: '+modelName);
-				model.init(onEnd);
+				//model.init(onEnd);
+				model.init(function(){
+					S.log('Initialize model: '+modelName+' ended');
+					onEnd.apply(null,arguments);
+				});
 			},function(){
 				S.log('Models initialized');
 				onEnd();
@@ -216,6 +222,7 @@ App.start=function(port){
 					//connect['static'](t.appDir+'web',{/*redirect:false,*/maxAge:86400000}
 				})
 				.use(connect.query())
+				.use(connect.urlencoded())
 				.use(function(req,res){
 					try{
 						var pathname=req._parsedUrl.pathname, host=req.headers.host.split(':')[0];

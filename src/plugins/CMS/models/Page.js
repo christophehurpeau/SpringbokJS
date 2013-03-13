@@ -2,8 +2,6 @@ module.exports=App.Model('Page',{
 	parent:'Searchable', behaviours:['Child'],
 	
 	Fields:{
-		title:[String,{index:true}],
-		slug:[String,{uniqueIndex:true}],
 		content:[String]
 	},
 
@@ -20,22 +18,18 @@ module.exports=App.Model('Page',{
 },{
 	beforeUpdate:function(onEnd){
 		var t=this;
-		this.parent._beforeUpdate(function(){
-			if(t.data.slug){
-				t.self.FindValue('slug',{id:t.data._id},function(oldSlug){
-					if(oldSlug && oldSlug!=t.data.slug) t.oldSlug=oldSlug;
-					onEnd();
-				});
-			}
-		});
+		if(t.data.slug){
+			t.self.FindValue('slug',{id:t.data._id},function(oldSlug){
+				if(oldSlug && oldSlug!=t.data.slug) t.oldSlug=oldSlug;
+				onEnd();
+			});
+		}
 	},
-	afterUpdate:function(){
+	afterUpdate:function(onEnd){
 		//VPage::destroy($this->id);
 		if(this.oldSlug) M.PageSlugRedirect.create(this.oldSlug,this.data.slug);
+		onEnd();
 	},
-	title:{type:String, index:true, set:function(v){ this.slug=UString.slugify(v); console.log(v,this.slug); return v;}},
-	slug:{type:String, index:{unique:true}},
-	content:{type:String}
 },{
 	
 })

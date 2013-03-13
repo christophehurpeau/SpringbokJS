@@ -25,7 +25,16 @@ var ParamValueStrValidator=S.extClass(ParamValueValidator,{
 	}
 });
 
-var ParamValueModelValidator=S.extClass(ParamValueValidator,{});
+var ParamValueModelValidator=S.extClass(ParamValueValidator,{
+	required:function(){
+		if(this.val==null) this._error('required');
+		return this;
+	},
+	valid:function(){
+		throw new Error('TODO');
+		return this;
+	}
+});
 
 ParamValidator.prototype={
 	_error:function(name,key,value){S.log(arguments);this._errors[name]={error:key,value:value};},
@@ -33,11 +42,12 @@ ParamValidator.prototype={
 	str:function(name,num){ return new ParamValueStrValidator(this,name,this.req.sParam(name,num)); },
 	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); },
 	model:function(modelName,name){ name=name||UString.lcFirst(modelName);
-		return new ParamValueModelValidator(this,name,new M[modelName](this.req.query[name])); }
+		var data=this.req.body[name]!==undefined ? this.req.body[name] : this.req.query[name];
+		return new ParamValueModelValidator(this,name,!data?null:new M[modelName](data)); }
 };
 
 var ParamValidatorValid=S.extClass(ParamValidator,{
-	_error:function(){ httpException.notFound(); }
+	_error:function(){ throw HttpException.notFound(); }
 });
 
 
