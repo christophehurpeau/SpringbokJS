@@ -33,17 +33,27 @@ includeCore('elements/Form');
 			}
 			
 			this.model.find.docs(H).exec(function(c){
-				var hasResult=false;
-				c.each(function(err,result){
-					hasResult=true;
-					if(err) table.aHtml('<tr><td>Error occured</td></tr>');
-					else{
-						table.aHtml('<tr><td>result='+JSON.stringify(result)+'</td></tr>');
+				c.count(function(err,count){
+					content.aHtml('<div class="">count='+count+'</div>');
+					
+					var addResult=function(err,item){
+						if(item===null){
+							content.aHtml(table);
+							H.renderLayout(t.layout,{layoutTitle:layoutTitle,layoutContent:content.toString()});
+							return;
+						}
+						if(err) table.aHtml('<tr><td>Error occured</td></tr>');
+						else{
+							table.aHtml('<tr><td>'+JSON.stringify(item)+'</td></tr>');
+						}
+						c.nextObject(addResult);
 					}
+					
+					c.nextObject(function(err,item){
+						if(item===null) table.aHtml('<tr><td>'+H.tC('No results')+'</td></tr>');
+						addResult(err,item);
+					});
 				});
-				if(!hasResult) table.aHtml('<tr><td>'+H.tC('No results')+'</td></tr>');
-				content.aHtml(table);
-				H.renderLayout(t.layout,{layoutTitle:layoutTitle,layoutContent:content.toString()});
 			});
 		}
 	};

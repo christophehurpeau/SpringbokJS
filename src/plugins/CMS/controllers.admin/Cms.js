@@ -12,8 +12,8 @@ module.exports=App.AdminController({
 		else */page.insertNoWait(function(err,page){
 			S.log(page);
 			if(err) res.end(err.err);
-			//else c.redirect('/Cms/edit/'+page.slug);
-			else res.end(UDebug.dump(page));
+			else c.redirect('/Cms/edit/'+page.slug);
+			//else res.end(UDebug.dump(page));
 		});
 	}),
 	Edit:App.Controller.Action(function(req,res){
