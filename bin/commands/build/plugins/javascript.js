@@ -3,6 +3,7 @@ var _exec=require('child_process').exec;
 module.exports={
 	type:'javascript',
 	extension:'js',
+	priority:0,
 	
 	init:function(config){
 		
@@ -55,7 +56,7 @@ module.exports={
 						if (error) callback(stderr);
 						else{
 							console.log(stdout);
-            				console.log(' '+ distPath + ' built.');
+							console.log(' '+ distPath + ' built.');
 						}
 					})
 			}else callback(null,devResult,prodResult,includes['']);

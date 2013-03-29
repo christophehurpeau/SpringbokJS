@@ -13,6 +13,7 @@ module.exports={
 	type:'stylesheet',
 	extension:'styl',
 	compiledExtension:'css',
+	priority:0,
 	
 	compile:function(file,data,callback){
 		var t=this;

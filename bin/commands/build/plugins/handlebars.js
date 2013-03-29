@@ -4,6 +4,7 @@ module.exports={
 	type:'template',
 	extension:'hbs',
 	pattern: /\.(?:hbs|handlebars)$/,
+	priority:-1,
 	
 	include:[__dirname+'/../../../../vendor/handlebars-1.0.rc.1.js'],
 	

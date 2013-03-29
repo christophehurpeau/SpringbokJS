@@ -3,6 +3,7 @@ module.exports={
 	type:'template',
 	extension:'ejs',
 //	compiledExtension:'js',
+	priority:0,
 	
 	compile:function(file,data,callback){
 		try{

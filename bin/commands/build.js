@@ -2,6 +2,7 @@ require('springboktools');
 require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
+require('springboktools/UFiles');
 
 var sysPath=require('path'),net=require('net');
 var build=require('./build/'),rootPath=process.cwd()+'/';
@@ -11,7 +12,7 @@ global.CORE_INCLUDES=sysPath.join(__dirname,'/../../includes/');
 
 module.exports={
 	core:function(persistent){
-		var fileList=new build.FileListSpringbokJS(rootPath);
+		var fileList=new build.FileListCore(rootPath);
 		build.SpringbokWatcher.init(fileList,persistent,false);
 		
 		var clients=[],server=net.createServer(function(stream){
@@ -39,8 +40,8 @@ module.exports={
 			});
 		});
 	},
-	project:function(persistent){
-		var fileList=new build.FileList(rootPath);
+	app:function(persistent){
+		var fileList=new build.FileListApp(rootPath);
 		build.SpringbokWatcher.init(fileList,persistent,true);
 		
 		try{

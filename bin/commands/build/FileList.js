@@ -4,7 +4,7 @@ var util=require("util"), sysPath=require('path'),fs=require("fs"), EventEmitter
 
 var RESET_TIME=65;
 var FileList=S.extClass(EventEmitter,{
-	config:{}, isCore:false,
+	isCore:false,
 	
 	ctor:function(rootPath){
 		EventEmitter.call(this);
@@ -15,14 +15,10 @@ var FileList=S.extClass(EventEmitter,{
 		this.on('unlink',this._unlink);
 		this.cleanDirectories();
 		
-		if(fs.existsSync(rootPath+'src/config/_.json')){
-			this.config=JSON.parse(fs.readFileSync(rootPath+'src/config/_.json','UTF-8'));
-			this.config.plugins=this.config.plugins||{};
-			this.config.pluginsPaths=this.config.pluginsPaths||{};
-			this.config.pluginsPaths.Springbok=CORE_SRC+'plugins/';
-			this.config.plugins.SpringbokBase=['Springbok','base'];
-		}
+		this.init();
 	},
+	
+	init:function(){},
 
 	filesToWatch:function(){
 		return [this.rootPath+'package.json',this.rootPath+'src'];
@@ -53,8 +49,7 @@ var FileList=S.extClass(EventEmitter,{
 	
 	_ignored:function(path){
 		if(path==='package.json') return true;
-		if(path.substr(0,11)==='src/config/') return false;
-		return sysPath.basename(path).startsWith('_');
+		return false;
 	},
 	//Called every time any file was changed. Emits `ready` event
 	_checkReady:function(){
@@ -91,19 +86,23 @@ var FileList=S.extClass(EventEmitter,{
 	_findByPath:function(path){
 		return this.files.filter(function(file){return file.path===path;})[0];
 	},
-	_add:function(path,compiler,linters,optimizers){
+	_add:function(path,compilerLintersOptimizers){
 		//console.log("_ADD: "+path);
-		var file = new SourceFile(this,path.substr(4),compiler,linters,optimizers);
+		var file = this.newSourceFile(path.substr(4),compilerLintersOptimizers);
 		this.files.push(file);
 		return file;
 	},
-	_change:function(path,compiler,linters,optimizers){
+	newSourceFile:function(path,compilerLintersOptimizers){
+		return new SourceFile(this,path,compilerLintersOptimizers)
+	},
+	
+	_change:function(path,compilerLintersOptimizers){
 		path=path.substr(this.rootPath.length);
 		//console.log("_CHANGE: "+path);
 		var ignored=this._ignored(path);
 		if(ignored) this._compileDependentFiles(path);
 		else{
-			this._compile(this._findByPath(path) || this._add(path,compiler,linters,optimizers));
+			this._compile(this._findByPath(path) || this._add(path,compilerLintersOptimizers));
 		}
 	},
 	_unlink:function(path){

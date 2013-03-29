@@ -2,6 +2,7 @@ var jade=require('jade');
 module.exports={
 	type:'template',
 	extension:'jade',
+	priority:-1,
 	
 	compile:function(file,data,callback){
 		try{

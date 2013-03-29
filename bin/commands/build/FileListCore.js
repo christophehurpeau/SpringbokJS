@@ -1,6 +1,6 @@
 var FileList=require('./FileList');
 
-var FileListSpringbokJS=FileList.extend({
+var FileListCore=FileList.extend({
 	isCore:true,
 	
 	filesToWatch:function(){
@@ -8,4 +8,4 @@ var FileListSpringbokJS=FileList.extend({
 	},
 });
 
-module.exports=FileListSpringbokJS;
+module.exports=FileListCore;

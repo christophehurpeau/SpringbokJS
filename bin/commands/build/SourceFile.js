@@ -1,12 +1,13 @@
 var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=require('async');
 
-var SourceFile=module.exports=function(fileList,path,compiler,linters,optimizers){
+var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	this.fileList=fileList;
 	this.rootPath=fileList.rootPath; this.path=path; this.srcPath=fileList.rootPath+'src/'+path;
-	this.compiledPath=compiler&&compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+compiler.compiledExtension:path;
+	UObj.extend(this,compilerLintersOptimizers);
+	
+	this.compiledPath=this.compiler&&this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
 	this.dirname=sysPath.dirname(path); this.basename=sysPath.basename(path);
-	this.compiler=compiler; this.linters=linters; this.optimizers=optimizers;
-	this.type=compiler&&compiler.type;
+	this.type=this.compiler&&this.compiler.type;
 	this.isBrowser=/^web\//.test(path);
 	this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
 	Object.freeze(this);

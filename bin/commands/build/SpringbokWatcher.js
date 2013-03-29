@@ -1,5 +1,5 @@
 var fs=require('fs'), diveSync=require('diveSync'), async=require('async'),
-		chokidar=require('chokidar');
+		chokidar=require('chokidar'),PluginsList=require('./PluginsList');
 
 function initWatcher(filesToWatch,persistent,callback){
 	async.filter(filesToWatch,fs.exists,function(watchedFiles){
@@ -12,42 +12,10 @@ function initWatcher(filesToWatch,persistent,callback){
 	});
 }
 
-function isPluginFor(path){
-	return function(plugin){
-		return (plugin.pattern||(plugin.extension&&new RegExp("\\."+plugin.extension+"$"))||/$.^/).test(path);
-	}
-}
 
-function changeFileList(plugins, fileList, path){
-	var ispluginforpath=isPluginFor(path),
-		compiler = plugins.compilers.filter(ispluginforpath)[0],
-		currentLinters = plugins.linters.filter(ispluginforpath),
-		currentOptimizers=plugins.optimizers.filter(ispluginforpath);
-	fileList.emit('change', path, compiler, currentLinters, currentOptimizers);
-}
 
 function initialize(fileList,persistent,startServer,pluginsDir,callback){
-	var plugins={all:[],compilers:[],linters:[],optimizers:[]},callbacks=[];
-	diveSync(pluginsDir || __dirname + '/plugins',function(err,path){
-		if(err) console.error(err.stack);
-		else if(/\.js$/.test(path)){
-			var /*name=path.slice(dir.length + 19,-3), */
-				plugin=require(path);
-			plugin.fileList=fileList;
-			plugin.isCore=fileList.isCore;
-			if(plugin.init) plugin.init();
-			if(S.isFunc(plugin.compile)) plugins.compilers.push(plugin);
-			if(S.isFunc(plugin.lint)) plugins.linters.push(plugin);
-			if(S.isFunc(plugin.optimize)) plugins.optimizers.push(plugin);
-			if(S.isFunc(plugin.onCompile)) callbacks.push(function(){ plugin.onCompile.apply(plugin,arguments)});
-			plugins.all.push(plugin);
-		}
-	});
-	//callbacks.push(onCompile);
-	var callCompileCallbacks=function(generatedFiles){
-		callbacks.forEach(function(callback){ callback(generatedFiles); });
-	}
-	
+	PluginsList.init(fileList,pluginsDir);
 	
 	//start Server
 	var server=persistent && startServer ? require('./Server') : null;
@@ -70,7 +38,7 @@ http.createServer(reqHandlerClosure).listen(8000);
 							.filter(function(paths){ return paths != null; })
 							.reduce(function(acc,elem){ return acc.concat(elem); },[]);
 	pluginIncludes.forEach(function(path){
-		changeFileList(plugins, fileList, path, true);
+		fileList.emit('change', path, PluginsList.find(path));
 	});
 	*/
 	if(persistent && server) fileList.on('ready',function(){ server.restart(); });
@@ -89,21 +57,21 @@ http.createServer(reqHandlerClosure).listen(8000);
 		},reload=function(){
 			console.log("RELOAD");
 		};
-		callback(null,watcher, server, plugins, compile, reload);
+		callback(null,watcher, server, compile, reload);
 	});
 }
 
-function bindWatcherEvents(fileList, plugins, watcher, reload, onChange){
+function bindWatcherEvents(fileList, watcher, reload, onChange){
 	watcher
 		.on('add',function(path){
 			onChange();
-			changeFileList(plugins, fileList, path, false);
+			fileList.emit('change', path, PluginsList.find(path));
 		})
 		.on('change',function(path){
 			//if(path is config.paths.config ) reload(false);
 			//else if path is config.paths.packageConfig reload(true)
 			onChange();
-			changeFileList(plugins, fileList, path, false);
+			fileList.emit('change', path, PluginsList.find(path));
 		})
 		.on('unlink',function(path){
 			/*if path is config.paths.config or path is config.paths.packageConfig
@@ -118,9 +86,9 @@ Exiting."
 module.exports={
 	init:function(fileList,persistent,startServer,pluginsDir){
 		var t=this;
-		initialize(fileList,persistent,startServer,pluginsDir,function(err, watcher, server, plugins, compile, reload){
+		initialize(fileList,persistent,startServer,pluginsDir,function(err, watcher, server, compile, reload){
 			if(err) return console.error(err);
-			bindWatcherEvents(fileList, plugins, watcher, reload, function(){
+			bindWatcherEvents(fileList, watcher, reload, function(){
 				if(t._start==null) t._start=Date.now();
 			});
 			fileList.on('ready',function(){

@@ -58,7 +58,7 @@ global.App={
 				require('./helpers/'+helperName); })
 	},
 	config:function(path){
-		return UFiles.getJsonSync(this.appDir+'config/'+path+'.json');
+		return UFiles.readJsonSync(this.appDir+'config/'+path+'.json');
 	}
 };
 global.WEB_URL='/web/';
@@ -95,7 +95,7 @@ App.start=function(port){
 	for(var keys=Object.keys(Config.plugins),i=0;i<keys.length;i++){
 		var v=Config.plugins[keys[i]],pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		try{
-			var dependencies=UFiles.getJsonSync(pluginPath+'/config/dependencies.json');
+			var dependencies=UFiles.readJsonSync(pluginPath+'/config/dependencies.json');
 			dependencies && UObj.forEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
 		}catch(err){}
 	}
@@ -112,7 +112,6 @@ App.start=function(port){
 			var dir_=paths[pluginName];
 			UObj.forEach(App.entries,function(entryName,entry){
 				var dir=dir_+(folderName==='models'?'':entryName+'/')+folderName;
-				console.log(dir);
 				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
 					if(err) console.error(err.stack);
 					else if(test.test(path)){
