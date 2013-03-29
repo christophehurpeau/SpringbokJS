@@ -1,3 +1,4 @@
+#!/usr/bin/node
 var argumentum=require('argumentum');
 
 argumentum.load({

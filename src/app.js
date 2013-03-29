@@ -80,12 +80,12 @@ App.start=function(port){
 	App.entriesList.forEach(function(entry){
 		if(entry!=='main'){
 			var ucFirstEntry=UString.ucFirst(entry);
-			t[ucFirstEntry+'Controller']=require(dir+'App'+ucFirstEntry+'Controller');
+			t[ucFirstEntry+'Controller']=require(dir+entry+'/App'+ucFirstEntry+'Controller');
 		}
 	});
 	
 	
-	var controllers={_:dir+'controllers'},models={_:dir+'models'},views={_:dir+'views'},viewsLayouts={_:dir+'viewsLayouts'};
+	var paths={_:dir};
 	
 	Config.plugins||(Config.plugins={})
 	Config.pluginsPaths||(Config.pluginsPaths={});
@@ -101,21 +101,18 @@ App.start=function(port){
 	}
 		
 	UObj.forEach(Config.plugins,function(k,v){
-		var pluginPath=Config.pluginsPaths[v[0]]+v[1];
-		controllers[k]=pluginPath+'/controllers';
-		models[k]=pluginPath+'/models';
-		views[k]=pluginPath+'/views';
-		viewsLayouts[k]=pluginPath+'/viewsLayouts';
+		var pluginPath=Config.pluginsPaths[v[0]]+v[1]+'/';
+		paths[k]=pluginPath;
 	});
 	
 	
-	var forEachDir=function(o,ext,onEnd,callback,entries){
-		ext=ext||'js';
-		test=new RegExp('\.'+ext+'$');
-		async.forEachSeries(Object.keys(o),function(pluginName,onEnd){
-			var dir_=o[pluginName];
-			UObj.forEach(entries||App.entries,function(entryName,entry){
-				var dir=dir_+entry.suffix;
+	var forEachDir=function(folderName,ext,onEnd,callback){
+		var test=new RegExp('\.'+(ext||'js')+'$');
+		async.forEachSeries(Object.keys(paths),function(pluginName,onEnd){
+			var dir_=paths[pluginName];
+			UObj.forEach(App.entries,function(entryName,entry){
+				var dir=dir_+(folderName==='models'?'':entryName+'/')+folderName;
+				console.log(dir);
 				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
 					if(err) console.error(err.stack);
 					else if(test.test(path)){
@@ -130,7 +127,7 @@ App.start=function(port){
 	async.series([
 		function(onEnd){
 			console.log('Loading controllers...');
-			forEachDir(controllers,null,onEnd,function(dir,path,entryName){
+			forEachDir('controllers',null,onEnd,function(dir,path,entryName){
 				var name = path.slice(dir.length+1,-3), c = require(path);
 				//if(S.isFunc(c)) c=c(t);
 				if(t.controllers[entryName][name]===undefined) t.controllers[entryName][name]=c;
@@ -139,8 +136,9 @@ App.start=function(port){
 		},
 		function(onEnd){
 			S.log('Loading views...');
-			forEachDir(views,'ejs',onEnd,function(dir,path,entryName){
-				var name=name = path.slice(dir.length+1,-4);
+			forEachDir('views','ejs',onEnd,function(dir,path,entryName){
+				var name=path.slice(dir.length+1,-4);
+				S.log('Loading view: '+name);
 				if(t.views[entryName][name]===undefined){
 					var fn=require(path);
 					t.views[entryName][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
@@ -149,14 +147,14 @@ App.start=function(port){
 		},
 		function(onEnd){
 			S.log('Loading layouts...');
-			forEachDir(viewsLayouts,'ejs',onEnd,function(dir,path,entryName){
-				var name=name=path.slice(dir.length+1,-4);
+			forEachDir('viewsLayouts','ejs',onEnd,function(dir,path,entryName){
+				var name= entryName+'/'+path.slice(dir.length+1,-4);
 				S.log('Loading layout: '+name);
 				if(t.views['layouts'][name]===undefined){
 					var fn=require(path);
 					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
 				}
-			},{layouts:{prefix:'',suffix:''}});
+			});
 		},
 		function(onEnd){
 			S.log('Creating db connections...');
@@ -164,7 +162,7 @@ App.start=function(port){
 		},
 		function(onEnd){
 			S.log('Loading models...');
-			forEachDir(models,null,onEnd,function(dir,path){
+			forEachDir('models',null,onEnd,function(dir,path){
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
 				S.log('Loading model: '+name);
 				//if(S.isFunc(c)) c=c(t);
@@ -189,7 +187,7 @@ App.start=function(port){
 		},
 		
 		function(onEnd){
-			console.log(views,t.views);
+			console.log(t.views);
 			console.log(t.controllers);
 			controllers=views=models=undefined;
 			

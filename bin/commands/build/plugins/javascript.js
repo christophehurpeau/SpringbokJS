@@ -1,5 +1,5 @@
 //var jshint=require('jshint').JSHINT;
-
+var _exec=require('child_process').exec;
 module.exports={
 	type:'javascript',
 	extension:'js',
@@ -49,7 +49,16 @@ module.exports={
 					.replace(/\(\(\/\* DEV\|\|PROD \*\/(.+)||(.+)\)\)/g,'$2')
 					.replace(/\(\/\*\s+DEV\|\|PROD\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$2');
 			
-			callback(null,devResult,prodResult,includes['']);
+			if(file.isBrowser){
+				_exec('java -jar '+ COMPILER_JAR +' --js '+ srcPath +' --js_output_file '+ distPath,
+					function (error, stdout, stderr){
+						if (error) callback(stderr);
+						else{
+							console.log(stdout);
+            				console.log(' '+ distPath + ' built.');
+						}
+					})
+			}else callback(null,devResult,prodResult,includes['']);
 		});
 	},
 	
