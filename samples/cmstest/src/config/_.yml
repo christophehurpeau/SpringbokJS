@@ -1,0 +1,3 @@
+helpers: ["Table"]
+plugins:
+	CMS: ["Springbok","CMS"]

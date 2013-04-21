@@ -1,0 +1,9 @@
+main: {
+	"/": ["Page.Index"],
+	"/:controller(/:action/*)?": ["!.!"]
+}
+
+admin: {
+	"/": ["Site.Index"],
+	"/:controller(/:action/*)?": ["!.!"]
+}

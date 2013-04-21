@@ -6,12 +6,14 @@ module.exports=FileList.extend({
 	
 	
 	init:function(){
-		if(fs.existsSync(this.rootPath+'src/config/_.json')){
-			this.config=UFiles.readJsonSync(this.rootPath+'src/config/_.json');
+		if(fs.existsSync(this.rootPath+'src/config/_.yml')){
+			this.config=UFiles.readYamlSync(this.rootPath+'src/config/_.yml');
 			this.config.plugins=this.config.plugins||{};
 			this.config.pluginsPaths=this.config.pluginsPaths||{};
 			this.config.pluginsPaths.Springbok=CORE_SRC+'plugins/';
 			this.config.plugins.SpringbokBase=['Springbok','base'];
+			
+			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
 		}
 	},
 	

@@ -58,7 +58,7 @@ global.App={
 				require('./helpers/'+helperName); })
 	},
 	config:function(path){
-		return UFiles.readJsonSync(this.appDir+'config/'+path+'.json');
+		return UFiles.readYamlSync(this.appDir+'config/'+path+'.yml');
 	}
 };
 global.WEB_URL='/web/';
@@ -74,6 +74,7 @@ require('./base/i18n');
 
 
 App.start=function(port){
+	S.log('Starting app on port '+port);
 	var t=this,dir=t.appDir;
 	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
 	
@@ -95,7 +96,7 @@ App.start=function(port){
 	for(var keys=Object.keys(Config.plugins),i=0;i<keys.length;i++){
 		var v=Config.plugins[keys[i]],pluginPath=Config.pluginsPaths[v[0]]+v[1];
 		try{
-			var dependencies=UFiles.readJsonSync(pluginPath+'/config/dependencies.json');
+			var dependencies=UFiles.readYamlSync(pluginPath+'/config/dependencies.yml');
 			dependencies && UObj.forEach(dependencies,function(k,v){ if(!Config.plugins[k]){ Config.plugins[k]=v; keys.push(k); } });
 		}catch(err){}
 	}

@@ -23,6 +23,10 @@ var FileList=S.extClass(EventEmitter,{
 	filesToWatch:function(){
 		return [this.rootPath+'package.json',this.rootPath+'src'];
 	},
+	// return true if need to rebuild everything
+	isConfig:function(path){
+		return path===this.rootPath+'package.json';
+	},
 	cleanDirectories:function(dirs){
 		/* https://gist.github.com/2367067 */
 		var rmrdir=function(dir){
@@ -71,7 +75,7 @@ var FileList=S.extClass(EventEmitter,{
 		var t=this;
 		t.compiling.push(file);
 		console.log("Compiling file: "+file.path);
-		file.compile(function(error){
+		this._compileFile(file,function(error){
 			t.compiling.splice(t.compiling.indexOf(file),1);
 			if(error){
 				console.log('ERROR: file: '+file.path+': '+error);
@@ -83,6 +87,11 @@ var FileList=S.extClass(EventEmitter,{
 			t._checkReady();
 		})
 	},
+	/* overridable */
+	_compileFile:function(file,onCompiled){
+		file.compile(onCompiled);
+	},
+	
 	_findByPath:function(path){
 		return this.files.filter(function(file){return file.path===path;})[0];
 	},

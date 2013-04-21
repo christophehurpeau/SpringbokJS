@@ -2,7 +2,7 @@ module.exports=function(){
 	var loading=this.H.tC('Loading...');
 	this.res.end('<!DOCTYPE html><html><head>'
 		+this.H.metaCharset()+this.H.metaLanguage()
-		+'<title>'+App.config.projectName+' - '+loading+'</title>'
+		+'<title>'+Config.projectName+' - '+loading+'</title>'
 		+this.H.cssLink()
 		+this.H.jsInline(
 			'window.onload=function(){'
@@ -13,7 +13,7 @@ module.exports=function(){
 			+'};'
 		)
 		+'</head><body>'
-		+'<div id="container"><div class="startloading"><b>'+App.config.projectName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
+		+'<div id="container"><div class="startloading"><b>'+Config.projectName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
 		+'</body>'
 	//HDev::springbokBar();
 		+'</html>');

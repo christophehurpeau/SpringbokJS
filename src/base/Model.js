@@ -14,6 +14,7 @@ S.Model=(function(){
 			}
 			this._fields ? this.model.collection.findOne(this._query,this._fields,callback)
 				: this.model.collection.findOne(this._query,callback) ;
+			//todo : res.prototype=Model.prototype ou new Model ?
 		},
 		byId:function(id){ this._query={_id:id}; return this; },
 		byIdNotNull:function(id,callback){ return this.byId(id).notNull(callback); },

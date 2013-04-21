@@ -1,6 +1,0 @@
-{
-	"entries":{"main":"localhost","admin":"localhost"},
-	"db":{
-		"default":{"dbName":"jstodoapp"}
-	}
-}
