@@ -1,9 +1,7 @@
-main: {
-	"/": ["Page.Index"],
+main:
+	"/": ["Page.Index"]
 	"/:controller(/:action/*)?": ["!.!"]
-}
 
-admin: {
-	"/": ["Site.Index"],
+admin:
+	"/": ["Site.Index"]
 	"/:controller(/:action/*)?": ["!.!"]
-}

@@ -16,6 +16,9 @@ module.exports=FileList.extend({
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
 		}
 	},
+	isConfig:function(path){
+		return path===this.rootPath+'package.json' || path===this.rootPath+'src/config/build.yml';
+	},
 	
 	_ignored:function(path){
 		if(path==='package.json') return true;

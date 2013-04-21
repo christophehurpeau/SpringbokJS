@@ -1,8 +1,8 @@
 var sysPath=require('path'),fs=require('fs'),async=require('async'),diveSync=require('diveSync'),YAML=require('js-yaml');
 YAML.stringify=YAML.dump;
 module.exports=function(file,data,callback){
-	data=data.replace("\t",'  ');
-	var configname=file.path.slice(7,-5);
+	data=data.replace("\t",' ');
+	var configname=file.path.slice(7,-4);
 	if(configname==='build'||configname==='tests'||configname==='_') callback(null,null,null); //nothing
 	else if(false&&file.fileList.isPlugin()){
 		console.log("TODO");
@@ -15,7 +15,7 @@ module.exports=function(file,data,callback){
 		if(!config.availableLangs) return callback('config.availableLangs must be set in your config file "'+configname+'"');
 		config.allLangs=config.allLangs||config.availableLangs;
 		
-		this.fileList.configBuild.forEach(function(entry){
+		file.fileList.buildConfig.entries.forEach(function(entry){
 			if(!config.entries[entry]) return callback('config.entry.'+entry+' must be set in your config file "'+configname+'"');
 		});
 		
@@ -25,7 +25,7 @@ module.exports=function(file,data,callback){
 		var result=t.appConfig=YAML.stringify(config);
 		callback(null,result,result,['config/_.json']);
 	}else{
-		var result=YAML.load(data),config=this.fileList.config,plugins=config.plugins;
+		var result=YAML.load(data),config=file.fileList.config,plugins=config.plugins;
 		
 		UObj.forEachSeries(plugins,function(pluginName,p,onEnd){
 			var dir=config.pluginsPaths[p[0]]+p[1], pluginPathConfig=dir+'/config/'+configname+'.yml';
@@ -35,7 +35,7 @@ module.exports=function(file,data,callback){
 			onEnd();
 		},function(){
 			result=YAML.stringify(result);
-			console.log(configname,result);
+			//console.log(configname,result);
 			callback(null,result,result);
 		});
 	}

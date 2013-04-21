@@ -37,10 +37,10 @@ SpringbokWatcher.prototype={
 								.reduce(function(acc,elem){ return acc.concat(elem); },[]);
 		pluginIncludes.forEach(function(path){ fileList.emit('change', path, PluginsList.find(path)); });
 		*/
-		if(this.persistent && this.server) this.fileList.on('ready',function(){ this.server.restart(); }.bind(this));
 		this.initWatcher();
 	},
 	initWatcher:function(){
+		if(this.persistent && this.server) this.fileList.on('ready',function(){ this.server.restart(); }.bind(this));
 		async.filter(this.fileList.filesToWatch(),fs.exists,function(watchedFiles){
 			this.watcher=chokidar.watch(watchedFiles,{ ignored:/(^[.#]|(?:__|~)$)/, persistent:this.persistent })
 			//	.on('add',function(path){console.log('watcher: File "'+path+'" received event "add"')})
@@ -48,12 +48,9 @@ SpringbokWatcher.prototype={
 			//	.on('unlink',function(path){console.log('watcher: File "'+path+'" received event "unlink"')})
 				.on('error',console.error);
 			
-			this.afterInit();
+			this.bindWatcherEvents();
+			this.fileList.on('ready',function(){ this.compiled(this._endCompilation()); }.bind(this));
 		}.bind(this));
-	},
-	afterInit:function(){
-		this.bindWatcherEvents();
-		this.fileList.on('ready',function(){ this.compiled(this._endCompilation()); }.bind(this));
 	},
 	
 	compiled:function(startTime){
@@ -63,7 +60,7 @@ SpringbokWatcher.prototype={
 		}else{
 			this.watcher.close();
 			process.on('exit',function(previousCode){
-				process.exit(false&&logger.errorHappened?1:previousCode);
+				process.exit(false&&/*logger.errorHappened?1:*/previousCode);
 			})
 		}
 	},
@@ -71,7 +68,9 @@ SpringbokWatcher.prototype={
 		console.log("RELOAD");
 		this.watcher.close();
 		var restart=function(){
-			
+			this.fileList.reset(function(){
+				this.initWatcher();
+			}.bind(this));
 		}.bind(this);
 		if(this.server && this.server.close) this.server.close(restart);
 		else restart();

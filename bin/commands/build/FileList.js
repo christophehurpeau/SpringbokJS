@@ -8,17 +8,29 @@ var FileList=S.extClass(EventEmitter,{
 	
 	ctor:function(rootPath){
 		EventEmitter.call(this);
-		this.files=[];
 		this.rootPath=rootPath;
-		this.compiling=[];
-		this.on('change',this._change);
-		this.on('unlink',this._unlink);
-		this.cleanDirectories();
-		
-		this.init();
+		this.reset();
 	},
 	
 	init:function(){},
+	reset:function(callback){
+		var reset=function(){
+			this.removeAllListeners();
+			this.files=[];
+			this.compiling=[];
+			this.cleanDirectories();
+			
+			this.on('change',this._change);
+			this.on('unlink',this._unlink);
+			
+			this.init();
+			callback && callback();
+		}.bind(this);
+		
+		if(!this.compiling || this.compiling.length===0) reset();
+		else this.once('ready',reset);
+		
+	},
 
 	filesToWatch:function(){
 		return [this.rootPath+'package.json',this.rootPath+'src'];
