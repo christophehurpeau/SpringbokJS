@@ -68,7 +68,8 @@ SourceFile.prototype={
 					try{
 						t.compiler.compile(t,fileContent,function(err,devResult,prodResult,dependencies){
 							if(err) return callbackError('Compiling',err);
-							t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
+							else if(err===false) callback();
+							else t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
 								t.cache.dependencies=dependencies;
 								t.cache.compilationTime=Date.now();
 								t.cache.error=null;
