@@ -18,6 +18,10 @@ S.extProto(S.Helpers,{
 			? '<meta http-equiv="Content-Type" content="text/html; charset='+(encoding||'utf-8')+'"/>'
 			: '<meta charset="'+(encoding||'utf-8')+'">';
 	},
+	metaLanguage:function(){
+		var lang='en';
+		return '<meta name="language" content="'+lang+'"/><meta http-equiv="content-language" content="'+lang+'"/>';
+	},
 	
 	cssLink:function(url,media){
 		if(!url) url='/main';
@@ -29,6 +33,9 @@ S.extProto(S.Helpers,{
 		return '<link rel="icon" type="image/vnd.microsoft.icon" href="'+href+'"/>'
 			+'<link rel="shortcut icon" type="image/x-icon" href="'+href+'"/>';
 	},
+	
+	
+	
 	
 	link:function(title,url,options){
 		return this.linkHtml(S.escape(title),url,options);
@@ -74,7 +81,7 @@ S.extProto(S.Helpers,{
 			$url=(!$full?'':($full===true?FULL_BASE_URL:$full)).BASE_URL.CRoute::getArrayLink($entry,$url);
 			$escape=false;
 		}else{
-			if(empty($url) || $url==='/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL/* DEV */.CRoute::$_prefix/* /DEV */.'/';
+			if(empty($url) || $url==='/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL/* DEV *\/.CRoute::$_prefix/* /DEV *\/.'/';
 			else{
 				if(strpos($url,'://')>0) return $url;
 				if(substr($url,0,2)==='\/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).substr($url,1);
@@ -105,5 +112,12 @@ S.extProto(S.Helpers,{
 	},
 	urlEscape:function(url,entry,full){
 		return S.escapeUrl(this.url(url,entry,full));
+	},
+	
+	
+	
+	
+	jsInline:function(content){
+		return '<script type="text/javascript">//<![CDATA['+"\n"+content.trim()+"//]]>\n</script>";
 	}
 });

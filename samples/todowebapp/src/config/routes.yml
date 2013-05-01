@@ -4,7 +4,3 @@ main:
  '/api/:controller(/:action/*)?': ["!.!"]
  '/*': ['Site::Index']
  "/:controller(/:action/*)?": ["!.!"]
-
-admin:
- "/": ["Site.Index"]
- "/:controller(/:action/*)?": ["!.!"]

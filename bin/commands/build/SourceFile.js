@@ -9,6 +9,8 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	this.dirname=sysPath.dirname(path); this.basename=sysPath.basename(path);
 	this.type=this.compiler&&this.compiler.type;
 	this.isBrowser=/^web\//.test(path);
+	this.isWebApp=fileList.regexpWebAppPath && fileList.regexpWebAppPath.test(path);
+	fileList.regexpWebAppPath && console.log(path,fileList.regexpWebAppPath,fileList.regexpWebAppPath.test(path))
 	this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
 	Object.freeze(this);
 }

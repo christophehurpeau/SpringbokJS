@@ -14,6 +14,9 @@ module.exports=FileList.extend({
 			this.config.plugins.SpringbokBase=['Springbok','base'];
 			
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
+			
+			if(this.buildConfig.webapps)
+				this.regexpWebAppPath=new RegExp('^('+this.buildConfig.webapps.join('|')+')/');
 		}
 	},
 	isConfig:function(path){

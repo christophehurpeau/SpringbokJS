@@ -27,6 +27,27 @@ Controller.prototype={
 	
 	table:function(modelName,cols){
 		return this.H.Table(modelName,cols);
+	},
+	
+	webApp:function(entry){
+		var loading=this.H.tC('Loading...');
+		this.res.end('<!DOCTYPE html><html><head>'
+			+this.H.metaCharset()+this.H.metaLanguage()
+			+'<title>'+Config.projectName+' - '+loading+'</title>'
+			+this.H.cssLink()
+			+this.H.jsInline(
+				'window.onload=function(){'
+					+'var s=document.createElement("script");'
+					+'s.type="text/javascript";'
+					+'s.src="'+this.H.staticUrl('/'+entry+'.js','js')/* DEV */+'?'+Date.now()/* /DEV */+'";'
+					+'document.body.appendChild(s);'
+				+'};'
+			)
+			+'</head><body>'
+			+'<div id="container"><div class="startloading"><b>'+Config.projectName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
+			+'</body>'
+		//HDev::springbokBar();
+			+'</html>');
 	}
 };
 

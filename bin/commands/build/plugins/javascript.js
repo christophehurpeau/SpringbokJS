@@ -30,6 +30,7 @@ module.exports={
 	},*/
 	
 	compile:function(file,data,callback){
+		if(file.isWebApp) console.log('COMPILING WEBAPP : '+file.path);
 		this[file.isBrowser ? 'includesBrowser' : 'includesNode' ](data,file.dirname,function(data,includes){
 			if(file.isBrowser)
 				data=data.replace(/\/\*\s+NODE\s+\*\/.*\/\*\s+\/NODE\s+\*\//g,'')
