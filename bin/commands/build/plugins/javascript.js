@@ -1,5 +1,7 @@
 //var jshint=require('jshint').JSHINT;
-var _exec=require('child_process').exec;
+var fs=require('fs'),Preprocessor=require('../Preprocessor');
+
+const COMPILER_JAR='/var/www/springbok/core/libs/src/ClosureCompiler/_gclosure.jar';
 module.exports={
 	type:'javascript',
 	extension:'js',
@@ -32,8 +34,19 @@ module.exports={
 	compile:function(file,data,callback){
 		if(file.isWebApp){
 			console.log('COMPILING WEBAPP : '+file.path);
-			if(!/^[a-zA-Z_\-]\/(controllers|models|views|viewsLayouts|web)\//.test(file.path)) return callback(false);
+			
+			if(file.isWebAppEntry){
+				data="var WEBAPP_NAME='"+file.webApp+"';\nincludeCore('browser/webapp');\n"
+					+'App.jsapp('+JSON.stringify(file.fileList.config.projectName)+',__SPRINGBOK_COMPILED_TIME__);'
+					+('S.router.init('+JSON.stringify(UFiles.readYamlSync(file.fileList.rootPath+'src/'+file.webApp+'/config/routes.yml'))
+						+','+JSON.stringify(UFiles.readYamlSync(file.fileList.rootPath+'src/config/routesLangs.yml'))+');')
+					+'App.run();';
+			}else if(!/^[a-zA-Z_\-]\/(controllers|models|views|viewsLayouts|web)\//.test(file.path))
+				return callback(false);
+	
 		}
+		
+		
 		this[file.isBrowser ? 'includesBrowser' : 'includesNode' ](data,file.dirname,function(data,includes){
 			if(file.isBrowser)
 				data=data.replace(/\/\*\s+NODE\s+\*\/.*\/\*\s+\/NODE\s+\*\//g,'')
@@ -44,7 +57,19 @@ module.exports={
 					.replace('/* NODE */','').replace('/* /NODE */','')
 					.replace(/\(\(\/\*\s+NODE\|\|BROWSER\s+\*\/(.+)\|\|(.+)\)\)/g,'$1');
 			
-			data.replace(/\/\*\s+(RM|HIDE|REMOVE|NONE)\s+\*\/.*\/\*\s+\/(RM|HIDE|REMOVE|NONE)\s+\*\//g,'');
+			
+			
+			data=Preprocessor(file.fileList.buildConfig && file.fileList.buildConfig.config,data);
+			
+			data=data.replace(/\/\*\s+(RM|HIDE|REMOVE|NONE)\s+\*\/.*\/\*\s+\/(RM|HIDE|REMOVE|NONE)\s+\*\//g,'');
+			data=data.replace('__SPRINGBOK_COMPILED_TIME__',Date.now());
+			
+			if(file.dirname.endsWith('/controllers')){
+				if(!file.isBrowser){
+					if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
+					data=data.replace(/App\.[A-Za-z]*Controller\(\{/g,'module.exports=$&');
+				}
+			}
 			
 			var devResult=data,prodResult=data;
 			devResult=devResult.replace(/\/\*\s+PROD\s+\*\/.*\/\*\s+\/PROD\s+\*\//g,'').replace('/* DEV */','').replace('/* /DEV */','')
@@ -54,55 +79,70 @@ module.exports={
 					.replace(/\(\(\/\* DEV\|\|PROD \*\/(.+)||(.+)\)\)/g,'$2')
 					.replace(/\(\/\*\s+DEV\|\|PROD\s+\*\/([^\)\|]+)\|\|([^)]+)\)/g,'$2');
 			
-			if(file.isBrowser){
-				_exec('java -jar '+ COMPILER_JAR +' --js '+ srcPath +' --js_output_file '+ distPath,
-					function (error, stdout, stderr){
-						if (error) callback(stderr);
-						else{
-							console.log(stdout);
-							console.log(' '+ distPath + ' built.');
-						}
-					})
-			}else callback(null,devResult,prodResult,includes['']);
+			callback(null,devResult,prodResult,includes['']);
 		});
 	},
 	
+	optimize:function(file,devResult,prodResult,onEnd){
+		if(!file.isBrowser) return onEnd(null,devResult,prodResult);
+		file.compiledPath=file.compiledPath.slice(0,-3)+'.src.js';
+		file.write(devResult,prodResult,function(err,paths){
+			if(err) return onEnd(err);
+			UArray.forEachAsync(paths,function(path,onEnd){
+				console.log('GoogleClosure: compiling '+path);
+				UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --js '+ UExec.escape(path)
+									+' --js_output_file '+ UExec.escape(path.slice(0,-(3+4))+'.js'),
+					function (error, stdout, stderr){
+						console.error(error,"\n",stdout,"\n",stderr);
+						if (error) onEnd(stderr);
+						else{
+							console.log(stdout);
+							console.log(' '+ path + ' built.');
+							onEnd();
+						}
+					});
+			},function(){ onEnd(null,false,false); });
+		});
+	},
+	
+	_checkTrailingSlash:function(inclPath){
+		if(inclPath.slice(-1)==='/'){
+			var slicedInclPath=inclPath.slice(0,-1);
+			inclPath+=slicedInclPath.contains('/') ? UString.substrLast(slicedInclPath,'/') : slicedInclPath;
+		}
+		return inclPath;
+	},
 	
 	includesNode:function(data,dirname,callback,includes){
-		var t=this,dataNode;
 		data=data.replace(/^include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
-			if(inclPath.slice(-1)==='/'){
-				var slicedInclPath=inclPath.slice(0,-1);
-				inclPath+=slicedInclPath.contains('/') ? UString.substrLast(slicedInclPath,'/') : slicedInclPath;
-			}
-			if(from==='Core') inclPath=t.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
+			inclPath=this._checkTrailingSlash(inclPath);
+			if(from==='Core') inclPath=this.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
 			else if(from==='Plugin'){
 				inclPath='TODO';
 			}else if(incluPath[0]!=='.') inclPath='./'+inclPath;
 			
 			if(inclPath[0]==='/') inclPath=('../'.repeat(dirname.split('/').length)||'./')+inclPath.substr(1);
 			return 'require("'+inclPath+'");';
-		});
+		}.bind(this));
 		callback(data,{});
 	},
 	includesBrowser:function(data,dirname,callback,includes){
-		var t=this,dataNode;
 		if(!includes) includes={'':{},Core:{},'Plugin':{}};
-		dataBrowser=dataBrowser.replace(/^@include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+		data=data.replace(/^include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
 			if(inclPath.slice(-1)==='/') inclPath+=UString.substrLast(inclPath.slice(0,-1),'/');
 			if(includes[from][inclPath]) return '';
 			includes[from][inclPath]=1;
 			var path;
-			if(from==='Core') path=CORE_INCLUDES+'styl/';
+			if(from==='Core') path=CORE_SRC;
 			else if(from==='Plugin') path='TODO';
 			else path=dirname;
 			
 			path+=inclPath;
-			if(inclPath.slice(-1)!=='/') path+='index.js';
+			if(inclPath.slice(-1)==='/') path+='.js';
 			else if(inclPath.slice(-3)!=='.js') path+='.js';
-			return t.includes(fs.readFileSync(path,'utf-8'),dirname,false,includes);
-		});
+			return this.includesBrowser(fs.readFileSync(path,'utf-8'),dirname,false,includes);
+		}.bind(this));
 		callback&&callback(data,includes);
-		return dataBrowser;
+		return data;
 	}
 }

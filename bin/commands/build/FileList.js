@@ -15,8 +15,12 @@ var FileList=S.extClass(EventEmitter,{
 	init:function(){},
 	reset:function(callback){
 		var reset=function(){
+			this.emit('reset');
+			
 			this.removeAllListeners();
 			this.files=[];
+			this.errors={};
+			this.errorsCount=0;
 			this.compiling=[];
 			this.cleanDirectories();
 			
@@ -30,6 +34,10 @@ var FileList=S.extClass(EventEmitter,{
 		if(!this.compiling || this.compiling.length===0) reset();
 		else this.once('ready',reset);
 		
+	},
+	
+	hasErrors:function(){
+		return this.errorsCount>0;
 	},
 
 	filesToWatch:function(){
@@ -70,11 +78,10 @@ var FileList=S.extClass(EventEmitter,{
 	//Called every time any file was changed. Emits `ready` event
 	_checkReady:function(){
 		if(this._timer) clearTimeout(this._timer);
-		if(this.compiling.length===0){
+		if(this.compiling.length===0)
 			this._timer=setTimeout((function(){
-				this.compiling.length===0 ? this.emit('ready') : this._checkReady();
+				if(this.compiling.length===0) this.emit('ready');
 			}).bind(this),RESET_TIME);
-		}
 	},
 	_compileDependentFiles:function(path){
 		this.files
@@ -84,20 +91,25 @@ var FileList=S.extClass(EventEmitter,{
 			.forEach(this._compile.bind(this));
 	},
 	_compile:function(file){
-		var t=this;
-		t.compiling.push(file);
-		console.log("Compiling file: "+file.path);
+		this.compiling.push(file);
+		console.log("Compiling file: "+file.path+" ["+this.compiling.length+"]");
 		this._compileFile(file,function(error){
-			t.compiling.splice(t.compiling.indexOf(file),1);
+			this.compiling.splice(this.compiling.indexOf(file),1);
 			if(error){
-				console.log('ERROR: file: '+file.path+': '+error);
-				t._checkReady();
+				console.log('ERROR: '+file.path+': '+error);
+				this.errors[file.path]=error;
+				this.errorsCount++;
+				this._checkReady();
 				return false;
 			}
-			console.log("Compiled file: "+file.path);
-			t._compileDependentFiles(file.path);
-			t._checkReady();
-		})
+			if(this.errors[file.path]){
+				this.errorsCount--;
+				delete this.errors[file.path];
+			}
+			console.log("Compiled file: "+file.path+" ["+this.compiling.length+"]");
+			this._compileDependentFiles(file.path);
+			this._checkReady();
+		}.bind(this))
 	},
 	/* overridable */
 	_compileFile:function(file,onCompiled){

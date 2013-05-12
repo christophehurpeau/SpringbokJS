@@ -3,6 +3,7 @@ require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
 require('springboktools/UFiles');
+require('springboktools/UExec');
 
 var sysPath=require('path'),net=require('net');
 var build=require('./build/'),rootPath=process.cwd()+'/';
@@ -33,11 +34,18 @@ module.exports={
 		
 		server.listen(7000);
 		
-		fileList.on('ready',function(){
-			console.log('sending reload to '+clients.length+' clients');
+		var ready=function(){
+			console.log('[!] sending reload to '+clients.length+' clients');
 			clients.forEach(function(stream){
 				stream.writable && stream.write('reload');
 			});
+		};
+		fileList.on('ready',ready);
+		fileList.on('reset',function(){
+			console.log('[!] filelist was reset !');
+			setTimeout(function(){
+				fileList.on('ready',ready);
+			},10);
 		});
 	},
 	app:function(persistent){

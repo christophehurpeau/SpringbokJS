@@ -1,4 +1,4 @@
-module.exports=App.AdminController({
+App.AdminController({
 	Index:App.Controller.Action(function(req,res){
 		this.table('Page','name,status,created,updated')
 			.allowFilters()

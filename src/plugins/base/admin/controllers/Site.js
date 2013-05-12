@@ -1,4 +1,4 @@
-module.exports=App.Controller({layout:'admin/page'},{
+App.Controller({layout:'admin/page'},{
 	beforeDispatch:function(req,res){
 		console.log(this.self);
 	},

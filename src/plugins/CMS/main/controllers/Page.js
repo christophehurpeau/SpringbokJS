@@ -1,4 +1,4 @@
-module.exports=App.Controller({
+App.Controller({
 	Index:App.Controller.Action(function(req,res){
 		req.route.nParams.slug='Accueil';
 		this.View(req,res);

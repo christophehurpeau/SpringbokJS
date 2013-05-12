@@ -39,7 +39,7 @@ Controller.prototype={
 				'window.onload=function(){'
 					+'var s=document.createElement("script");'
 					+'s.type="text/javascript";'
-					+'s.src="'+this.H.staticUrl('/'+entry+'.js','js')/* DEV */+'?'+Date.now()/* /DEV */+'";'
+					+'s.src="'+this.H.staticUrl('/'+entry+'.js')/* DEV */+'?'+Date.now()/* /DEV */+'";'
 					+'document.body.appendChild(s);'
 				+'};'
 			)

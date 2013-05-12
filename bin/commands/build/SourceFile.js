@@ -2,15 +2,34 @@ var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=r
 
 var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	this.fileList=fileList;
-	this.rootPath=fileList.rootPath; this.path=path; this.srcPath=fileList.rootPath+'src/'+path;
+	this.rootPath=fileList.rootPath; this.path=path;
 	UObj.extend(this,compilerLintersOptimizers);
+	this.type=this.compiler&&this.compiler.type;
+	
+	this.srcPath=fileList.rootPath+'src/'+path;
+	this.dirname=sysPath.dirname(path); this.basename=sysPath.basename(path);
 	
 	this.compiledPath=this.compiler&&this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
-	this.dirname=sysPath.dirname(path); this.basename=sysPath.basename(path);
-	this.type=this.compiler&&this.compiler.type;
-	this.isBrowser=/^web\//.test(path);
-	this.isWebApp=fileList.regexpWebAppPath && fileList.regexpWebAppPath.test(path);
-	fileList.regexpWebAppPath && console.log(path,fileList.regexpWebAppPath,fileList.regexpWebAppPath.test(path))
+	
+	if((this.isBrowser=path.startsWith('web/'))) this.isWebApp=false;
+	else{
+		var resWebApp;
+		if( this.isWebApp=fileList.regexpWebAppPath && (resWebApp=fileList.regexpWebAppPath.exec(path)) ){
+			this.webApp=resWebApp[1];
+			if(this.dirname===this.webApp && this.basename===this.webApp+'.js'){
+				this.isWebAppEntry=this.isBrowser=true;
+				this.compiledPath='web/'+this.compiledPath.substr(this.webApp.length+1);
+				
+			}else if( this.isBrowser=path.slice(this.webApp.length+1,4)==='web/'){
+				this.compiledPath=this.compiledPath.substr(this.webApp.length+5);
+				this.compiledPath='web/'+(this.compiledPath.startsWith(this.webApp)?'':this.webApp+'/')+this.compiledPath;
+				console.log('substr path : ',this.compiledPath);
+			}
+		}
+	}
+	this.compiledPathDirname=sysPath.dirname(this.compiledPath);
+	
+	
 	this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
 	Object.freeze(this);
 }
@@ -34,10 +53,11 @@ SourceFile.prototype={
 		else{
 			var i=0,callbackOptimizer=function callbackOptimizer(err,devResult,prodResult){
 				if(err) return callback(err);
-				if(i===l) callback(null,devResult,prodResult);
+				if(i===l) return callback(null,devResult,prodResult);
+				if(err===false) return callback(false);
 				optimizers[i++].optimize(file,devResult,prodResult,callbackOptimizer);
 			}
-			callbackOptimizer(null,file,devResult,prodResult);
+			callbackOptimizer(null,devResult,prodResult);
 		}
 	},
 	
@@ -52,8 +72,8 @@ SourceFile.prototype={
 				}
 				strOrErr=finalStr;
 			}*/
-			var str=strOrErr instanceof Error ? console.error(strOrErr.stack)&&strOrErr.toString().slice(7) : strOrErr,
-				error=new Error(str);
+			//var error=new Error(strOrErr instanceof Error ? strOrErr.toString().slice(7) : strOrErr);
+			var error=strOrErr instanceof Error ? strOrErr : new Error(strOrErr);
 			error._Type=type;
 			t.cache.error=error;
 			callback(error);
@@ -68,11 +88,16 @@ SourceFile.prototype={
 					try{
 						t.compiler.compile(t,fileContent,function(err,devResult,prodResult,dependencies){
 							if(err) return callbackError('Compiling',err);
-							else if(err===false) callback();
-							else t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
-								t.cache.dependencies=dependencies;
-								t.cache.compilationTime=Date.now();
+							if(err===false) return callback();
+							t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
+								if(err) return callbackError('Optimizing',err);
 								t.cache.error=null;
+								t.cache.compilationTime=Date.now();
+								if(err===false){
+									t.cache.dependencies=null;
+									return callback();
+								}
+								t.cache.dependencies=dependencies;
 								t.write(devResultOptimized,prodResultOptimized,callback);
 							});
 						})
@@ -87,22 +112,25 @@ SourceFile.prototype={
 	},
 	
 	write:function(devResultOptimized,prodResultOptimized,callback){
-		var t=this, results={'dev':devResultOptimized,'prod':prodResultOptimized};
+		var results={'dev':devResultOptimized,'prod':prodResultOptimized},paths=[];
 		async.forEach(['dev','prod'],function(dir,callback){
 			var result=results[dir];
-			if(result===null) return callback();
-			t._write(t.rootPath+dir+'/'+t.dirname,function(){
-				fs.writeFile(t.rootPath+dir+'/'+t.compiledPath,result,function(err){
-					if(err!=null) console.error(err.stack);
-					callback()
+			if(result==null) return callback();
+			var path=this.rootPath+dir+'/';
+			this._write(path+this.compiledPathDirname,function(err){
+				if(err) return callback(err);
+				fs.writeFile(path=(path+this.compiledPath),result,function(err){
+					if(err) return callback(err);
+					paths.push(path);
+					callback();
 				});
-			});
-		},callback);
+			}.bind(this));
+		}.bind(this),function(err){ callback(err,paths); });
 	},
 	copy:function(callback){
 		var t=this,srcPath=this.srcPath;
 		async.forEach(['dev','prod'],function(dir,callback){
-			t._write(t.rootPath+dir+'/'+t.dirname,function(){
+			t._write(t.rootPath+dir+'/'+t.compiledPathDirname,function(){
 				var input=fs.createReadStream(srcPath),
 					output=fs.createWriteStream(t.rootPath+dir+'/'+t.compiledPath);
 				var request=input.pipe(output);
@@ -115,8 +143,7 @@ SourceFile.prototype={
 		fs.exists(parent,function(exists){
 			exists ? callback() 
 				: mkdirp(parent,function(err){
-					if(err!=null) console.error(err.stack);
-					callback();
+					callback(err);
 				});
 		});
 	}

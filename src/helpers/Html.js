@@ -90,28 +90,29 @@ S.extProto(S.Helpers,{
 		}
 		return $escape?h($url,false):$url;
 	*/
-	url:function(url,entry,full){
+	url:function(url,entry,options){
+		if(!S.isObj(options)) options={full:options};
 		/* DEV */ if(entry===false || entry===true) throw new Error('Entry param cannot be false or true'); /* /DEV */
 		if(entry==null){
 			entry=this.req.entry;
-			full=(/* DEV||PROD */'/~'+entry||full===true ? Config.siteUrl[entry] : '');
-		}else if((entry !== this.req.entry && full!==false) || full===true) full=(/* DEV||PROD */'/~'+entry||Config.siteUrl[entry]);
-		else full=(/* DEV||PROD */'/~'+entry||'');
+			options.full=(/* DEV||PROD */'/~'+entry||options.full===true ? Config.siteUrl[entry] : '');
+		}else if((entry !== this.req.entry && options.full!==false) || options.full===true) options.full=(/* DEV||PROD */'/~'+entry||Config.siteUrl[entry]);
+		else options.full=(/* DEV||PROD */'/~'+entry||'');
 		
 		if(S.isStr(url) || !url){
 			if(url) url=url.trim();
-			if(!url || url==='/') return full+ '/';
+			if(!url || url==='/') return options.full+ '/';
 			else{
 				if(url.contains('://')) return url;
 				if(url.startsWith('\\/')) return url.substr(1);
-				if(url.substr(0,1)==='/') return full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
+				if(url.substr(0,1)==='/') return options.full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
 			}
 		}else{
 			return (full || '') + this.router.getArrayLink(this.req.lang,entry,url);
 		}
 	},
-	urlEscape:function(url,entry,full){
-		return S.escapeUrl(this.url(url,entry,full));
+	urlEscape:function(url,entry,options){
+		return S.escapeUrl(this.url(url,entry,options));
 	},
 	
 	

@@ -40,7 +40,9 @@ SpringbokWatcher.prototype={
 		this.initWatcher();
 	},
 	initWatcher:function(){
-		if(this.persistent && this.server) this.fileList.on('ready',function(){ this.server.restart(); }.bind(this));
+		if(this.persistent && this.server) this.fileList.on('ready',
+					function(){ this.fileList.hasErrors() ? (this.server && this.server.close && this.server.close())
+											 : this.server.restart(); }.bind(this));
 		async.filter(this.fileList.filesToWatch(),fs.exists,function(watchedFiles){
 			this.watcher=chokidar.watch(watchedFiles,{ ignored:/(^[.#]|(?:__|~)$)/, persistent:this.persistent })
 			//	.on('add',function(path){console.log('watcher: File "'+path+'" received event "add"')})
@@ -54,7 +56,15 @@ SpringbokWatcher.prototype={
 	},
 	
 	compiled:function(startTime){
-		console.log("Compiled in "+(Date.now() - startTime)+"ms");
+		var log="Compiled in "+(Date.now() - startTime)+"ms";
+		if(this.fileList.hasErrors()){
+			log+=' with '+this.fileList.errorsCount+' errors [!]';
+			log+="\nErrors on files: "+Object.keys(this.fileList.errors).join(', ')+"\n";
+			UObj.forEach(this.fileList.errors,function(path,error){
+				log+="\n"+path+": "+S.isObj(error) ? error.stack : error;
+			})
+		}
+		console.log(log);
 		if(this.persistent){
 			this.fileList.emit('done');
 		}else{
