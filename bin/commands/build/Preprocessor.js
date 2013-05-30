@@ -1,26 +1,12 @@
-evaluate = function(defines,expr) {
-	var Preprocessor = null;
-	for (var key in defines) {
-		if (defines.hasOwnProperty(key)) {
-			eval("var "+key+" = "+JSON.stringify(""+defines[key])+";");
-		}
-	}
-	return eval(expr);
-}.bind(null)
-
 //https://github.com/dcodeIO/Preprocessor.js/blob/master/Preprocessor.js
 
 module.exports=function(defines,data,isBrowser,baseDir){
 	defines=defines||{};
+	defines.NODE=!isBrowser; defines.BROWSER=!!isBrowser;
 	
 	var Preprocessor={
 		errorSourceAhead:50,
-		EXPR: /\/\*\s+#(include|ifn?def|if|endif|else|elif|eval)\s+(.+)\s+\*\//g,
-		
-		INCLUDE: /include[ ]+"([^"\\]*(\\.[^"\\]*)*)"[ ]*\r?\n/g,
-		EVAL: /eval\s+([^\n]+)/g,
-		IF: /(ifdef|ifndef|if)[ ]*([^\r\n]+)\r?\n/g,
-		ENDIF: /(endif|else|elif)([ ]+[^\r\n]+)?\r?\n/g,
+		EXPR: /(^[ ]*)?\/\*[ ]*#(include|ifn?def|if|\/if|endif|else|el(?:se)?if|eval|value|val)[ ]*([^\*]*)[ ]*\*\//gm,
 		
 		/**
 		 * Indents a multi-line string.
@@ -40,72 +26,69 @@ module.exports=function(defines,data,isBrowser,baseDir){
 	
 	var match, match2, include, p, stack = [];
 	while ((match = Preprocessor.EXPR.exec(data)) !== null) {
-		var indent = match[1];
-		switch (match[2]) {
-			case 'include':
-					Preprocessor.INCLUDE.lastIndex = match.index;
-					if ((match2 = Preprocessor.INCLUDE.exec(data)) === null)
-						throw(new Error("Illegal #"+match[2]+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"..."));
-					
-					try {//TODO
-						var key = include;
-						include = require("fs").readFileSync(baseDir+"/"+include)+"";
-					} catch (e) {
-						throw(new Error("File not found: "+include+" ("+e+")"));
-					}
-					data = data.substring(0, match.index)+Preprocessor.indent(include, indent)+data.substring(Preprocessor.INCLUDE.lastIndex);
-					Preprocessor.EXPR.lastIndex = stack.length > 0 ? stack[stack.length-1].lastIndex : 0; // Start over again
-					break;
-					
+		//console.log(match,match.index,Preprocessor.EXPR.lastIndex);
+		if(match.index > 50) throw new Error;
+		var indent = match[1], instruction=match[2], content=match[3].trim();
+		switch (instruction) {
 			case 'eval':
-				Preprocessor.EVAL.lastIndex = match.index;
-				if ((match2 = Preprocessor.EVAL.exec(data)) === null)
-					throw new Error("Illegal #"+match[2]+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"...");
+			case 'value': case 'val':
+				if(instruction==='eval') include = eval(content);
+				else include = String(defines[content]);
 				
-				include = match2[1];
-				include = evaluate(defines, match2[1]);
-				data = data.substring(0, match.index)+indent+include+data.substring(Preprocessor.EVAL.lastIndex);
+				var removeAfterLength=0,
+					first5=data.substr(Preprocessor.EXPR.lastIndex,5), 
+					first4=first5&&first5.substr(0,4), 
+					first2=first4&&first4.substr(0,2);
+				if(first2){
+					if(first2==='0 ') removeAfterLength=2;
+					else if(['0;','0,','0)','0.','0+','0-'].indexOf(first2)!==-1) removeAfterLength=1;
+					else if(first2==="''") removeAfterLength=2;
+					else if(first5==='false') removeAfterLength=5;
+					else if(first4==='true') removeAfterLength=4;
+				}
+				
+				data = data.substring(0, match.index)+include+data.substring(Preprocessor.EXPR.lastIndex + removeAfterLength);
 				Preprocessor.EXPR.lastIndex = match.index + include.length;
 				break;
 			
-			case 'ifdef':
-			case 'ifndef':
-			case 'if':
-				Preprocessor.IF.lastIndex = match.index;
-				if ((match2 = Preprocessor.IF.exec(data)) === null)
-					throw(new Error("Illegal #"+match[2]+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"..."));
+			case 'ifdef': case 'ifndef': case 'if':
+				if (instruction == "ifdef") include = defines.hasOwnProperty(content);//!!defines[match2[2]];
+				else if (instruction == "ifndef")  include = defines.hasOwnProperty(content);//!defines[match2[2]];
+				else{
+					var ifThenMatch=/^(.*) then (.*)$/.exec(content);
+					if(ifThenMatch){
+						include=defines[ifThenMatch[1]] ? ifThenMatch[2] : '';
+						data = data.substring(0, match.index)+include+data.substring(Preprocessor.EXPR.lastIndex);
+						break;
+					}else{
+						if(content.substr(0,1)==='!') include = !defines[content.substr(1).trim()]
+						else include = defines[content];
+					}
+				}
 				
-				if (match2[1] == "ifdef") include = !!defines[match2[2]];
-				else if (match2[1] == "ifndef")  include = !defines[match2[2]];
-				else include = Preprocessor.evaluate(defines, match2[2]);
-				
-				stack.push(p={ "include": include, "index": match.index, "lastIndex": Preprocessor.IF.lastIndex });
+				stack.push(p={ "include": include, "index": match.index, "lastIndex": Preprocessor.EXPR.lastIndex });
 				break;
-			case 'endif':
-			case 'else':
-			case 'elif':
-				Preprocessor.ENDIF.lastIndex = match.index;
-				if ((match2 = Preprocessor.ENDIF.exec(data)) === null)
-					throw(new Error("Illegal #"+match[2]+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"..."));
-				
+			
+			case '/if': case 'endif': case 'else': case 'elif': case 'elseif':
 				if (stack.length == 0)
-					throw(new Error("Unexpected #"+match2[1]+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"..."));
+					throw(new Error("Unexpected #"+instruction+": "+data.substring(match.index, match.index+Preprocessor.errorSourceAhead)+"..."));
 				
 				var before = stack.pop();
 				include = data.substring(before["lastIndex"], match.index);
-				if (before["include"]) {
-					data = data.substring(0, before["index"])+include+data.substring(Preprocessor.ENDIF.lastIndex);
-				} else {
-					include = "";
-					data = data.substring(0, before["index"])+data.substring(Preprocessor.ENDIF.lastIndex);
-				}
+				if (!before["include"]) include='';
+				data = data.substring(0, before["index"])+include+data.substring(Preprocessor.EXPR.lastIndex);
 				Preprocessor.EXPR.lastIndex = before["index"]+include.length;
-				if (match2[1] == "else" || match2[1] == "elif") {
-					include =  match2[1] == 'else' ? !before["include"] : evaluate(defines, match2[2]);
+				if (instruction == "else" || instruction == "elif" || instruction == "elseif") {
+					if(instruction==='else') include=!before['include'];
+					else{
+						if(content.substr(0,1)==='!') include = !defines[content.substr(1).trim()]
+						else include = defines[content];
+					}
 					stack.push(p={ "include": !before["include"], "index": Preprocessor.EXPR.lastIndex, "lastIndex": Preprocessor.EXPR.lastIndex });
 				}
 				break;
 		}
 	}
+	if(stack.length!==0) throw new Error('Still have stack : missing endif');
 	return data;
 }
