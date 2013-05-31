@@ -1,3 +1,3 @@
-((/* NODE||BROWSER */module.exports||S.behaviours.Parent))=function(model,onEnd){
+/*#ifelse NODE*/(module.exports||S.behaviours.Parent)/*#/if*/=function(model,onEnd){
 	onEnd();
 };

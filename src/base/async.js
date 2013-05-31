@@ -1,7 +1,7 @@
 UObj.extend(S,{
-	nextTick:((/* NODE||BROWSER */process.nextTick||function(fn){ setTimeout(fn,0); })),
+	nextTick:/*#ifelse NODE*/(process.nextTick||function(fn){ setTimeout(fn,0); })/*#/if*/,
 	asyncForEach:function(arr, iterator, callback){
-		/* DEV */ if(!S.isFunc(callback)) throw new Error('asyncForEach: callback must be a function !'); /* /DEV */
+		/*#if DEV*/ if(!S.isFunc(callback)) throw new Error('asyncForEach: callback must be a function !'); /*#/if*/
 		if(!arr || !arr.length) return callback();
 		
 		var l=arr.length,completed=0;

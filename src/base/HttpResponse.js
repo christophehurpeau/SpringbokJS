@@ -4,8 +4,8 @@ S.extProto(http.ServerResponse,{
 	exception:function(err){
 		if(err instanceof HttpException){
 		}else{
-			/* DEV */console.log(err.stack);/* /DEV */
-			err=HttpException.newInternalServerError(/* DEV */err.stack/* /DEV */);
+			/*#if DEV*/console.log(err.stack);/*#/if*/
+			err=HttpException.newInternalServerError(/*if DEV then err.stack*/);
 		}
 		this.statusCode=err.code;
 		this.end('<pre>'+err.details+'</pre>');

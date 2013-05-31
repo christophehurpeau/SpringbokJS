@@ -1,10 +1,10 @@
-((/* NODE||BROWSER */module.exports||S.behaviours.Child))=function(model,onEnd){
-	/* DEV */ if(!model.parent) throw Error('missing parent conf '+model.modelName); /* /DEV */
+/*#ifelse NODE*/(module.exports||S.behaviours.Child)/*#/if*/=function(model,onEnd){
+	/*#if DEV*/ if(!model.parent) throw Error('missing parent conf '+model.modelName); /*#/if*/
 	model.parent=M[model.parent];
 	S.log(model.modelName+': initialize parent '+model.parent.modelName);
 	model.parent.init(function(){
 		S.log(model.modelName+': parent initialized');
-		/* DEV */ if(!model.parent.types || !model.parent.types[model.modelName]) throw Error('missing parent type '+model.modelName+' in model '+model.parent); /* /DEV */
+		/*#if DEV*/ if(!model.parent.types || !model.parent.types[model.modelName]) throw Error('missing parent type '+model.modelName+' in model '+model.parent); /*#/if*/
 		
 		//in case it's not already initialized
 		model.db=model.parent.db;

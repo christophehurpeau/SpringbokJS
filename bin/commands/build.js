@@ -6,15 +6,17 @@ require('springboktools/UFiles');
 require('springboktools/UExec');
 
 var sysPath=require('path'),net=require('net');
-var build=require('./build/'),rootPath=process.cwd()+'/';
+var build=require('./build/');
 
 global.CORE_SRC=sysPath.join(__dirname,'/../../src/');
+global.CORE_MODULES=sysPath.join(__dirname,'/../../node_modules/');
 global.CORE_INCLUDES=sysPath.join(__dirname,'/../../includes/');
+console.log({src:CORE_SRC,mod:CORE_MODULES,incl:CORE_INCLUDES});
 
 module.exports={
-	core:function(persistent){
+	core:function(rootPath,persistent){
 		var fileList=new build.FileListCore(rootPath);
-		build.SpringbokWatcher.init(fileList,persistent,false);
+		var sw=build.SpringbokWatcher.init(fileList,persistent,false);
 		
 		var clients=[],server=net.createServer(function(stream){
 			console.log('[socket] client has joined');
@@ -39,18 +41,19 @@ module.exports={
 			clients.forEach(function(stream){
 				stream.writable && stream.write('reload');
 			});
-		};
-		fileList.on('ready',ready);
-		fileList.on('reset',function(){
+		},reset=function(){
 			console.log('[!] filelist was reset !');
 			setTimeout(function(){
 				fileList.on('ready',ready);
+				fileList.on('reset',reset);
 			},10);
-		});
+		};
+		fileList.on('ready',ready);
+		fileList.on('reset',reset);
 	},
-	app:function(persistent){
+	app:function(rootPath,persistent){
 		var fileList=new build.FileListApp(rootPath);
-		build.SpringbokWatcher.init(fileList,persistent,true);
+		var sw=build.SpringbokWatcher.init(fileList,persistent,true);
 		
 		try{
 			var client=net.connect(7000,function(){
@@ -58,7 +61,7 @@ module.exports={
 				client.once('data',function(data){
 					if(data.toString()!=='FileList SpringbokJS') client.end();
 					client.on('data',function(data){
-						if(data.toString()==='reload') fileList._checkReady(); // emit ready if waiting list is empty
+						if(data.toString()==='reload') sw.reload();
 					});
 				})
 				client.on('end',function(){

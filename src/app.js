@@ -2,65 +2,16 @@ var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), asy
 	connect=require('connect'), httpSendFile=require('send'),
 	ejs=require('springbokejs'), ejsUtils=require('springbokejs/lib/utils');
 
-require('springboktools');
-require('springboktools/UObj');
-require('springboktools/UArray');
-require('springboktools/UString/UString');
-require('springboktools/UFiles');
-require('springboktools/UDebug');
+require('./Springbok');
 
-require('./base/async');
-S.log=console.log;//todo use CLogger
 require('./helpers');
 require('./db/');
 
 require.extensions['.ejs']=require.extensions['.js'];
 
-// ; mongoose=require 'mongoose'
-
-/* http://www.senchalabs.org/connect/vhost.html */
-
-
-// https://github.com/glesperance/node-rocket/blob/master/lib/loader.js 
-// https://github.com/jaredhanson/locomotive/blob/master/bin/lcm.js
-// https://github.com/MaxaGfeller/mongee/blob/master/app.js
-process.on('uncaughtException',function(err){
-	console.error(err.stack);
-});
-
-
 require('./base/HttpRequest'); require('./base/HttpResponse');
-require('./base/HttpException.js')
-var Router=require('./base/Router');
+require('./base/HttpException')
 
-global.App={
-	behaviours:[],
-	init:function(dir){
-		dir += '/';
-		App.env = fs.readFileSync(dir + 'env');
-		App.appDir = dir+='dev/';
-		global.Config=this.config('_' + App.env);
-		App.router=new Router();
-		
-		['controllers','PControllers','views','models','PModels'].forEach(function(v){ App[v]={}; });
-		global.M=App.models;
-		
-		App.entries={};
-		App.entriesList=Object.keys(Config.entries);
-		App.entriesList.forEach(function(entry){
-			App.entries[entry]=entry==='main' ? {prefix:'',suffix:''} : {prefix:entry+'.',suffix:'.'+entry};
-			App.entries[entry].host=Config.entries[entry];
-			['controllers','PControllers','views'].forEach(function(v){ App[v][entry]={}; });
-		});
-		App.views.layouts={};
-		
-		Config.helpers && Config.helpers.forEach(function(helperName){
-				require('./helpers/'+helperName); })
-	},
-	config:function(path){
-		return UFiles.readYamlSync(this.appDir+'config/'+path+'.yml');
-	}
-};
 global.WEB_URL='/web/';
 global.WEB_FOLDER='./';
 
@@ -71,7 +22,6 @@ App.Model=S.Model;
 App.CValidator=require('./components/CValidator');
 
 require('./base/i18n');
-
 
 App.start=function(port){
 	S.log('Starting app on port '+port);
@@ -195,11 +145,12 @@ App.start=function(port){
 			var webDir=t.appDir+'web';
 		
 			app = connect()
-				/* DEV */.use(connect.errorHandler())/* /DEV */
+				/*#if DEV*/ .use(connect.errorHandler()) /*#/if*/
 				.use(connect.compress())
 				.use(connect.favicon('web/favicon.ico'))
-				/* DEV */.use(connect.logger('dev'))/* /DEV */
-				/* PROD */.use(connect.logger())/* /PROD */
+				/*#if DEV*/ .use(connect.logger('dev'))
+				/*#else*/ .use(connect.logger())
+				/*#/if*/
 				.use(function(req,res,next){
 					if('GET' != req.method && 'HEAD' != req.method) return next();
 					var path=req._parsedUrl.pathname;
@@ -211,12 +162,21 @@ App.start=function(port){
 							res.statusCode=404;
 							res.end("Not Found");
 						})
-						.on('directory',function directory(){
+						.on('directory',function(){
 							res.statusCode=404;
 							res.end("Not Found");
 						})
 						.pipe(res);
-						
+					
+					// TODO : return pre-gzipped file, if statusCode===200
+					/*if (req.method === 'HEAD' || !~accept.indexOf('gzip') ||
+								!matchType.test(type) || encoding ||
+								(~ua.indexOf('MSIE 6') && !~ua.indexOf('SV1')))
+						return;
+					*/
+					//res.setHeader('Content-Encoding', 'gzip');
+					//res.setHeader('Vary', 'Accept-Encoding');
+					
 					//connect['static'](t.appDir+'web',{/*redirect:false,*/maxAge:86400000}
 				})
 				.use(connect.query())
@@ -225,7 +185,7 @@ App.start=function(port){
 					try{
 						var pathname=req._parsedUrl.pathname, host=req.headers.host.split(':')[0];
 					
-						/* DEV */
+						/*#if DEV*/
 						if(host==='localhost'){
 							if(pathname && pathname.charAt(1)==='~'){ //0:'/',1:'~'
 								var e_p=UString.splitLeft(pathname.substr(1),'/');
@@ -235,22 +195,24 @@ App.start=function(port){
 								}else req.entry='main';
 							}else req.entry='main';
 						}else{
-						
-						/* /DEV */
+						/*#/if*/
 						req.entry=Config.reversedEntries[host];
-						/* DEV */
+						/*#if DEV*/
 						}
 						
 						if(!Config.entries[req.entry]) throw new Error('This entry doesn\'t exists : "'+req.entry+'"');
-						/* /DEV */
+						/*#/if*/
 						
 						var route=req.route=t.router.find(pathname,'en',req.entry);
 						req.currentUrl=pathname;//window.location.pathname
 						
 						var controller=t.controllers[req.entry][route.controller];
 						if(!controller)
-							/* DEV */res.exception(HttpException.newInternalServerError('Controller Not Found: '+route.controller));/* /DEV */
-							/* PROD */res.notFound();/* /PROD */
+							/*#if DEV*/
+							res.exception(HttpException.newInternalServerError('Controller Not Found: '+route.controller));
+							/*#else*/
+							res.notFound();
+							/*#/if*/
 						else{
 							controller=new controller(t,req,res);
 							if(controller.beforeDispatch(req,res)!==false)

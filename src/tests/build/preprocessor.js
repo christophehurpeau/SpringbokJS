@@ -44,5 +44,16 @@ module.exports={
 		result=Preprocessor({arg1:true},'test.limit(/*#val arg1 */false,123)');
 		t.equal(result,'test.limit(true,123)');
 		t.done();
+	},
+	
+	ifelse:function(t){
+		var result;
+		result=Preprocessor({},'/*#ifelse NODE*/module.exports||S.behaviours.Slug/*#/if*/');
+		t.equal(result,"module.exports");
+		result=Preprocessor({},'/*#ifelse NODE*/module.exports||S.behaviours.Slug/*#/if*/',true);
+		t.equal(result,"S.behaviours.Slug");
+		result=Preprocessor({},'nextTick:/*#ifelse NODE*/(process.nextTick||function(fn){ setTimeout(fn,0); })/*#/if*/,');
+		t.equal(result,"nextTick:process.nextTick,");
+		t.done();
 	}
 }

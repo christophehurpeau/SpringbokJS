@@ -1,2 +1,2 @@
-// tester env
-module.exports=require('./'+(true?'dev':'prod')+'/app.js');
+global.SPRINGBOK_ENV=require('fs').readFileSync('./env');
+module.exports=require('./'+(SPRINGBOK_ENV==='dev'||SPRINGBOK_ENV==='home'||SPRINGBOK_ENV==='work'?'dev':'prod')+'/app.js');

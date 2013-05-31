@@ -30,16 +30,22 @@ Controller.prototype={
 	},
 	
 	webApp:function(entry){
-		var loading=this.H.tC('Loading...');
+		var loading=this.H.tC('Loading...'), ielt9=this.req.isIElt9();
 		this.res.end('<!DOCTYPE html><html><head>'
 			+this.H.metaCharset()+this.H.metaLanguage()
 			+'<title>'+Config.projectName+' - '+loading+'</title>'
 			+this.H.cssLink()
 			+this.H.jsInline(
 				'window.onload=function(){'
+					+(ielt9?
+						'var s=document.createElement("script");'
+						+'s.type="text/javascript";'
+						+'s.src="'+this.H.staticUrl('/es5-compat.js')+'";'
+						+'document.body.appendChild(s);'
+					:'')
 					+'var s=document.createElement("script");'
 					+'s.type="text/javascript";'
-					+'s.src="'+this.H.staticUrl('/'+entry+'.js')/* DEV */+'?'+Date.now()/* /DEV */+'";'
+					+'s.src="'+this.H.staticUrl('/'+entry+(ielt9?'.oldIe':'')+'.js')/*#if DEV*/+'?'+Date.now()/*#/if*/+'";'
 					+'document.body.appendChild(s);'
 				+'};'
 			)

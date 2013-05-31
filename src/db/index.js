@@ -1,4 +1,4 @@
-/* NODE */ var mongodb=require('mongodb'); /* /NODE */
+/*#if NODE*/ var mongodb=require('mongodb'); /*#/if*/
 /* http://axemclion.github.com/IndexedDBShim/dist/IndexedDBShim.min.js */
 S.Db=(function(){
 	var connections={},Db={
@@ -8,7 +8,7 @@ S.Db=(function(){
 			},onEnd);
 		},
 		create:function(key,dbCondig,onEnd){
-			/* NODE */
+			/*#if NODE*/
 			mongodb.MongoClient.connect('mongodb://localhost:27017/'+dbCondig.dbName,function(err,db){
 				if(err) console.error('connection error:',err);
 				else{
@@ -17,10 +17,10 @@ S.Db=(function(){
 					onEnd();
 				}
 			});
-			/* /NODE */
+			/*#/if*/
 		},
 		get:function(key){
-			/* DEV */ if(!connections[key]) throw new Error('No connections for db "'+key+'"'); /* /DEV */
+			/*#if DEV*/ if(!connections[key]) throw new Error('No connections for db "'+key+'"'); /*#/if*/
 			return connections[key];
 		}
 	};

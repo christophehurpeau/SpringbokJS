@@ -24,7 +24,7 @@ Listenable.prototype={
 	},
 	fire:function(event/*,args*/){
 		/*if(this._events[event]){
-			args = arraySliceFunction.call(arguments,1);
+			args = UArray.slice1(arguments);
 			for(var i=0,events=this._events[event],l=events.length; i<l; i++)
 				events[i].apply(this,args);
 		}*/
@@ -45,4 +45,4 @@ Listenable.prototype={
 	removeEvent:function(event){
 		event ? delete this._events[event] : delete this._events;
 	}
-}
+};

@@ -89,11 +89,10 @@ S.Model=(function(){
 				prevOnEnd.apply(null,arguments);
 			};*/
 			
-			/* NODE */
+			/*#if NODE*/
 			if(!App.behaviours[behaviour]) App.behaviours[behaviour]=require('../behaviours/'+behaviour);
 			App.behaviours[behaviour](model,onEnd);
-			/* /NODE */
-			/* BROWSER */behaviour(model,onEnd);/* /BROWSER */
+			/*#else*/behaviour(model,onEnd);/*#/if*/
 		},function(err){
 			//S.log(model.modelName+' end foreach behaviours');
 			if(err){ console.err(err); throw new Error(err); }

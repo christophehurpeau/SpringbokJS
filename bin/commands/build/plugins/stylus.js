@@ -21,7 +21,7 @@ module.exports={
 		
 		//includes
 		this.includes("@includeCore 'index';\n"+data,file.dirname,function(data,includes){
-			var pathDev=file.rootPath+'dev/'+file.dirname+'/',pathProd=file.rootPath+'prod/'+file.dirname+'/';
+			var pathDev=file.rootPath+'dev/'+file.dirname,pathProd=file.rootPath+'prod/'+file.dirname;
 			mkdirp.sync(pathDev);
 			mkdirp.sync(pathProd);
 			

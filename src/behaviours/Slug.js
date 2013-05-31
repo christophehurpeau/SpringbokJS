@@ -1,8 +1,8 @@
 require('springboktools/UString/normalize');
-((/* NODE||BROWSER */module.exports||S.behaviours.Slug))=function(model,onEnd){
+/*#ifelse NODE*/(module.exports||S.behaviours.Slug)/*#/if*/=function(model,onEnd){
 	model.Fields.slug=[String];
 	model.beforeInsert.push(function(data,onEnd){
-		/* DEV */ if(!data[model.displayField]) throw new Error(model.displayField+" REQUIRED ! data="+UDebug.dump(data)) /* /DEV */
+		/*#if DEV*/ if(!data[model.displayField]) throw new Error(model.displayField+" REQUIRED ! data="+UDebug.dump(data)) /*#/if*/
 		data.slug=UString.slugify(data[model.displayField]);
 		onEnd();
 	});

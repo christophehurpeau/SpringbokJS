@@ -11,12 +11,12 @@ Route.prototype={
 var Router=module.exports=function(r,rl){
 	var t=this;
 	t.routes = {}; t.routesLangs = {};
-	/* NODE */
+	/*#if NODE*/
 	if(r===undefined){
 		r=App.config('routes'),
 		rl=App.config('routesLangs');
 	}
-	/* /NODE */
+	/*#/if*/
 	
 	
 	//Langs
@@ -65,8 +65,8 @@ var Router=module.exports=function(r,rl){
 				route=route[2];
 				Config.allLangs.forEach(function(lang){
 					if(!route[lang]){
-						/* DEV */if(lang==='en') /* /DEV */route.en=url;
-						/* DEV */else throw new Error('Missing lang "'+lang+'" for route "'+url+'"');/* /DEV */
+						/*#if DEV*/if(lang==='en') /*#/if*/route.en=url;
+						/*#if DEV*/else throw new Error('Missing lang "'+lang+'" for route "'+url+'"');/*#/if*/
 					}
 				});
 			}else if(!url.match(/\/[a-z]/)) Config.allLangs.forEach(function(lang){ route[lang]=url; });
@@ -176,10 +176,10 @@ Router.prototype={
 		return this.routesLangs['->' + lang][string] || string;
 	},
 	untranslate:function(lang,string){
-		/* DEV */
+		/*#if DEV*/
 		if(!this.routesLangs[lang + '->']) throw new Error('Missing lang "'+lang+'"');
 		if(!this.routesLangs[lang + '->'][string]) throw new Error('Missing translation for string "'+string+'"');
-		/* /DEV */
+		/*#/if*/
 		return this.routesLangs[lang + '->'][string] || string;
 	}
 };

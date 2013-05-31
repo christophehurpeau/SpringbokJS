@@ -81,7 +81,7 @@ S.extProto(S.Helpers,{
 			$url=(!$full?'':($full===true?FULL_BASE_URL:$full)).BASE_URL.CRoute::getArrayLink($entry,$url);
 			$escape=false;
 		}else{
-			if(empty($url) || $url==='/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL/* DEV *\/.CRoute::$_prefix/* /DEV *\/.'/';
+			if(empty($url) || $url==='/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL/*#if DEV *\/.CRoute::$_prefix/*#/if*\/.'/';
 			else{
 				if(strpos($url,'://')>0) return $url;
 				if(substr($url,0,2)==='\/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).substr($url,1);
@@ -92,12 +92,12 @@ S.extProto(S.Helpers,{
 	*/
 	url:function(url,entry,options){
 		if(!S.isObj(options)) options={full:options};
-		/* DEV */ if(entry===false || entry===true) throw new Error('Entry param cannot be false or true'); /* /DEV */
+		/*#if DEV*/ if(entry===false || entry===true) throw new Error('Entry param cannot be false or true'); /*#/if*/
 		if(entry==null){
 			entry=this.req.entry;
-			options.full=(/* DEV||PROD */'/~'+entry||options.full===true ? Config.siteUrl[entry] : '');
-		}else if((entry !== this.req.entry && options.full!==false) || options.full===true) options.full=(/* DEV||PROD */'/~'+entry||Config.siteUrl[entry]);
-		else options.full=(/* DEV||PROD */'/~'+entry||'');
+			options.full=/*#ifelse DEV */('/~'+entry||options.full===true ? Config.siteUrl[entry] : '')/*#/if*/;
+		}else if((entry !== this.req.entry && options.full!==false) || options.full===true) options.full=/*#ifelse DEV */('/~'+entry||Config.siteUrl[entry])/*#/if*/;
+		else options.full=/*#ifelse DEV */('/~'+entry||'')/*#/if*/;
 		
 		if(S.isStr(url) || !url){
 			if(url) url=url.trim();

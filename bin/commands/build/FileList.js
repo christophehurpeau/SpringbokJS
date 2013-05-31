@@ -2,7 +2,7 @@
 var util=require("util"), sysPath=require('path'),fs=require("fs"), EventEmitter=require("events").EventEmitter,
 	SourceFile=require('./SourceFile.js');
 
-var RESET_TIME=65;
+var RESET_TIME=85;
 var FileList=S.extClass(EventEmitter,{
 	isCore:false,
 	
@@ -83,11 +83,12 @@ var FileList=S.extClass(EventEmitter,{
 				if(this.compiling.length===0) this.emit('ready');
 			}).bind(this),RESET_TIME);
 	},
-	_compileDependentFiles:function(path){
+	_compileDependentFiles:function(path,type){
+		type=type||'app';
 		this.files
-			.filter(function(dependent){ return dependent.cache.dependencies 
-													&& dependent.cache.dependencies.length > 0 })
-			.filter(function(dependent){ return path in dependent.cache.dependencies })
+			.filter(function(dependent){ return dependent.cache.dependencies && dependent.cache.dependencies[type]
+													&& dependent.cache.dependencies[type].length > 0 })
+			.filter(function(dependent){ return path in dependent.cache.dependencies[type] })
 			.forEach(this._compile.bind(this));
 	},
 	_compile:function(file){
@@ -106,7 +107,7 @@ var FileList=S.extClass(EventEmitter,{
 				this.errorsCount--;
 				delete this.errors[file.path];
 			}
-			console.log("Compiled file: "+file.path+" ["+this.compiling.length+"]");
+			console.log("Compiled file: "+file.path+" [remaining: "+this.compiling.length+']');
 			this._compileDependentFiles(file.path);
 			this._checkReady();
 		}.bind(this))

@@ -29,7 +29,7 @@ module.exports=function(_options){
 			countVFormat:function(string,count,args){
 				return UString.vformat(this.count(string,count),args).replace(/%d/,count);
 			}
-			/* DEV */,sync:sync/* /DEV */
+			/*#if DEV*/,sync:sync/*#/if*/
 		};
 	}
 	

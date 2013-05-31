@@ -68,7 +68,6 @@ S.Form.Container=S.extClass(S.Elt.WithContent,{
 
 S.Form.Containable=S.extClass(S.Elt,{
 	ctor:function(form,name){
-		///* DEV */if(!name) throw new Error;/* /DEV */
 		S.Elt.call(this);
 		this._form=form; this._name=name;
 	},

@@ -1,12 +1,13 @@
 module.exports=App.Model('PageSlugRedirect',{
 	Fields:{
+		model:[String],
 		from:[String],
 		to:[String],
 		direct:[Boolean]
 	},
 	
-	create:function(oldSlug,newSlug){
-		this.collection.insert({from:oldSlug,to:newSlug,direct:true});
+	create:function(modelName,oldSlug,newSlug){
+		this.collection.insert({model:modelName,from:oldSlug,to:newSlug,direct:true});
 		throw new Error;
 		//this.collection.find
 		//if(self::QUpdateOneField('direct',false)->byNew_slug($oldSlug))

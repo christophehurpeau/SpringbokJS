@@ -7,7 +7,7 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	this.type=this.compiler&&this.compiler.type;
 	
 	this.srcPath=fileList.rootPath+'src/'+path;
-	this.dirname=sysPath.dirname(path); this.basename=sysPath.basename(path);
+	this.dirname=sysPath.dirname(path)+'/'; this.basename=sysPath.basename(path);
 	
 	this.compiledPath=this.compiler&&this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
 	
@@ -16,7 +16,7 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 		var resWebApp;
 		if( this.isWebApp=fileList.regexpWebAppPath && (resWebApp=fileList.regexpWebAppPath.exec(path)) ){
 			this.webApp=resWebApp[1];
-			if(this.dirname===this.webApp && this.basename===this.webApp+'.js'){
+			if(this.dirname===this.webApp+'/' && this.basename===this.webApp+'.js'){
 				this.isWebAppEntry=this.isBrowser=true;
 				this.compiledPath='web/'+this.compiledPath.substr(this.webApp.length+1);
 				
@@ -97,7 +97,7 @@ SourceFile.prototype={
 									t.cache.dependencies=null;
 									return callback();
 								}
-								t.cache.dependencies=dependencies;
+								t.cache.dependencies=!dependencies || dependencies.app ? dependencies : {app:dependencies};
 								t.write(devResultOptimized,prodResultOptimized,callback);
 							});
 						})
@@ -111,21 +111,26 @@ SourceFile.prototype={
 		}
 	},
 	
-	write:function(devResultOptimized,prodResultOptimized,callback){
-		var results={'dev':devResultOptimized,'prod':prodResultOptimized},paths=[];
+	paths:function(callback,results,write){
+		var paths=[];
 		async.forEach(['dev','prod'],function(dir,callback){
-			var result=results[dir];
-			if(result==null) return callback();
+			if(results && results[dir]==null) return callback();
 			var path=this.rootPath+dir+'/';
 			this._write(path+this.compiledPathDirname,function(err){
 				if(err) return callback(err);
-				fs.writeFile(path=(path+this.compiledPath),result,function(err){
-					if(err) return callback(err);
-					paths.push(path);
-					callback();
-				});
+				paths.push(path=(path+this.compiledPath));
+				if(results && write){
+					fs.writeFile(path,results[dir],function(err){
+						if(err) return callback(err);
+						callback();
+					});
+				}else callback();
 			}.bind(this));
 		}.bind(this),function(err){ callback(err,paths); });
+	},
+	
+	write:function(devResultOptimized,prodResultOptimized,callback){
+		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true);
 	},
 	copy:function(callback){
 		var t=this,srcPath=this.srcPath;

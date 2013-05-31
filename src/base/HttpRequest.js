@@ -1,10 +1,15 @@
 var http=require('http');
 S.extProto(http.IncomingMessage,{
 	lang:'en',//TODO lang
-	isIElt8:function(){
+	
+	ieVersion:function(){
+		if(this.ieVersion !== undefined) return this.ieVersion;
 		var ua=this.headers['user-agent'],m;
-		return ua && (m=ua.match(/MSIE ([\d\.]+)/i)) && m[1]<8;
+		if(!ua || !(m=ua.match(/MSIE ([\d\.]+)/i))) return this.ieVersion=false;
+		return this.ieVersion=m[1];
 	},
+	isIElt8:function(){ return this.ieVersion()<8; },
+	isIElt9:function(){ return this.ieVersion()<9; },
 	
 	accepts:function(type){
 		var accept=this.headers.accept;

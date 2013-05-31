@@ -24,7 +24,7 @@ module.exports=FileList.extend({
 	},
 	
 	_ignored:function(path){
-		if(path==='package.json') return true;
+		if(path==='package.json' || path.substr(0,10)==='src/tests/') return true;
 		if(path.substr(0,11)==='src/config/') return false;
 		return sysPath.basename(path).startsWith('_');
 	}

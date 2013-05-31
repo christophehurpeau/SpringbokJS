@@ -3,12 +3,12 @@ YAML.stringify=YAML.dump;
 module.exports=function(file,data,callback){
 	data=data.replace("\t",' ');
 	var configname=file.path.slice(7,-4);
-	if(configname==='build'||configname==='tests'||configname==='_') callback(null,null,null); //nothing
+	if(configname==='build'||configname==='tests'||configname==='_') return callback(null,null,null); //nothing
 	else if(false&&file.fileList.isPlugin()){
 		console.log("TODO");
 	}else if(configname.charAt(0)==='_'){
 		var t=this,config=YAML.load(data);
-		var config_=UFiles.readYamlSync(file.rootPath+'src/'+file.dirname+'/_.yml');
+		var config_=UFiles.readYamlSync(file.rootPath+'src/'+file.dirname+'_.yml');
 		config=UObj.union(config,config_);
 		if(!config.entries) return callback('config.entries must be set in your config file "'+configname+'"');
 		
@@ -23,7 +23,7 @@ module.exports=function(file,data,callback){
 		UObj.forEach(config.entries,function(k,v){ config.reversedEntries[v]=k; });
 		
 		var result=t.appConfig=YAML.stringify(config);
-		callback(null,result,result,['config/_.json']);
+		return callback(null,result,result,['config/_.json']);
 	}else{
 		var result=YAML.load(data),config=file.fileList.config,plugins=config.plugins;
 		

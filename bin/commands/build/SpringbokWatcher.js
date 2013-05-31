@@ -124,5 +124,6 @@ module.exports={
 	init:function(fileList,persistent,startServer,pluginsDir){
 		var sw=new SpringbokWatcher(fileList,persistent,startServer,pluginsDir);
 		sw.init();
+		return sw;
 	}
 };
