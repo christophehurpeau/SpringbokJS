@@ -1,6 +1,12 @@
+/*#if DEV*/
+console.log('App: DEV');
+/*#else*/
+console.log('App: PROD');
+/*#/if*/
 var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), async=require('async'), util=require('util'),
 	connect=require('connect'), httpSendFile=require('send'),
 	ejs=require('springbokejs'), ejsUtils=require('springbokejs/lib/utils');
+
 
 require('./Springbok');
 
@@ -11,6 +17,7 @@ require.extensions['.ejs']=require.extensions['.js'];
 
 require('./base/HttpRequest'); require('./base/HttpResponse');
 require('./base/HttpException')
+require('./base/Router');
 
 global.WEB_URL='/web/';
 global.WEB_FOLDER='./';
@@ -24,6 +31,7 @@ App.CValidator=require('./components/CValidator');
 require('./base/i18n');
 
 App.start=function(port){
+	port=(port||3000);
 	S.log('Starting app on port '+port);
 	var t=this,dir=t.appDir;
 	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
@@ -222,8 +230,23 @@ App.start=function(port){
 						res.exception(err);
 					}
 					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
-				}).listen(port=(port||3000));
-			console.log("Listening on port "+port);
+				});
+				
+				
+				var successListenCallback=function(){ console.log("Listening on port "+port); }
+				app.on('error',function(e){
+					if (e.code == 'EADDRINUSE'){
+						console.log('Address in use, retrying...');
+						setTimeout(function(){
+							app.close(function(){
+								app.listen(++port,'localhost',successListenCallback);
+							});
+						});
+					}
+					console.log('there was an error:', err.message);
+				});
+				app.listen(port,'localhost',successListenCallback);
+			
 			onEnd();
 		}
 	]/*,function(err){ if(err){ console.err(err); throw err; } }*/);

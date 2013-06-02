@@ -24,9 +24,6 @@ process.on('uncaughtException',function(err){
 });
 
 
-//TODO keep this in app only not cli !
-var Router=require('./base/Router');
-
 
 global.App={
 	behaviours:[],
@@ -35,7 +32,7 @@ global.App={
 		App.env = global.SPRINGBOK_ENV;
 		App.appDir = dir+='dev/';
 		global.Config=this.config('_' + App.env);
-		App.router=new Router();
+		App.router=new App.Router();
 		
 		['controllers','PControllers','views','models','PModels'].forEach(function(v){ App[v]={}; });
 		global.M=App.models;

@@ -1,14 +1,14 @@
 var DEFAULT = { controller: 'Site', action: 'Index' };
 
-var Route=function(attrs){
+App.Route=function(attrs){
 	UObj.extend(this,attrs);
 };
-Route.prototype={
+App.Route.prototype={
 	
 };
 
 
-var Router=module.exports=function(r,rl){
+App.Router=function(r,rl){
 	var t=this;
 	t.routes = {}; t.routesLangs = {};
 	/*#if NODE*/
@@ -113,7 +113,7 @@ var Router=module.exports=function(r,rl){
 	});
 	//console.log(this.routes);
 };
-Router.prototype={
+App.Router.prototype={
 	find:function(all,lang,entry){
 		var t = this,route = false,m,r,routes=t.routes[entry];
 		all=t.all='/'+UString.trim(all,'/');
@@ -143,7 +143,7 @@ Router.prototype={
 					}
 				}
 				
-				route=new Route({
+				route=new App.Route({
 					all:all,
 					controller:c_a[0],
 					action:c_a[1],

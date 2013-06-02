@@ -17,7 +17,7 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 		if( this.isWebApp=fileList.regexpWebAppPath && (resWebApp=fileList.regexpWebAppPath.exec(path)) ){
 			this.webApp=resWebApp[1];
 			if(this.dirname===this.webApp+'/' && this.basename===this.webApp+'.js'){
-				this.isWebAppEntry=this.isBrowser=true;
+				this.isWebAppEntry=this.isBrowser=this.isMainJs=true;
 				this.compiledPath='web/'+this.compiledPath.substr(this.webApp.length+1);
 				
 			}else if( this.isBrowser=path.slice(this.webApp.length+1,4)==='web/'){

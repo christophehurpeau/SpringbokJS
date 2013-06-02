@@ -36,10 +36,19 @@ module.exports={
 			console.log('COMPILING WEBAPP : '+file.path);
 			
 			if(file.isWebAppEntry){
-				data="var WEBAPP_NAME='"+file.webApp+"';\nincludeCore('browser/webapp');\n"
+				var configPath=file.fileList.rootPath+'src/'+file.webApp+'/config/',
+					config=UFiles.readYamlSync(configPath+'/config.yml');
+				
+				if(!config.availableLangs) return callback('config.availableLangs must be set in your config file for webapp "'+file.webApp+'"');
+				config.allLangs=config.allLangs||config.availableLangs;
+		
+				
+				data="var WEBAPP_NAME='"+file.webApp+"';\n"
+					+"var Config="+JSON.stringify(config)+";\n"//keep in the function
+					+"includeCore('browser/webapp');\n"
 					+'App.jsapp('+JSON.stringify(file.fileList.config.projectName)+',__SPRINGBOK_COMPILED_TIME__);'
-					+('S.router.init('+JSON.stringify(UFiles.readYamlSync(file.fileList.rootPath+'src/'+file.webApp+'/config/routes.yml'))
-						+','+JSON.stringify(UFiles.readYamlSync(file.fileList.rootPath+'src/config/routesLangs.yml'))+');')
+					+('App.preinit('+JSON.stringify(UFiles.readYamlSync(configPath+'routes.yml'))
+						+','+JSON.stringify(UFiles.readYamlSync(configPath+'routesLangs.yml'))+');')
 					+data
 					+'App.run();';
 			}else if(!/^[a-zA-Z_\-]\/(controllers|models|views|viewsLayouts|web)\//.test(file.path))
@@ -60,6 +69,11 @@ module.exports={
 					if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
 					data=data.replace(/App\.[A-Za-z]*Controller\(\{/g,'module.exports=$&');
 				}
+			}
+			
+			if(file.isBrowser){
+				if(file.isMainJs) data='(function(window,undefined){'+data+'})(window);';
+				data=data.replace(/\bglobal\./g,'window.');
 			}
 			
 			var defs=(file.fileList.buildConfig && file.fileList.buildConfig.config) || {};
@@ -120,7 +134,7 @@ module.exports={
 			defs.OLD_IE=!!oldIe;
 			var toplevel=UglifyJS.parse(code,{});
 			toplevel.figure_out_scope();
-			var compressor = UglifyJS.Compressor({ unsafe:true, comparisons:true, global_defs:defs });
+			var compressor = UglifyJS.Compressor({ unsafe:true, comparisons:true, global_defs:defs, sequences:false });
 			var compressed_ast = toplevel.transform(compressor);
 			
 			//var source_map = UglifyJS.SourceMap({});

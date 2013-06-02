@@ -7,9 +7,6 @@ if(OLD_IE){
 	}
 }
 
-window.global=window;
-var global=window;
-
 includeCoreUtils('index');
 includeCoreUtils('UObj');
 includeCoreUtils('UArray');
