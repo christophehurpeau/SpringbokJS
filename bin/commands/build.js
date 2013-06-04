@@ -46,6 +46,7 @@ module.exports={
 			setTimeout(function(){
 				fileList.on('ready',ready);
 				fileList.on('reset',reset);
+				stream.writable && stream.write('restart');
 			},10);
 		};
 		fileList.on('ready',ready);
@@ -61,7 +62,13 @@ module.exports={
 				client.once('data',function(data){
 					if(data.toString()!=='FileList SpringbokJS') client.end();
 					client.on('data',function(data){
-						if(data.toString()==='reload') sw.reload();
+						data=data.toString();
+						if(data==='reload') sw.reload();
+						else if(data==='restart'){
+							console.log('RELOAD UNSUPPORTED YET: exiting....');
+							process.exit(1);
+							
+						}
 					});
 				})
 				client.on('end',function(){

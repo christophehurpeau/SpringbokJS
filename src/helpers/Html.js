@@ -14,9 +14,10 @@ S.extProto(S.Helpers,{
 	},
 	
 	metaCharset:function(encoding){
+		encoding=encoding||'utf-8';
 		return this._isIElt8
-			? '<meta http-equiv="Content-Type" content="text/html; charset='+(encoding||'utf-8')+'"/>'
-			: '<meta charset="'+(encoding||'utf-8')+'">';
+			? '<meta http-equiv="Content-Type" content="text/html; charset='+encoding+'"/>'
+			: '<meta charset="'+encoding+'">';
 	},
 	metaLanguage:function(){
 		var lang='en';
@@ -25,7 +26,10 @@ S.extProto(S.Helpers,{
 	
 	cssLink:function(url,media){
 		if(!url) url='/main';
-		return '<link rel="stylesheet" type="text/css" href="'+this.staticUrl(url.indexOf('?')!==-1?url:(url+'.css'),'css')+'"'+(media?' media="'+media+'"':'')+'/>';
+		return '<link rel="stylesheet" type="text/css" href="'+this.staticUrl(url+'.css')+'"'+(media?' media="'+media+'"':'')+'/>';
+	},
+	jsLink:function(url){
+		return '<script type="text/javascript" src="'+this.staticUrl(url+'.js')+'"></script>';
 	},
 	favicon:function(imgUrl){
 		if(!imgUrl) imgUrl=='favicon.png';
@@ -34,6 +38,10 @@ S.extProto(S.Helpers,{
 			+'<link rel="shortcut icon" type="image/x-icon" href="'+href+'"/>';
 	},
 	
+	jsI18n:function(url){
+		if(!url) url='/main';
+		return this.jsLink(url+'.en');//TODO use CLang
+	},
 	
 	
 	
@@ -50,11 +58,11 @@ S.extProto(S.Helpers,{
 					&& (url.length < 7 || url.substr(0,7)!=='mailto:')))) url=this.url(url,options.fullUrl);
 		delete options.fullUrl;
 		
-		var a=S.createElt('a').html(title),current=false;
+		var a=$.create('a').html(title),current=false;
 		
 		if(options.current !== undefined){
 			if(options.current===1) current=true;
-			else if(options.current && url!==false && url !==this.baseurl) current=url.startsWith(this.currentUrl);
+			else if(options.current && url!==false && url !==this.baseUrl) current=url.startsWith(this.currentUrl);
 			else current=url===this.currentUrl;
 			
 			delete options.current;

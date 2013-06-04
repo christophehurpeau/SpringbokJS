@@ -39,14 +39,14 @@ module.exports={
 				var configPath=file.fileList.rootPath+'src/'+file.webApp+'/config/',
 					config=UFiles.readYamlSync(configPath+'/config.yml');
 				
+				if(!config.name) config.name=file.fileList.config.projectName;
 				if(!config.availableLangs) return callback('config.availableLangs must be set in your config file for webapp "'+file.webApp+'"');
 				config.allLangs=config.allLangs||config.availableLangs;
-		
 				
-				data="var WEBAPP_NAME='"+file.webApp+"';\n"
-					+"var Config="+JSON.stringify(config)+";\n"//keep in the function
-					+"includeCore('browser/webapp');\n"
-					+'App.jsapp('+JSON.stringify(file.fileList.config.projectName)+',__SPRINGBOK_COMPILED_TIME__);'
+				config.id=file.webApp;
+				config.version=Date.now();
+				data="var Config="+JSON.stringify(config)+";\n"//keep in the function
+					+"includeCore('browser/webapp/');\n"
 					+('App.preinit('+JSON.stringify(UFiles.readYamlSync(configPath+'routes.yml'))
 						+','+JSON.stringify(UFiles.readYamlSync(configPath+'routesLangs.yml'))+');')
 					+data
@@ -72,11 +72,12 @@ module.exports={
 			}
 			
 			if(file.isBrowser){
-				if(file.isMainJs) data='(function(window,undefined){'+data+'})(window);';
+				if(file.isMainJs) data='(function(window,undefined){var baseUrl="/";'+data+'})(window);';
 				data=data.replace(/\bglobal\./g,'window.');
 			}
 			
 			var defs=(file.fileList.buildConfig && file.fileList.buildConfig.config) || {};
+			defs.WebApp=!!file.isWebAppEntry;
 			defs.DEV=true; defs.PROD=false; var devResult=Preprocessor(defs,data,file.isBrowser);
 			defs.DEV=false; defs.PROD=true; var prodResult=Preprocessor(defs,data,file.isBrowser);
 			

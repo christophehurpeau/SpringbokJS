@@ -53,7 +53,7 @@ S.Form.Container=S.extClass(S.Elt.WithContent,{
 		this.tagName=contained._form._tagContainer||'div';
 		S.Elt.WithContent.call(this);
 		this._form=contained._form;
-		defaultClass && this.attrClass(defaultClass);
+		defaultClass && this.setClass(defaultClass);
 		this.html(contained.toString());
 	},
 	

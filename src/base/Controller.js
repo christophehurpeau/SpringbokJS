@@ -34,7 +34,8 @@ Controller.prototype={
 		this.res.end('<!DOCTYPE html><html><head>'
 			+this.H.metaCharset()+this.H.metaLanguage()
 			+'<title>'+Config.projectName+' - '+loading+'</title>'
-			+this.H.cssLink()
+			+this.H.cssLink('/'+entry)
+			+this.H.jsI18n('/'+entry)
 			+this.H.jsInline(
 				'window.onload=function(){'
 					+(ielt9?
@@ -45,7 +46,7 @@ Controller.prototype={
 					:'')
 					+'var s=document.createElement("script");'
 					+'s.type="text/javascript";'
-					+'s.src="'+this.H.staticUrl('/'+entry+(ielt9?'.oldIe':'')+'.js')/*#if DEV*/+'?'+Date.now()/*#/if*/+'";'
+					+'s.src="'+this.H.staticUrl('/'+entry+(ielt9?'.oldIe':'')+'.js')+'";'
 					+'document.body.appendChild(s);'
 				+'};'
 			)

@@ -7,7 +7,6 @@ App.Route.prototype={
 	
 };
 
-
 App.Router=function(r,rl){
 	var t=this;
 	t.routes = {}; t.routesLangs = {};
@@ -113,10 +112,11 @@ App.Router=function(r,rl){
 	});
 	//console.log(this.routes);
 };
+App.Router.routeStripper=/^\/+|\/+$/g;
 App.Router.prototype={
 	find:function(all,lang,entry){
 		var t = this,route = false,m,r,routes=t.routes[entry];
-		all=t.all='/'+UString.trim(all,'/');
+		all=t.all='/'+all.replace(App.Router.routeStripper,'');
 		console.log('router: find: "'+all+'"');
 		for (var i in routes){
 			r = routes[i];

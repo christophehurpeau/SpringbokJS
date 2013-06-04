@@ -15,7 +15,7 @@ includeCore('elements/Form');
 		layout:function(layout){ this.layout=layout; return this; },
 		
 		render:function(layoutTitle,add){
-			var t=this,H=this.H,content=S.Elt.div().html(''),table=S.createElt('table').html('');
+			var t=this,H=this.H,content=S.Elt.div().html(''),table=$.create('table').html('');
 			
 			if(add){
 				if(S.isStr(add)) add={action:add};
@@ -27,7 +27,7 @@ includeCore('elements/Form');
 					echo ' '.$form->autoField($field,array('label'=>$label));
 				echo $form->end(_tC('Add'));*/
 				
-				var form=H.FormForModel(this.modelName).attrClass('oneline').action(add.action);
+				var form=H.FormForModel(this.modelName).setClass('oneline').action(add.action);
 				add.fields.forEach(function(f){ form.autoField(f[0]).label(f[1]).end(); });
 				content.aHtml(form.end(H.tC('Add')));
 			}

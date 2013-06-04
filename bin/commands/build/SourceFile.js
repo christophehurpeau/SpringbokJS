@@ -4,12 +4,14 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	this.fileList=fileList;
 	this.rootPath=fileList.rootPath; this.path=path;
 	UObj.extend(this,compilerLintersOptimizers);
-	this.type=this.compiler&&this.compiler.type;
+	this.type=this.compiler && this.compiler.type;
 	
 	this.srcPath=fileList.rootPath+'src/'+path;
 	this.dirname=sysPath.dirname(path)+'/'; this.basename=sysPath.basename(path);
 	
-	this.compiledPath=this.compiler&&this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
+	this.compiledPath=this.compiler && this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
+	this.compiler && this.compiler.newSourceFile && this.compiler.newSourceFile(this);
+	
 	
 	if((this.isBrowser=path.startsWith('web/'))) this.isWebApp=false;
 	else{
@@ -34,7 +36,6 @@ var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
 	Object.freeze(this);
 }
 SourceFile.prototype={
-	
 	lint:function(file,data,callback){
 		var linters=this.linters,l=linters.length;
 		if(l===0) callback(null);
@@ -80,30 +81,38 @@ SourceFile.prototype={
 		},t=this;
 		
 		if(t.compiler){
-			fs.readFile(t.srcPath,function(err,buffer){
+			(t.compiler.read||function(path,callback){
+				fs.readFile(t.srcPath,function(err,buffer){
+					if(err) return callback(err);
+					callback(null,buffer.toString());
+				});
+			})(t.srcPath,function(err,fileContent){
 				if(err) return callbackError('Reading',err);
-				var fileContent=buffer.toString();
 				t.lint(t,fileContent,function(err){
 					if(err) return callbackError('Linting',err);
-					try{
-						t.compiler.compile(t,fileContent,function(err,devResult,prodResult,dependencies){
-							if(err) return callbackError('Compiling',err);
-							if(err===false) return callback();
-							t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
-								if(err) return callbackError('Optimizing',err);
-								t.cache.error=null;
-								t.cache.compilationTime=Date.now();
-								if(err===false){
-									t.cache.dependencies=null;
-									return callback();
-								}
-								t.cache.dependencies=!dependencies || dependencies.app ? dependencies : {app:dependencies};
-								t.write(devResultOptimized,prodResultOptimized,callback);
-							});
-						})
-					}catch(err){
-						return callbackError('Compiling',err);
-					}
+					
+					(t.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,function(err,data){
+						if(err) return callbackError('Parsing',err);
+						try{
+							t.compiler.compile(t,data,function(err,devResult,prodResult,dependencies){
+								if(err) return callbackError('Compiling',err);
+								if(err===false) return callback();
+								t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
+									if(err) return callbackError('Optimizing',err);
+									t.cache.error=null;
+									t.cache.compilationTime=Date.now();
+									if(err===false){
+										t.cache.dependencies=null;
+										return callback();
+									}
+									t.cache.dependencies=!dependencies || dependencies.app ? dependencies : {app:dependencies};
+									t.write(devResultOptimized,prodResultOptimized,callback);
+								});
+							})
+						}catch(err){
+							return callbackError('Compiling',err);
+						}
+					});
 				})
 			});
 		}else{
@@ -111,14 +120,14 @@ SourceFile.prototype={
 		}
 	},
 	
-	paths:function(callback,results,write){
+	paths:function(callback,results,write,destinationPath){
 		var paths=[];
 		async.forEach(['dev','prod'],function(dir,callback){
 			if(results && results[dir]==null) return callback();
 			var path=this.rootPath+dir+'/';
 			this._write(path+this.compiledPathDirname,function(err){
 				if(err) return callback(err);
-				paths.push(path=(path+this.compiledPath));
+				paths.push(path=(path+(destinationPath||this.compiledPath)));
 				if(results && write){
 					fs.writeFile(path,results[dir],function(err){
 						if(err) return callback(err);
@@ -129,8 +138,8 @@ SourceFile.prototype={
 		}.bind(this),function(err){ callback(err,paths); });
 	},
 	
-	write:function(devResultOptimized,prodResultOptimized,callback){
-		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true);
+	write:function(devResultOptimized,prodResultOptimized,callback,destinationPath){
+		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true,destinationPath);
 	},
 	copy:function(callback){
 		var t=this,srcPath=this.srcPath;
