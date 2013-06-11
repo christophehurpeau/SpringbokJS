@@ -8,6 +8,7 @@ S.extProto(http.IncomingMessage,{
 		if(!ua || !(m=ua.match(/MSIE ([\d\.]+)/i))) return this.ieVersion=false;
 		return this.ieVersion=m[1];
 	},
+	isIElt7:function(){ return this.ieVersion()<7; },
 	isIElt8:function(){ return this.ieVersion()<8; },
 	isIElt9:function(){ return this.ieVersion()<9; },
 	
@@ -19,6 +20,6 @@ S.extProto(http.IncomingMessage,{
 			if(acceptType.contains(';'))
 				acceptTypes[k]=accept.split(';',1)[0];
 		});
-		return S.isStr(type) ? UArray.has(acceptTypes,type) : UArray.hasAmong(acceptTypes,type)
+		return S.isString(type) ? UArray.has(acceptTypes,type) : UArray.hasAmong(acceptTypes,type)
 	}
 });

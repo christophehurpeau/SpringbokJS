@@ -77,13 +77,15 @@ SpringbokWatcher.prototype={
 	reload:function(reInstall){
 		console.log("RELOAD");
 		this.watcher.close();
-		var restart=function(){
+		this.close(function(){
 			this.fileList.reset(function(){
 				this.initWatcher();
 			}.bind(this));
-		}.bind(this);
-		if(this.server && this.server.close) this.server.close(restart);
-		else restart();
+		}.bind(this));
+	},
+	close:function(callback){
+		if(this.server && this.server.close) this.server.close(callback);
+		else callback();
 	},
 	
 	_onChangedFile:function(){

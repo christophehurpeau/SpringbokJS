@@ -18,7 +18,8 @@ App.AdminController({
 	}),
 	Edit:App.Controller.Action(function(req,res){
 		var c=this,v=req.validParams(), slug=v.str('slug',1).notEmpty().val;
-		c.findOne('Page').byIdNotNull(slug,function(page){
+	//	Page.c(this).findOne().byIdNotNull(slug)
+		this.findOne('Page').byIdNotNull(slug,function(page){
 			c.render({page:page});
 		});
 	})

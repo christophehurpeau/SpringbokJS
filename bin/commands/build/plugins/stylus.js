@@ -21,7 +21,7 @@ module.exports={
 		
 		//includes
 		this.includes("@includeCore 'index';\n"+data,file.dirname,function(data,includes){
-			var pathDev=file.rootPath+'dev/'+file.dirname,pathProd=file.rootPath+'prod/'+file.dirname;
+			var pathDev=file.rootPath+'dev/'+file.compiledPathDirname,pathProd=file.rootPath+'prod/'+file.compiledPathDirname;
 			mkdirp.sync(pathDev);
 			mkdirp.sync(pathProd);
 			
@@ -35,7 +35,7 @@ module.exports={
 			var sprites=new StylusSprites({
 				prefix:file.basename==='main'?'':file.basename,
 				path:file.rootPath+'src/'+file.dirname,
-				outputPath:[pathDev,pathProd]
+				outputPath:[pathDev+'/',pathProd+'/']
 			}),spritesfn=sprites.stylus();
 			
 			var compiler=stylus(data)

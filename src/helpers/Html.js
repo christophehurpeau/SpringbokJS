@@ -107,7 +107,7 @@ S.extProto(S.Helpers,{
 		}else if((entry !== this.req.entry && options.full!==false) || options.full===true) options.full=/*#ifelse DEV */('/~'+entry||Config.siteUrl[entry])/*#/if*/;
 		else options.full=/*#ifelse DEV */('/~'+entry||'')/*#/if*/;
 		
-		if(S.isStr(url) || !url){
+		if(S.isString(url) || !url){
 			if(url) url=url.trim();
 			if(!url || url==='/') return options.full+ '/';
 			else{

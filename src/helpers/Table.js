@@ -3,7 +3,7 @@ includeCore('elements/Form');
 (function(){
 	var Table=function(H,modelName,cols){
 		this.H=H;
-		this.cols=S.isStr(cols) ? cols.split(',') : cols;
+		this.cols=S.isString(cols) ? cols.split(',') : cols;
 		this.modelName=modelName;
 		this.model=App.models[modelName];
 	}
@@ -18,7 +18,7 @@ includeCore('elements/Form');
 			var t=this,H=this.H,content=S.Elt.div().html(''),table=$.create('table').html('');
 			
 			if(add){
-				if(S.isStr(add)) add={action:add};
+				if(S.isString(add)) add={action:add};
 				//if(!isset($add['form']['action'])) $add['form']['action']='/'.lcfirst($add['modelName']::$__pluralized).'/add';
 				if(!add.fields) add.fields=[[this.model.displayField,H.tF(this.modelName,'New')+' :']];
 				

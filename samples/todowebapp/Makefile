@@ -1,2 +1,2 @@
 compile:
-	sJs w
+	node --harmony /usr/bin/sJs w

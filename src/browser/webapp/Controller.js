@@ -1,40 +1,58 @@
 App.Controller = (function(){
-	var Controller = function(){
-	};
-	
-	Controller.prototype={
-		beforeDispatch:function(){},
+	var Controller=S.defineProperties({},{
+		writable:{
+			beforeDispatch:function(){}
+		},
+		
+		dispatch:function(route){
+			if(this.beforeDispatch) this.beforeDispatch();
+			route.sParams.unshift(route.nParams);
+			var m=this[UString.ucFirst(route.action)];
+			/*#if DEV*/ if(!m) console.log('This action doesn\'t exists: "'+route.action+'".'
+							+' Known methods: '+Object.keys(this).filter(function(m){ return m[0]===m[0].toUpperCase() })); /*#/if*/
+			if(!m) throw HttpException.notFound();
+			m.apply(this,route.sParams);
+		},
+		layout:function(name,callback){
+			if(!callback){ callback=name; name=this.defaultLayout; }
+			/*#if DEV*/if(!L.has(name)) throw new Error("This layout doesn't exists: "+name);/*#/if*/
+			L.get(name).render(callback.bind(this));
+		},
+		check:function(){
+			if(!S.CSecure.checkAccess()) throw new S.Controller.Stop();
+		},
 		
 		redirect:function(to,exit){
 			App.load(to);
 			if(exit) throw new S.Controller.Stop();
 		},
 		dispose:function(){
-			delete this.methods;
 		}
+	});
+	
+	var Action=function(args,route,action){
+		if(S.isFunc(args)){ action=args; args={}; }
+		else if(S.isFunc(route)){ action=route; route=undefined; }
+		
+		if(route===undefined) route='/:controller/:action/*';
+		
+		action.route=function(){ return '?'; };
+		return action;
 	};
 	
-	Controller.extend=S.extThis;
-	
 	var createF=function createF(Controller){
-		var f=function(classProps,protoProps){
-			if(!protoProps){ protoProps=classProps; classProps=undefined; }
-			return Controller.extend(protoProps,classProps);
+		var f=function(controllerName,props){
+			/*#if DEV*/if(!S.isString(controllerName)) throw new Error('New Controller: first arg is the name, second is the object containing the methods');/*#/if*/
+			var o=C[controllerName]=Object.create(Controller);
+			UObj.extend(o,props);
+			o.name=controllerName;
+			
 		};
 		f.Controller=Controller;
-		f.Action=function(args,route,action){
-			if(S.isFunc(args)){ action=args; args={}; }
-			else if(S.isFunc(route)){ action=route; route=undefined; }
-			
-			if(route===undefined) route='/:controller/:action/*';
-			
-			action.route=function(){ return '?'; };
-			
-			return action;
-		};
-		f.extend=function(){
+		f.Action=Action;
+		f.extend=function(props){
 			var c=Controller.extend.apply(Controller,arguments);
-			return createF(c);
+			return createF(UObj.union(props,Controller));
 		}
 		return f;
 	};

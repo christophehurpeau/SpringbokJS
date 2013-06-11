@@ -1,5 +1,8 @@
 
 require('springboktools');
+
+require('springboktools/es6/Map');
+
 require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
@@ -8,7 +11,6 @@ require('springboktools/UDebug');
 
 
 
-require('./base/async');
 S.log=console.log;//todo use CLogger
 
 

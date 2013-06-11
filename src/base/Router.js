@@ -9,7 +9,7 @@ App.Route.prototype={
 
 App.Router=function(r,rl){
 	var t=this;
-	t.routes = {}; t.routesLangs = {};
+	t.routes = new Map; t.routesLangs = new Map;
 	/*#if NODE*/
 	if(r===undefined){
 		r=App.config('routes'),
@@ -23,13 +23,13 @@ App.Router=function(r,rl){
 	UObj.forEach(rl,function(s,tr){
 		if(!tr.en) tr.en=s;
 		UObj.forEach(tr,function(lang,s2){
-			if (!t.routesLangs['->' + lang]) {
-				t.routesLangs['->' + lang] = {};
-				t.routesLangs[lang + '->'] = {};
+			if (!t.routesLangs.has('->' + lang)) {
+				t.routesLangs.set('->' + lang,new Map);
+				t.routesLangs.set(lang + '->',new Map);
 			}
 			
-			t.routesLangs['->' + lang][s.toLowerCase()] = s2;
-			t.routesLangs[lang + '->'][s2.toLowerCase()] = s;
+			t.routesLangs.get('->' + lang).set(s.toLowerCase(),s2);
+			t.routesLangs.get(lang + '->').set(s2.toLowerCase(),s);
 		});
 	});
 	
@@ -38,13 +38,13 @@ App.Router=function(r,rl){
 	if(!r.main) r={main:r};
 	
 	UObj.forEach(r,function(entry,entryRoutes){
-		t.routes[entry]={};
+		t.routes.set(entry,new Map);
 		
 		if(entryRoutes.includesFromEntry){
-			if(S.isStr(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
+			if(S.isString(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
 			for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
 				var ife=entryRoutes.includesFromEntry[iife];
-				if(S.isStr(ife)) UObj.union(entryRoutes,routes[ife]);
+				if(S.isString(ife)) UObj.union(entryRoutes,routes[ife]);
 				else{
 					for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
 						var includeRouteFromEntry=ife[iirfe];
@@ -56,7 +56,7 @@ App.Router=function(r,rl){
 		}
 		
 		UObj.forEach(entryRoutes,function(url,route){
-			var finalRoute=t.routes[entry][url]={ 0: route[0] }, paramsDef=route[1]||null, ext;
+			var finalRoute={ 0: route[0] }, paramsDef=route[1]||null, ext;
 			//langs=route[2] || null
 			if (route.ext) ext = finalRoute.ext = route.ext;
 			route = {};
@@ -71,8 +71,8 @@ App.Router=function(r,rl){
 			}else if(!url.match(/\/[a-z]/)) Config.allLangs.forEach(function(lang){ route[lang]=url; });
 			else Config.allLangs.forEach(function(lang){
 				route[lang]=url.replace(/\/([a-z\-]+)/g,function(str,p1){
-					if(!t.routesLangs['->' + lang][p1]) throw new Error('Missing traduction "'+p1+'" for lang "'+lang+'"');
-					return t.routesLangs['->' + lang][p1].toLowerCase();
+					if(!t.routesLangs.get('->' + lang).get(p1)) throw new Error('Missing traduction "'+p1+'" for lang "'+lang+'"');
+					return t.routesLangs.get('->' + lang).get(p1).toLowerCase();
 				});
 			});
 			
@@ -108,19 +108,21 @@ App.Router=function(r,rl){
 				if(paramsNames) finalRoute[':']=paramsNames;
 			});
 			finalRoute.paramsCount=finalRoute[Config.allLangs[0]][1].split('%s').length-1;
+			t.routes.get(entry).set(url,finalRoute);
 		});
 	});
-	//console.log(this.routes);
+	S.log(this.routes);
 };
 App.Router.routeStripper=/^\/+|\/+$/g;
 App.Router.prototype={
-	find:function(all,lang,entry){
-		var t = this,route = false,m,r,routes=t.routes[entry];
+	find:function(all/*#if NODE*/,lang,entry/*#/if*/){
+		var t = this,route = false,m,r,routes=t.routes.get(/*#ifelse NODE*/entry||'main'/*#/if*/)/*#if BROWSER*/,lang=App.lang/*#/if*/;
 		all=t.all='/'+all.replace(App.Router.routeStripper,'');
-		console.log('router: find: "'+all+'"');
-		for (var i in routes){
-			r = routes[i];
-			console.log('try: ', r[lang][0], r[lang][0].exec(all));
+		S.log('router: find: "'+all+'"');
+		//S.log(routes);
+		UObj.forEach(routes,function(i,r){
+			S.log('route: ',r);
+			S.log('try: ', r[lang][0], r[lang][0].exec(all));
 			if(m=r[lang][0].exec(all)){
 				//console.log('match : ',m,r);
 				var c_a=r[0].split('.'),params={};
@@ -151,13 +153,14 @@ App.Router.prototype={
 					sParams:m,//simple
 					ext:false
 				});
-				break
+				return false;
 			}
-		}
+		});
+		S.log('route=',route);
 		return route;
 	},
 	getLink:function(lang,entry,url){
-		return S.isStr(url) ? this.getStringLink(lang,entry,url) : this.getArrayLink(lang,entry,url);
+		return S.isString(url) ? this.getStringLink(lang,entry,url) : this.getArrayLink(lang,entry,url);
 	},
 	getArrayLink:function(lang,entry,params){},
 	getStringLink:function(lang,entry,params){

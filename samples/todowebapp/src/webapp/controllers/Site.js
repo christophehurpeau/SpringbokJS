@@ -1,7 +1,9 @@
-App.Controller({
+S.require('vL/page',null);
+App.Controller('Site',{
 	Index:App.Controller.Action(function(req,res){
-		this.layout('default').title('todos')
-			.top('<h1>todos</h1>')
-			.content(M.Todo.find.all().toUl())
+		this.layout('page',function(l){
+			l.title('todos')
+				.content(M.Todo.find.all().toUl());
+		});
 	})
 });

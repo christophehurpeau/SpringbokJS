@@ -1,41 +1,66 @@
 var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=require('async');
 
-var SourceFile=module.exports=function(fileList,path,compilerLintersOptimizers){
-	this.fileList=fileList;
-	this.rootPath=fileList.rootPath; this.path=path;
-	UObj.extend(this,compilerLintersOptimizers);
-	this.type=this.compiler && this.compiler.type;
-	
-	this.srcPath=fileList.rootPath+'src/'+path;
-	this.dirname=sysPath.dirname(path)+'/'; this.basename=sysPath.basename(path);
-	
-	this.compiledPath=this.compiler && this.compiler.compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+this.compiler.compiledExtension:path;
-	this.compiler && this.compiler.newSourceFile && this.compiler.newSourceFile(this);
-	
-	
-	if((this.isBrowser=path.startsWith('web/'))) this.isWebApp=false;
-	else{
-		var resWebApp;
-		if( this.isWebApp=fileList.regexpWebAppPath && (resWebApp=fileList.regexpWebAppPath.exec(path)) ){
-			this.webApp=resWebApp[1];
-			if(this.dirname===this.webApp+'/' && this.basename===this.webApp+'.js'){
-				this.isWebAppEntry=this.isBrowser=this.isMainJs=true;
-				this.compiledPath='web/'+this.compiledPath.substr(this.webApp.length+1);
-				
-			}else if( this.isBrowser=path.slice(this.webApp.length+1,4)==='web/'){
-				this.compiledPath=this.compiledPath.substr(this.webApp.length+5);
-				this.compiledPath='web/'+(this.compiledPath.startsWith(this.webApp)?'':this.webApp+'/')+this.compiledPath;
-				console.log('substr path : ',this.compiledPath);
+var regexpSubfolders=/^([a-zA-Z]+)\/(?:([a-zA-Z]+)\/)?/,webAppFolders={controllers:'c',models:'m',views:'v',viewsLayouts:'vL'};
+
+module.exports=S.newClass({
+	ctor:function(fileList,path,compilerLintersOptimizers){
+		this.fileList=fileList;
+		this.rootPath=fileList.rootPath; this.path=path;
+		this.srcPath=fileList.rootPath+'src/'+path; //must be before (cand be overrided by extends)
+		UObj.extend(this,compilerLintersOptimizers);
+		this.type=this.compiler && this.compiler.type;
+		
+		this.dirname=sysPath.dirname(path)+'/'; this.basename=sysPath.basename(path);
+		
+		var compiledExtension=this.compiler && this.compiler.compiledExtension;
+		//if(S.isFunction(compiledExtension)) compiledExtension=compiledExtension(this);
+		
+		if(!this.compiledPath) this.compiledPath=compiledExtension?path.replace(/^(.+)\.\w{2,}$/,'$1')+'.'+compiledExtension:path;
+		this.compiler && this.compiler.newSourceFile && this.compiler.newSourceFile(this);
+		
+		
+		if((this.isBrowser=path.startsWith('web/'))) this.isWebApp=false;
+		else{
+			var mSubfolder=path.match(regexpSubfolders);
+			if(mSubfolder){
+				if(this.isBrowser=(mSubfolder[2]==='web')){
+					this.isWebApp=false;
+					this.compiledPath=this.compiledPath.replace(/^[a-zA-Z]+\//,'');
+				}else{
+					if( this.isWebApp=(fileList.buildConfig && fileList.buildConfig.webapps && UArray.has(fileList.buildConfig.webapps,mSubfolder[1])) ){
+						this.webApp=mSubfolder[1];
+						if(this.dirname===this.webApp+'/' && this.basename===this.webApp+'.js'){
+							this.isWebAppEntry=this.isBrowser=this.isMainJs=true;
+							this.compiledPath='web/'+this.compiledPath.substr(this.webApp.length+1);
+						}else{
+							switch(mSubfolder[2]){
+								case 'config':
+									this.compiledPath=this.compiler=false;
+									break;
+								case 'controllers':
+								case 'models':
+								case 'views':
+								case 'viewsLayouts':
+									this.isBrowser=true;
+									this.compiledPath='web/'+this.webApp+'/'+webAppFolders[mSubfolder[2]]+'/'+this.compiledPath.substr(mSubfolder[0].length);
+									if(mSubfolder[2].substr(0,5)==='views' && this.compiledPath.slice(0,-4)==='.ejs')
+										this.compiledPath=this.compiledPath.slice(0,-3)+'js';
+									break;
+								case 'locales':
+									break;
+							}
+						}
+					}
+				}
 			}
 		}
-	}
-	this.compiledPathDirname=sysPath.dirname(this.compiledPath);
+		this.compiledPathDirname=sysPath.dirname(this.compiledPath);
+		
+		
+		this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
+		Object.freeze(this);
+	},
 	
-	
-	this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
-	Object.freeze(this);
-}
-SourceFile.prototype={
 	lint:function(file,data,callback){
 		var linters=this.linters,l=linters.length;
 		if(l===0) callback(null);
@@ -121,13 +146,13 @@ SourceFile.prototype={
 	},
 	
 	paths:function(callback,results,write,destinationPath){
-		var paths=[];
+		var paths=new Map;
 		async.forEach(['dev','prod'],function(dir,callback){
 			if(results && results[dir]==null) return callback();
 			var path=this.rootPath+dir+'/';
 			this._write(path+this.compiledPathDirname,function(err){
 				if(err) return callback(err);
-				paths.push(path=(path+(destinationPath||this.compiledPath)));
+				paths.set(dir,path=(path+(destinationPath||this.compiledPath)));
 				if(results && write){
 					fs.writeFile(path,results[dir],function(err){
 						if(err) return callback(err);
@@ -142,15 +167,16 @@ SourceFile.prototype={
 		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true,destinationPath);
 	},
 	copy:function(callback){
-		var t=this,srcPath=this.srcPath;
+		var srcPath=this.srcPath;
 		async.forEach(['dev','prod'],function(dir,callback){
-			t._write(t.rootPath+dir+'/'+t.compiledPathDirname,function(){
+			this._write(this.rootPath+dir+'/'+this.compiledPathDirname,function(err){
+				if(err) return callback(err);
 				var input=fs.createReadStream(srcPath),
-					output=fs.createWriteStream(t.rootPath+dir+'/'+t.compiledPath);
+					output=fs.createWriteStream(this.rootPath+dir+'/'+this.compiledPath);
 				var request=input.pipe(output);
 				request.on('close',callback);
-			});
-		},callback);
+			}.bind(this));
+		}.bind(this),callback);
 	},
 	
 	_write:function(parent,callback){
@@ -161,4 +187,4 @@ SourceFile.prototype={
 				});
 		});
 	}
-};
+});

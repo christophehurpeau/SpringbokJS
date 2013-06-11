@@ -1,4 +1,4 @@
-var FileList=require('./FileList'), sysPath=require('path'),fs=require("fs");
+var FileList=require('./FileList'), sysPath=require('path'),fs=require("fs"), PluginsList=require('./PluginsList');;
 
 module.exports=FileList.extend({
 	config:{},
@@ -14,10 +14,12 @@ module.exports=FileList.extend({
 			this.config.plugins.SpringbokBase=['Springbok','base'];
 			
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
-			
-			if(this.buildConfig.webapps)
-				this.regexpWebAppPath=new RegExp('^('+this.buildConfig.webapps.join('|')+')/');
 		}
+		process.nextTick(function(){
+			this._change(this.rootPath+'src/web/compat/es5.js',{ srcPath: CORE_SRC+'browser/compat/es5.js', compiledPath: 'web/compat.es5.js' });
+			this._change(this.rootPath+'src/web/compat/es6.js',UObj.extend(PluginsList.find('a.js'),{
+					srcPath: CORE_SRC+'browser/compat/es6.js', compiledPath: 'web/compat.es6.js' }));
+		}.bind(this));
 	},
 	isConfig:function(path){
 		return path===this.rootPath+'package.json' || path===this.rootPath+'src/config/build.yml';

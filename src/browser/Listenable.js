@@ -1,5 +1,4 @@
-function Listenable(){}
-Listenable.prototype={
+global.Listenable=S.newClass({
 	on:function(event,listener){
 		var events = this._events || (this._events = {}),callbacks=events[event];
 		if(!callbacks) callbacks=/*this._events*/events[event]=[];
@@ -45,4 +44,4 @@ Listenable.prototype={
 	removeEvent:function(event){
 		event ? delete this._events[event] : delete this._events;
 	}
-};
+});

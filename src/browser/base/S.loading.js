@@ -5,10 +5,9 @@ includeCore('elements/');
 		loaded=function(callback){
 			nbCurrentlyLoaded--;
 			if(nbCurrentlyLoaded===0){
-				
-				return callback(true);
+				return callback&&callback(true);
 			}
-			callback();
+			callback&&callback();
 		};
 	UObj.extend(S,{
 		loading:function(block){

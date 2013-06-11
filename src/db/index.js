@@ -3,7 +3,7 @@
 S.Db=(function(){
 	var connections={},Db={
 		init:function(onEnd){
-			S.asyncObjForEach(Config.db,function(key,dbConfig,onEnd){
+			UObj.forEachAsync(Config.db,function(key,dbConfig,onEnd){
 				Db.create(key,dbConfig,onEnd);
 			},onEnd);
 		},

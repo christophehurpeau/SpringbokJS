@@ -107,7 +107,7 @@ var FileList=S.extClass(EventEmitter,{
 				this.errorsCount--;
 				delete this.errors[file.path];
 			}
-			console.log("Compiled file: "+file.path+" [remaining: "+this.compiling.length+']');
+			console.log("Compiled file: "+file.path+' to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
 			this._compileDependentFiles(file.path);
 			this._checkReady();
 		}.bind(this))

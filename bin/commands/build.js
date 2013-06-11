@@ -1,4 +1,5 @@
 require('springboktools');
+require('springboktools/es6/Map');
 require('springboktools/UObj');
 require('springboktools/UArray');
 require('springboktools/UString/UString');
@@ -39,14 +40,16 @@ module.exports={
 		var ready=function(){
 			console.log('[!] sending reload to '+clients.length+' clients');
 			clients.forEach(function(stream){
-				stream.writable && stream.write('reload');
+				stream && stream.writable && stream.write('reload');
 			});
 		},reset=function(){
 			console.log('[!] filelist was reset !');
 			setTimeout(function(){
 				fileList.on('ready',ready);
 				fileList.on('reset',reset);
-				stream.writable && stream.write('restart');
+				clients.forEach(function(stream){
+					stream && stream.writable && stream.write('restart');
+				});
 			},10);
 		};
 		fileList.on('ready',ready);
@@ -66,7 +69,9 @@ module.exports={
 						if(data==='reload') sw.reload();
 						else if(data==='restart'){
 							console.log('RELOAD UNSUPPORTED YET: exiting....');
-							process.exit(1);
+							sw.close(function(){
+								process.exit(1);
+							});
 							
 						}
 					});

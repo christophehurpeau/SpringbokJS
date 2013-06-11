@@ -18,7 +18,7 @@ module.exports={
 		var t=this;
 		t.restarting=false;
 		
-		t.process = child_process.spawn('node',['start.js']);
+		t.process = child_process.spawn('node',['--harmony','start.js']);
 		t.process.stdout.addListener('data', function (data) {
 			process.stdout.write(data);
 		});

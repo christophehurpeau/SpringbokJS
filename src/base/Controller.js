@@ -30,25 +30,30 @@ Controller.prototype={
 	},
 	
 	webApp:function(entry){
-		var loading=this.H.tC('Loading...'), ielt9=this.req.isIElt9();
+		var ielt9=this.req.isIElt9(), notSupported=this.req.isIElt7(),
+			loading=this.H.tC(notSupported ? 'Your browser is not supported.' : 'Loading...');
+		if(notSupported) loading='<a style="font-weight:bold" href="http://whatbrowser.org/">'+loading+'</a>';
+		
 		this.res.end('<!DOCTYPE html><html><head>'
 			+this.H.metaCharset()+this.H.metaLanguage()
 			+'<title>'+Config.projectName+' - '+loading+'</title>'
 			+this.H.cssLink('/'+entry)
-			+this.H.jsI18n('/'+entry)
-			+this.H.jsInline(
-				'window.onload=function(){'
-					+(ielt9?
-						'var s=document.createElement("script");'
+			+(notSupported?'':
+				this.H.jsI18n('/'+entry)
+				+this.H.jsInline(
+					'window.onload=function(){'
+						+(ielt9?
+							'var s=document.createElement("script");'
+							+'s.type="text/javascript";'
+							+'s.src="'+this.H.staticUrl('/es5-compat.js')+'";'
+							+'document.body.appendChild(s);'
+						:'')
+						+'var s=document.createElement("script");'
 						+'s.type="text/javascript";'
-						+'s.src="'+this.H.staticUrl('/es5-compat.js')+'";'
+						+'s.src="'+this.H.staticUrl('/'+entry+(ielt9?'.oldIe':'')+'.js')+'";'
 						+'document.body.appendChild(s);'
-					:'')
-					+'var s=document.createElement("script");'
-					+'s.type="text/javascript";'
-					+'s.src="'+this.H.staticUrl('/'+entry+(ielt9?'.oldIe':'')+'.js')+'";'
-					+'document.body.appendChild(s);'
-				+'};'
+					+'};'
+				)
 			)
 			+'</head><body>'
 			+'<div id="container"><div class="startloading"><b>'+Config.projectName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
@@ -60,6 +65,17 @@ Controller.prototype={
 
 Controller.extend=S.extThis;
 
+var Action=function(args,route,action){
+	if(S.isFunc(args)){ action=args; args={}; }
+	else if(S.isFunc(route)){ action=route; route=undefined; }
+	
+	if(route===undefined) route='/:controller/:action/*';
+	
+	action.route=function(){ return '?'; };
+	
+	return action;
+};
+
 module.exports = (function(){
 	var createF=function createF(Controller){
 		var f=function(classProps,protoProps){
@@ -67,16 +83,7 @@ module.exports = (function(){
 			return Controller.extend(protoProps,classProps);
 		};
 		f.Controller=Controller;
-		f.Action=function(args,route,action){
-			if(S.isFunc(args)){ action=args; args={}; }
-			else if(S.isFunc(route)){ action=route; route=undefined; }
-			
-			if(route===undefined) route='/:controller/:action/*';
-			
-			action.route=function(){ return '?'; };
-			
-			return action;
-		};
+		f.Action=Action;
 		f.extend=function(){
 			var c=Controller.extend.apply(Controller,arguments);
 			return createF(c);

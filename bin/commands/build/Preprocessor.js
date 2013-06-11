@@ -60,6 +60,12 @@ module.exports=function(defines,data,isBrowser,baseDir){
 						include = defines[ifThenMatch[1]] ? ifThenMatch[2] : '';
 						data = data.substring(0, match.index)+include+data.substring(Preprocessor.EXPR.lastIndex);
 						break;
+					}else if(content.slice(-2)==='=>'){
+						content=content.slice(0,-2).trim();
+						if(defines[ifThenMatchcontent])
+							data = data.substring(0, match.index)+data.substring(Preprocessor.EXPR.lastIndex);
+						else
+							data = data.substring(0, match.index)+data.substring(data.indexOf("\n",Preprocessor.EXPR.lastIndex));
 					}else{
 						if(content.substr(0,1)==='!') include = !defines[content.substr(1).trim()]
 						else include = defines[content];
@@ -78,7 +84,7 @@ module.exports=function(defines,data,isBrowser,baseDir){
 				if(before.include === 1 || before.include === 2){
 					if(include.substr(0,1)==='(' && include.slice(-1)===')') include=include.slice(1,-1);
 					include=include.split('||');
-					if(include.length !== 2) throw new Error('ifelse : '+include.length+' != 2 : '+data);
+					if(include.length !== 2) throw new Error('ifelse : '+include.length+' != 2 : '+include.join('||'));
 					include=include[before.include-1];
 				}else if(!before.include) include='';
 				data = data.substring(0, before["index"])+include+data.substring(Preprocessor.EXPR.lastIndex);

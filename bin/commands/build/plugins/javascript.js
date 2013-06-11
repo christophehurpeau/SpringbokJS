@@ -1,4 +1,4 @@
-//var jshint=require('jshint').JSHINT;
+var jshint=require('jshint').JSHINT;
 var fs=require('fs'), sysPath=require('path') ,Preprocessor=require('../Preprocessor'), UglifyJS=require('uglify-js');
 
 const COMPILER_JAR='/var/www/springbok/core/libs/src/ClosureCompiler/_gclosure.jar';
@@ -12,11 +12,33 @@ module.exports={
 	},
 	/*
 	lint:function(file,data,callback){
+		if(!data) return callback();
 		var success=jshint(data,{
-			browser:false,
-			cap:false,
-			node:true,
-			undef:false,
+			browser: false,
+			node: true,
+			
+			bitwise: false,
+			camelcase: true,
+			curly: false,
+			eqeqeq: false,
+			immed: true,
+			latedef: false,
+			newcap: true,
+			noarg: true,
+			nonew: false,
+			undef: false,
+			strict: false,
+			trailing: true,
+			boss: true,
+			eqnull: true,
+			esnext: true,
+			regexdash: true,
+			smarttabs: true,
+			lastsemic: true,
+			proto: true,
+			supernew: true,
+			validthis: true,
+			
 		});
 		if(success) return callback();
 		else{
@@ -51,8 +73,7 @@ module.exports={
 						+','+JSON.stringify(UFiles.readYamlSync(configPath+'routesLangs.yml'))+');')
 					+data
 					+'App.run();';
-			}else if(!/^[a-zA-Z_\-]\/(controllers|models|views|viewsLayouts|web)\//.test(file.path))
-				return callback(false);
+			}
 	
 		}
 		
@@ -74,6 +95,8 @@ module.exports={
 			if(file.isBrowser){
 				if(file.isMainJs) data='(function(window,undefined){var baseUrl="/";'+data+'})(window);';
 				data=data.replace(/\bglobal\./g,'window.');
+				data=data.replace(/\bObject.defineProperty\(global,/g,'Object.defineProperty(window,');
+				
 			}
 			
 			var defs=(file.fileList.buildConfig && file.fileList.buildConfig.config) || {};
@@ -94,8 +117,8 @@ module.exports={
 		file.paths(function(err,paths){
 			if(err) return onEnd(err);
 			UArray.forEachAsync([
-						{path:paths[0],result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
-						{path:paths[1],result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
+						{path:paths.get('dev'),result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
+						{path:paths.get('prod'),result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
 						function(obj,onEnd){
 				var path=obj.path, result=obj.result;
 				console.log('optimize: '+path);
@@ -115,10 +138,10 @@ module.exports={
 								fs.writeFile(srcPath,modernResult,function(err){
 									if(err) return onEnd(err);
 									
-									module.exports.callGoogleClosureCompiler(srcPath,path,false,obj.defs.DEV ? slicedPath+'.map.js' : false,
+									module.exports.callGoogleClosureCompiler(srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
 										obj.defs.DEV ? function(err){
 												if(err) return onEnd(err);
-												fs.appendFile(path,"\n//@ sourceMappingURL=/web/"+sysPath.basename(path).slice(0,-3)+'.src.js',onEnd);
+												fs.appendFile(path,"\n//@ sourceMappingURL=/web/"+sysPath.basename(path).slice(0,-3)+'.map',onEnd);
 											} : onEnd);
 								});
 							});
@@ -126,7 +149,7 @@ module.exports={
 					});
 				});
 				
-			},function(error){ onEnd(error || false); });
+			},function(error){ if(error) console.error(error); onEnd(error || false); });
 		});
 	},
 	
@@ -135,7 +158,7 @@ module.exports={
 			defs.OLD_IE=!!oldIe;
 			var toplevel=UglifyJS.parse(code,{});
 			toplevel.figure_out_scope();
-			var compressor = UglifyJS.Compressor({ unsafe:true, comparisons:true, global_defs:defs, sequences:false });
+			var compressor = UglifyJS.Compressor({ /*lint:false,*/ unsafe:true, comparisons:true, global_defs:defs, sequences:false });
 			var compressed_ast = toplevel.transform(compressor);
 			
 			//var source_map = UglifyJS.SourceMap({});
@@ -158,10 +181,12 @@ module.exports={
 	},
 	
 	callGoogleClosureCompiler:function(srcPath,output,forOldIe,sourceMap,onEnd){
+		var dir=process.cwd();
+		process.chdir(sysPath.dirname(srcPath));
 		console.log('GoogleClosure: compiling '+srcPath+' to '+output);
 		UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --compilation_level SIMPLE_OPTIMIZATIONS --language_in=ECMASCRIPT5_STRICT'
-						+' --js '+ UExec.escape(srcPath)+' --js_output_file '+ UExec.escape(output)
-						+(sourceMap&&false ? '--create_source_map '+UExec.escape(sourceMap)+' --source_map_format=V3' : ''),
+						+' --js '+ UExec.escape(sysPath.basename(srcPath))+' --js_output_file '+ UExec.escape(sysPath.basename(output))
+						+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : ''),
 			function (error, stdout, stderr){
 				//console.error(error,"\n",stdout,"\n",stderr);
 				if (error) onEnd(stderr);
@@ -171,6 +196,7 @@ module.exports={
 					onEnd();
 				}
 			});
+		process.chdir(dir);
 	},
 	
 	_checkTrailingSlash:function(inclPath){
@@ -196,7 +222,7 @@ module.exports={
 	},
 	includesBrowser:function(data,dirname,callback,includes){
 		if(!includes) includes={'':{},Core:{},CoreUtils:{},'Plugin':{}};
-		data=data.replace(/^include(Core|JsCore|CoreUtils|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+		data=data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
 			if(inclPath.slice(-1)==='/') inclPath+=sysPath.basename(inclPath)+'.js';
 			
 			if(from==='JsCore') from='Core';
