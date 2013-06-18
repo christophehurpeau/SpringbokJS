@@ -1,10 +1,10 @@
-var Controller = function(app,req,res){
-	this.req=req; this.res=res;
-	this.H=new S.Helpers(app,this);
-};
+var Controller = S.newClass({
+	ctor:function(app,req,res){
+		this.req=req; this.res=res;
+		this.H=new S.Helpers(app,this);
+	},
 
-Controller.prototype={
-	beforeDispatch:function(){},
+	writable:{ beforeDispatch:function(){} },
 	
 	findOne:function(modelName){ return M[modelName].find.one(this.H); },
 	
@@ -61,9 +61,7 @@ Controller.prototype={
 		//HDev::springbokBar();
 			+'</html>');
 	}
-};
-
-Controller.extend=S.extThis;
+});
 
 var Action=function(args,route,action){
 	if(S.isFunc(args)){ action=args; args={}; }

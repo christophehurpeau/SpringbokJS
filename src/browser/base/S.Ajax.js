@@ -1,3 +1,4 @@
+includeCore('browser/base/');
 includeCore('browser/base/S.loading');
 /* 
  * http://stackoverflow.com/questions/7718935/load-scripts-asynchronously

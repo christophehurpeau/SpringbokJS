@@ -1,20 +1,22 @@
+// may be used later
+var S_loadSyncScript=function(path){
+	var xhr=new XMLHttpRequest;
+	xhr.open('GET',baseUrl+'web/'+path+'.js', false);
+	xhr.send();
+	if(xhr.status !== 200) new FatalError(/*#if DEV*/'Unable to load: '+path+'.js'/*#/if*/); 
+	var s = document.createElement('script');
+	s.type = "text/javascript";
+	s.text = xhr.responseText;
+	document.getElementsByTagName('head')[0].appendChild(s);
+};
 if(OLD_IE){
 	//include Core('es5-compat.src');
 }else{
 	//http://kangax.github.com/es5-compat-table/
-	if(!Object.keys || !String.contains || !(window.Map && window.Map.prototype.clear)){ // not String.prototype.contains : the generic version
+	if(!Object.keys || !String.contains || !(window.Map && window.Map.prototype.forEach)){ // not String.prototype.contains : the generic version
 		//$.ajax({ url:webUrl+'js/es5-compat.js', global:false, async:false, cache:true, dataType:'script' });
-		var loadSyncScript=function(path){
-			var xhr=new XMLHttpRequest;
-			xhr.open('GET',baseUrl+'web/'+path+'.js', false);
-			xhr.send('');
-			var s = document.createElement('script');
-			s.type = "text/javascript";
-			s.text = xhr.responseText;
-			document.getElementsByTagName('head')[0].appendChild(s);
-		};
-		Object.keys || loadSyncScript('compat.es5');
-		loadSyncScript('compat.es6');
+		Object.keys || S_loadSyncScript('compat/es5');
+		S_loadSyncScript('compat/es6');
 	}
 }
 

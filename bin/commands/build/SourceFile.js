@@ -1,6 +1,6 @@
 var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=require('async');
 
-var regexpSubfolders=/^([a-zA-Z]+)\/(?:([a-zA-Z]+)\/)?/,webAppFolders={controllers:'c',models:'m',views:'v',viewsLayouts:'vL'};
+var regexpSubfolders=/^([a-zA-Z]+)\/(?:([a-zA-Z]+)\/)?(?:([a-zA-Z]+)\/)?/,webAppFolders={controllers:'c',models:'m',views:'v',viewsLayouts:'vL'};
 
 module.exports=S.newClass({
 	ctor:function(fileList,path,compilerLintersOptimizers){
@@ -37,8 +37,13 @@ module.exports=S.newClass({
 								case 'config':
 									this.compiledPath=this.compiler=false;
 									break;
-								case 'controllers':
 								case 'models':
+									if(mSubfolder[3]){
+										this.compiledPath=this.compiler=false;
+										break;
+									}
+									this.isWebAppModel=true;
+								case 'controllers':
 								case 'views':
 								case 'viewsLayouts':
 									this.isBrowser=true;

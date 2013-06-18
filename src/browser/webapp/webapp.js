@@ -22,7 +22,7 @@ Object.defineProperty(global,'L',{ value:new Map });
 
 /* models */
 /*#if DEV*/if(global.M){ console.error(M); throw new Error('M is already defined'); } /*#/if*/
-Object.defineProperty(global,'M',{ value:new Map });
+Object.defineProperty(global,'M',{ value:{} });
 
 
 /* App */
@@ -46,6 +46,7 @@ global.App={
 	},
 	
 	run:function(){
+		S.log('Running webapp...');
 		this.lang=$.findFirst('meta[name="language"]').attr('content');
 		this.topLayout.body=$.findFirst('body');
 		this.readyCallbacks.fire();
@@ -56,6 +57,7 @@ global.App={
 	},
 	
 	load:function(url,callback){
+		S.log('Load: '+url);
 		try{
 			var route=this.router.find(url);
 			if(!route) throw HttpException.notFound();

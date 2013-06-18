@@ -16,9 +16,13 @@ module.exports=FileList.extend({
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
 		}
 		process.nextTick(function(){
-			this._change(this.rootPath+'src/web/compat/es5.js',{ srcPath: CORE_SRC+'browser/compat/es5.js', compiledPath: 'web/compat.es5.js' });
+			'es5,IndexedDBShim'.split(',').forEach(function(fileName){
+				this._change(this.rootPath+'src/web/compat/'+fileName+'.js',
+					{ srcPath: CORE_SRC+'browser/compat/'+fileName+'.js', compiledPath: 'web/compat/'+fileName+'.js' });
+			}.bind(this));
+			
 			this._change(this.rootPath+'src/web/compat/es6.js',UObj.extend(PluginsList.find('a.js'),{
-					srcPath: CORE_SRC+'browser/compat/es6.js', compiledPath: 'web/compat.es6.js' }));
+					srcPath: CORE_SRC+'browser/compat/es6.js', compiledPath: 'web/compat/es6.js' }));
 		}.bind(this));
 	},
 	isConfig:function(path){

@@ -75,22 +75,26 @@ S.Elt=(function(){
 			while( e.firstChild )
 				e.removeChild( e.firstChild );
 		},
-		append:function(e,content){
+		append:function(e,child){
 			/*#if DEV*/
 			if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
 				throw new Error('append not allowed on non-element|document nodes');
 			/*#/if*/
 			//for(var i=0,l=content.length;i<l;i++)
 			//	e.appendChild(content[i]);
-			e.appendChild(content);
+			e.appendChild(child.nodeType ? child : child.a);
 		},
-		prepend:function(e,content){
+		prepend:function(e,child){
 			/*#if DEV*/
 			if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
 				throw new Error('append not allowed on non-element|document nodes');
 			/*#/if*/
-			e.insertBefore(arg,e.firstChild);
+			e.insertBefore(child.nodeType ? child : child.a,e.firstChild);
 		},
+		
+		appendTo:function(e,parent){
+			Elt.append(parent.nodeType ? parent : parent.a,e);
+		}
 	});
 	Elt.setAttrs=Elt.attrs;
 	
@@ -160,7 +164,7 @@ S.Elt=(function(){
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
-	'attrs,setAttrs,rmAttr,setClass,addClass,text,html,aText,prependText,aHtml,append,prepend'.split(',').forEach(function(mName){
+	'attrs,setAttrs,rmAttr,setClass,addClass,text,html,aText,prependText,aHtml,append,prepend,appendTo'.split(',').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this.a,arg1); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
@@ -178,7 +182,9 @@ S.Elt=(function(){
 		return new Elt(document.createElement(tag));
 		/*#/if*/
 	};
-	Elt.div=function(){ return Elt.create('div'); };
+	'div,ul,li'.split(',').forEach(function(v){
+		Elt[v]=function(){ return Elt.create(v); };
+	});
 	
 	return Elt;
 	

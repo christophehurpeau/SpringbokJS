@@ -50,8 +50,6 @@ if(!global.$){
 			return new S.Elt(selector);
 		}
 	};
-	$.div=S.Elt.div;
-	$.create=S.Elt.create;
 	
 	var results=Object.prototype.__proto__ !== null ? function(results){
 		if(!results) return new S.Elt.Array;
@@ -109,7 +107,8 @@ if(!global.$){
 	$.disposeElements.event=new CustomEvent('dispose');
 }else{
 	//TODO : jquery compat
-	$.div=S.Elt.div;
-	$.create=S.Elt.create;
 }
+'div,ul,li,create'.split(',').forEach(function(v){
+	$[v]=S.Elt[v];
+});
 /*#/if*/

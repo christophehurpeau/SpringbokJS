@@ -1,3 +1,4 @@
+includeCore('browser/base/');
 includeCore('elements/');
 (function(){
 	var nbCurrentlyLoaded=0,

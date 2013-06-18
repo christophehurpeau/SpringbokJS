@@ -16,7 +16,7 @@ module.exports={
 	"start": function() {
 		sys.debug('Server: Starting');
 		var t=this;
-		t.restarting=false;
+		this.stop();
 		
 		t.process = child_process.spawn('node',['--harmony','start.js']);
 		t.process.stdout.addListener('data', function (data) {

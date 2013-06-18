@@ -34,7 +34,7 @@ App.Router=function(r,rl){
 	});
 	
 	// Routes
-	console.log(r);
+	S.log('Routes=',r);
 	if(!r.main) r={main:r};
 	
 	UObj.forEach(r,function(entry,entryRoutes){
@@ -44,6 +44,8 @@ App.Router=function(r,rl){
 			if(S.isString(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
 			for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
 				var ife=entryRoutes.includesFromEntry[iife];
+				console.log("ife=",ife,S.isString(ife));
+				throw new Error('Todo: map addAll');
 				if(S.isString(ife)) UObj.union(entryRoutes,routes[ife]);
 				else{
 					for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
@@ -111,7 +113,7 @@ App.Router=function(r,rl){
 			t.routes.get(entry).set(url,finalRoute);
 		});
 	});
-	S.log(this.routes);
+	S.log('Transformed routes=',this.routes);
 };
 App.Router.routeStripper=/^\/+|\/+$/g;
 App.Router.prototype={

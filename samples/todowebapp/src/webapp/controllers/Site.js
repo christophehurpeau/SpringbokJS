@@ -1,9 +1,16 @@
-S.require('vL/page',null);
-App.Controller('Site',{
-	Index:App.Controller.Action(function(req,res){
-		this.layout('page',function(l){
-			l.title('todos')
-				.content(M.Todo.find.all().toUl());
-		});
-	})
+S.require('vL/page','m/todos',function(){
+	App.Controller('Site',{
+		Index:App.Controller.Action(function(req,res){
+			S.log('Site::Index');
+			this.layout('page',function(l){
+				var ul=$.ul();
+				ul.append($.li().html('What needs to be done ?'));
+				l.title('todos').content(ul);
+				M.Todo.find.all()
+					.each(function(todo){
+						ul.append(todo.toLi());
+					});
+			});
+		})
+	});
 });

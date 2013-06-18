@@ -7,7 +7,11 @@ App.Layout=S.newClass({
 		t.init=init;
 		(t.methods=methods.split(',')).forEach(function(v){
 			t[v]=function(){
-				t['$'+v].empty().append.apply(elt,arguments);
+				t['$'+v].empty().append.apply(t['$'+v],arguments);
+				return t;
+			};
+			t['append'+UString.ucFirst(v)]=function(){
+				t['$'+v].append.apply(t['$'+v],arguments);
 				return t;
 			};
 		});

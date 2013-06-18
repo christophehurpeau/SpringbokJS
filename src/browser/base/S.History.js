@@ -33,6 +33,7 @@ S.History=(function(){
 			// in a browser where it could be `pushState`-based instead...
 			if (_hasPushState && loc.hash && loc.pathname==='/') {
 				this.fragment = this.getHash().replace(routeStripper, '');
+				loc.hash='';
 				window.history.replaceState({fragment:this.fragment},document.title,loc.protocol + '//' + loc.host + baseUrl + this.fragment);
 				return false;
 			}
@@ -44,9 +45,9 @@ S.History=(function(){
 			return match ? match[1] : '';
 		},
 		
-		getFragment:function(fragment,forcePushState){
+		getFragment:function(fragment){
 			if(fragment == null){
-				if(this._hasPushState || forcePushState){
+				if(_hasPushState){
 					fragment=window.location.pathname;
 					var search=window.location.search;
 					if(search) fragment+=search;
@@ -87,7 +88,7 @@ S.History=(function(){
 			if(this.fragment == frag) return;
 			
 			this.fragment=frag;
-			if(this._hasPushState){
+			if(_hasPushState){
 				//if(console && console.log) console.log('push: '+loc.protocol + '//' + loc.host + baseUrl+frag);
 				//var title=document.title;
 				window.history[replace?'replaceState':'pushState']({},document.title, loc.protocol+'//'+loc.host + baseUrl+frag);
