@@ -7,9 +7,9 @@ module.exports={
 	type:'javascript',
 	extension:'js',
 	priority:0,
+	_enums:fs.readFileSync(CORE_SRC+'browser/_enums.js'),
 	
 	init:function(config){
-		
 	},
 	/*
 	lint:function(file,data,callback){
@@ -134,7 +134,7 @@ module.exports={
 				
 				module.exports.callUglifyJs(result,obj.defs,true,function(err,ieResult){
 					if(err) return onEnd(err);
-					fs.writeFile(srcPath,ieResult,function(err){
+					fs.writeFile(srcPath,module.exports._enums+ieResult,function(err){
 						if(err) return onEnd(err);
 						
 						module.exports.callGoogleClosureCompiler(srcPath,oldIePath,true,false,function(err){
@@ -143,7 +143,7 @@ module.exports={
 							/* now for modern browsers */
 							module.exports.callUglifyJs(result,obj.defs,false,function(err,modernResult){
 								if(err) return onEnd(err);
-								fs.writeFile(srcPath,modernResult,function(err){
+								fs.writeFile(srcPath,module.exports._enums+modernResult,function(err){
 									if(err) return onEnd(err);
 									
 									module.exports.callGoogleClosureCompiler(srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,

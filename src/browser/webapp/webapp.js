@@ -3,6 +3,7 @@ includeCore('browser/base/S.Ajax');
 includeCore('browser/base/S.History');
 includeCore('browser/base/S.require');
 includeCore('elements/');
+includeCore('elements/Form');
 S.require.prefix=Config.id+'/';
 
 global.FatalError=function(error){

@@ -32,6 +32,7 @@ module.exports=FileList.extend({
 	_ignored:function(path){
 		if(path==='package.json' || path.startsWith('src/tests/')) return true;
 		if(path.substr(0,11)==='src/config/') return false;
-		return sysPath.basename(path).startsWith('_');
+		var basename=sysPath.basename(path);
+		return basename.startsWith('_') || basename.startsWith('.');
 	}
 });

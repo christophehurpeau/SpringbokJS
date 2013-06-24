@@ -1,4 +1,4 @@
-S.Form.Input=S.extClass(S.Form.Containable,{
+S.Form.Input=S.Form.Containable.extend({
 	tagName:'input',
 	
 	ctor:function(form,name,largeSize){
@@ -34,7 +34,7 @@ S.Form.Input=S.extClass(S.Form.Containable,{
 				}
 			}
 		}
-		if(this.getAttr('type')!=='password') this._setAttrValue();
+		if(this.attr('type')!=='password') this._setAttrValue();
 		this._setAttrId(); this._setAttrName();
 		
 	},

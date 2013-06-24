@@ -1,15 +1,11 @@
 includeCore('elements/');
 
-S.extProto(S.Helpers,{
-	FormPost:function(){ return new S.Form(this,'post'); },
-	FormGet:function(){ return new S.Form(this,'get'); },
-	FormForModel:function(modelName,name,value){ return (new S.Form(this,'post')).setModelName(modelName,name,value); }
-});
-
-S.Form=S.extClass(S.Elt.WithContent,{
-	tagName:'form',
+S.Form=S.Elt.WithContent.extend({
+	tagName:'form', _tagContainer:'div',
 	
-	ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
+	/*#if NODE*/ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
+	/*#else*/ctor:function(method){ S.Elt.WithContent.call(this); this.attr('method',method); },
+	/*#/if*/
 	
 	action:function(url,entry,full){ this.attr('action',this.H.url(url,entry,full)); return this; },
 	setModelName:function(modelName,name,value){
@@ -31,7 +27,7 @@ S.Form=S.extClass(S.Elt.WithContent,{
 	fieldsetStart:function(legend){
 		this._fieldsetStarted=1;
 		this.aHtml('<fieldset>');
-		if(legend) this.aHtml('<legend>'+S.escape(legend)+'</legend>');
+		if(legend) this.aHtml(S.Elt.create('legend').text(legend));
 		return this;
 	},
 	fieldsetStop:function(){
@@ -48,13 +44,36 @@ S.Form=S.extClass(S.Elt.WithContent,{
 	_getValue:function(name){ return this._value && this._value[name]; }
 });
 
-S.Form.Container=S.extClass(S.Elt.WithContent,{
+/*#if NODE*/
+S.extProto(S.Helpers,{
+	FormPost:function(){ return new S.Form(this,'post'); },
+	FormGet:function(){ return new S.Form(this,'get'); },
+	FormForModel:function(modelName,name,value){ return (new S.Form(this,'post')).setModelName(modelName,name,value); }
+});
+/*#else*/
+UObj.extend(S.Form,{
+	Post:function(){ return new this('post'); },
+	Get:function(){ return new this('get'); },
+	ForModel:function(modelName,name,value){ return (new this('post')).setModelName(modelName,name,value); },
+	extend:function(){//override
+		var o=S.extThis.apply(this,arguments);
+		o.Post=S.Form.Post;
+		o.Get=S.Form.Get;
+		o.ForModel=S.Form.ForModel;
+		return o;
+	}
+});
+/*#/if*/
+
+
+S.Form.Container=S.Elt.WithContent.extend({
 	ctor:function(contained,defaultClass){
-		this.tagName=contained._form._tagContainer||'div';
+		this.tagName=contained._form._tagContainer;
+		console.log('S.Form.Container',this);
 		S.Elt.WithContent.call(this);
 		this._form=contained._form;
 		defaultClass && this.setClass(defaultClass);
-		this.html(contained.toString());
+		this.html(contained.html());
 	},
 	
 	//tagContainer:function(tag){ this.elt=$('<'+tag+'/>').attr(this.attr()) return this; }
@@ -63,12 +82,12 @@ S.Form.Container=S.extClass(S.Elt.WithContent,{
 	//error:function($message){ $this._error=message; return this; },
 	//noError:function(){ $this->error=false; return this; },
 	
-	end:function(){ return this._form.aHtml(this.toString()); }
+	end:function(){ return this._form.aHtml(this.toHtml()); }
 });
 
-S.Form.Containable=S.extClass(S.Elt,{
+S.Form.Containable=S.Elt.Basic.extend({
 	ctor:function(form,name){
-		S.Elt.call(this);
+		S.Elt.Basic.call(this);
 		this._form=form; this._name=name;
 	},
 	
@@ -80,7 +99,7 @@ S.Form.Containable=S.extClass(S.Elt,{
 	noName:function(){ this.rmAttr('name'); return this; },
 	
 	between:function(content){ this._between=content; return this; },
-	noContainer:function(){ return this._form.aHtml(this.toString()); },
+	noContainer:function(){ return this._form.aHtml(this.toHtml()); },
 	end:function(){ return this.container().end(); },
 	
 	container:function(){ return new S.Form.Container(this,this._getDefaultContainerClass ? this._getDefaultContainerClass() : this.tagName); },
@@ -99,10 +118,10 @@ S.Form.Containable=S.extClass(S.Elt,{
 		return this._form._modelName != null ? this._form._name+'['+this._name+']' : this._name;
 	},
 	
-	toString:function(){
+	toHtml:function(){
 		return (this._label===false?'':this._label)+(this._between||' ')
 			+S.Elt.toString(this.tagName,this._attributes,null);
-	}
+	},
 });
 
 includeCore('elements/FormInput');

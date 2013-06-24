@@ -6,6 +6,7 @@ S.Elt=(function(){
 		this.a=elt;
 		/*#/if*/
 	}
+	Elt.extend=S.extThis;
 	
 	/*#if NODE*/
 	var _attrs=function(attrs){
@@ -16,7 +17,7 @@ S.Elt=(function(){
 		});
 		return res;
 	},
-	_toString=function(tagName,attrs,content){
+	_toHtml=function(tagName,attrs,content){
 		//console.log('Elt.toString',tag,attrs,content);
 		return '<'+tagName+(attrs?_attrs(attrs):'')+(content===null?'/>':('>'+content+'</'+tagName+'>'));
 	};
@@ -40,6 +41,9 @@ S.Elt=(function(){
 		},
 		setClass:function(elt,$class){
 			Elt.setAttr(elt,'class',$class);
+		},
+		id:function(elt,id){
+			Elt.setAttr(elt,'id',id);
 		},
 		addClass:function(elt,$class){
 			Elt.setAttr(elt,'class',Elt.getAttr(e,'class')+' '+$class);
@@ -119,25 +123,38 @@ S.Elt=(function(){
 			Elt.setAttr(this.a,attrName,value);
 			return this;
 		},
+		prop:function(attrName,value){
+			if(value===undefined)
+				return Elt.getAttr(this.a,attrName);
+			value ? Elt.setAttr(this.a,attrName,attrName) : Elt.rmAttr(this.a,attrName);
+			return this;
+		}
 		/*#/if*/
 		
 	};
 	
 	/*#if NODE*/
-	Elt.WithContent=S.extClass(Elt,{
+	Elt.WithContent=Elt.extend({
 		text:function(content){ this.content=S.escape(content); return this; },
 		html:function(content){ this.content=content; return this; },
 		aText:function(content){ this.content+=S.escape(content); return this; },
 		prependText:function(content){ this.content=this.content+S.escape(content); return this; },
 		aHtml:function(content){ this.content+=content; return this; },
-		toString:function(){ return _toString(this.tagName,this._attributes,this.content); }
+		toHtml:function(){ return _toHtml(this.tagName,this._attributes,this.content); },
+		toString:function(){ return this.toHtml(); }
 	});
 	
-	Elt.Basic=S.extClass(Elt.WithContent,{
+	Elt.Basic=Elt.WithContent.extend({
 		ctor:function(tagName){ this.tagName=tagName; this._attributes={}; },
-		toString:function(){ return Elt.Basic.super_.toString.call(this); }
+		toHtml:function(){ return Elt.Basic.super_.toString.call(this); }
 	});
 	/*#else*/
+	Elt.Basic=Elt.WithContent=Elt.extend({
+		ctor:function(){
+			console.log('(Elt.Basic|Elt.WithContent) ctor',this.tagName,this);
+			Elt.call(this,document.createElement(this.tagName));
+		}
+	});
 	Elt.Array=function(){ this.length=0; };
 	Elt.Array.prototype={
 		forEach:Array.prototype.forEach,
@@ -159,23 +176,31 @@ S.Elt=(function(){
 		},
 	};
 	
-	'remove,empty'.split(',').forEach(function(mName){
+	'remove empty'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(){ Elt[mName].call(null,this.a); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
-	'attrs,setAttrs,rmAttr,setClass,addClass,text,html,aText,prependText,aHtml,append,prepend,appendTo'.split(',').forEach(function(mName){
+	'attrs setAttrs rmAttr id setClass addClass text html aText prependText aHtml append prepend appendTo'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this.a,arg1); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
-	'is,hasClass'.split(',').forEach(function(mName){
+	'is hasClass'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ return Elt[mName].call(null,this.a,arg1); };
 		Elt.Array.prototype[mName]=function(){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
+	});
+	
+	'click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave keydown keypress keyup'
+		.split(' ').forEach(function(mName){
+			Elt.prototype[mName]=function(arg1){ this.a.addEventListener(mName,arg1,true); return this; };
+			Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e.addEventListener(mName,arg1,true); }); return this; };
 	});
 	
 	/*#/if*/
 	
 	Elt.create=function(tag){
+		console.log('Creating a new Element: ',tag);
+		/*#if DEV*/if(!tag) new FatalError('tag=',tag);/*#/if*/
 		/*#if NODE*/
 		return new Elt.Basic(tag);
 		/*#else*/
