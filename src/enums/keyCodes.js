@@ -34,4 +34,3 @@ var keyCodes={
 	RIGHT: 39,
 	DOWN: 40
 };
-

@@ -1,3 +1,4 @@
+includeCore('enums/keyCodes');
 S.require('vL/page','m/todos',function(){
 	var UlContainer=S.Form.extend({
 		tagName:'ul', _tagContainer:'li',
