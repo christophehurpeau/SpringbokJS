@@ -6,12 +6,13 @@
 
 ## Clone repository
 
-        git clone https://github.com/christophehurpeau/SpringbokJS.git
+        git clone https://github.com/christophehurpeau/SpringbokJS.git springbokjs
+        cd springbokjs
         git submodule init && git submodule update
 
 ## Launch Todo Webapp
 
-        cd SpringbokJS
+        cd springbokjs
         make
         
 Then, in an other terminal :
