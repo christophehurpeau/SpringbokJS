@@ -1,2 +1,2 @@
 compile:
-	node --harmony bin/sJsCore.js w
+	node --harmony bin/sJsCore.js build

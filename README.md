@@ -13,7 +13,7 @@
 ## Launch Todo Webapp
 
         cd springbokjs
-        make
+        sh ./watch.sh
         
 Then, in an other terminal :
 

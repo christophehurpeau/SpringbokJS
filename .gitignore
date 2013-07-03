@@ -36,8 +36,8 @@ _$*
 _svn
 svn-commit*.tmp
 
-/node_modules
+node_modules
 /dev
 /prod
 /old
-src/links.txt
+/src/links.txt

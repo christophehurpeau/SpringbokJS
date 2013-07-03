@@ -22,13 +22,6 @@ S.require('vL/default','m/todos',function(){
 									//add the new todo in the database and in the html
 									M.Todo.create(input.val(),function(todo,request){
 										ul.append(todo.toLi());
-										request.success(function(){
-											
-										});
-										request.synced(function(){
-											
-										})
-										
 									});
 									input.val('');
 								}
