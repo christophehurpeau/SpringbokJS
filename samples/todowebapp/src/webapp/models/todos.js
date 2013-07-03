@@ -1,5 +1,5 @@
 var db=S.Db('todos',{
-	version:1,
+	version:3,
 	upgrade:function(){
 		
 	}

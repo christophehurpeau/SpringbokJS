@@ -14,8 +14,8 @@ includeCore('base/Model.QFind');
 		/*#else*/
 		if(this._id) return this.model.transaction(function(transaction,objectStore){
 			objectStore.get(this._id).onsuccess = function(event){
-				callback(event.target.result);
-			};
+				callback(this.toModel(event.target.result));
+			}.bind(this);
 		});
 		return this.cursor(function(transaction,objectStore,cursor){
 			callback(cursor ? cursor.value : null);

@@ -17,20 +17,22 @@ S.Form.Input=S.Form.Containable.extend({
 						break; 
 				}
 				
-				if(fModel[1].minL || fModel[1].req) this.attr('required',true);
-				if(v=fModel[1].min) this.attr('min',v);
-				if(v=fModel[1].max) this.attr('max',v);
-				if(v=fModel[1].maxL){
-					this.attr('maxlength',v);
-					var size=70;
-					if(v < 10) size=11;
-					else if(v <= 30) size=25;
-					else if(v < 80) size=30;
-					else if(v < 120) size=40;
-					else if(v < 160) size=50;
-					else if(v < 200) size=60;
-					
-					this.attr('size',size*largeSize);
+				if(fModel[1]){
+					if(fModel[1].minL || fModel[1].required) this.attr('required',true);
+					if(v=fModel[1].min) this.attr('min',v);
+					if(v=fModel[1].max) this.attr('max',v);
+					if(v=fModel[1].maxL){
+						this.attr('maxlength',v);
+						var size=70;
+						if(v < 10) size=11;
+						else if(v <= 30) size=25;
+						else if(v < 80) size=30;
+						else if(v < 120) size=40;
+						else if(v < 160) size=50;
+						else if(v < 200) size=60;
+						
+						this.attr('size',size*largeSize);
+					}
 				}
 			}
 		}

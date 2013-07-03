@@ -2,7 +2,7 @@
 includeCore('base/Model.QFindAll');
 
 /*#if NODE*/var QFindOne=/*#/if*/
-includeCore('base/Model.QFindAll');
+includeCore('base/Model.QFindOne');
 
 
 /*#ifelse BROWSER*/(var Find||module.exports)/*#/if*/=S.newClass({

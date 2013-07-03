@@ -87,6 +87,10 @@ S.Form.Container=S.Elt.WithContent.extend({
 
 S.Form.Containable=S.Elt.Basic.extend({
 	ctor:function(form,name){
+		if(!name){
+			console.error('name is undefined or empty',this);
+			throw new Error('name is undefined or empty');
+		}
 		S.Elt.Basic.call(this);
 		this._form=form; this._name=name;
 	},

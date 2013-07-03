@@ -113,7 +113,7 @@ S.extProto(S.Helpers,{
 			else{
 				if(url.contains('://')) return url;
 				if(url.startsWith('\\/')) return url.substr(1);
-				if(url.substr(0,1)==='/') return options.full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
+				if(url.charAt(0)==='/') return options.full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
 			}
 		}else{
 			return (full || '') + this.router.getArrayLink(this.req.lang,entry,url);

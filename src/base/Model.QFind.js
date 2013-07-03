@@ -1,6 +1,21 @@
 /*#ifelse BROWSER*/(var QFind||module.exports)/*#/if*/=S.newClass({
 	ctor:function(model,H){ this.model=model; this.H=H; },
 	
+	/*toModel:Object.prototype.__proto__ !== null ? function(model,result){
+		if(!result) return null;
+		result.__proto__=model.prototype;
+		return result;
+	} : function(results){
+		var result=new model();
+		Array.forEach(results,function(r){
+			ret[ret.length++]=r;
+		});
+		return ret;
+	},*/
+	toModel:function(result){
+		return result && new this.model(result,'unchanged');
+	},
+	
 	/*#if BROWSER*/
 	writable:{ _range:null, _direction:'next' },
 	/*#/if*/
@@ -11,7 +26,7 @@
 		function(callback){ callback(this._fields ? this.model.collection.find(this._query,this._fields)
 												: this.model.collection.find(this._query)); }
 		||
-		function(callback){ this.model.cursor(callback,this._range,this._direction); }
+		function(callback){ this.model.store.cursor(callback,this._range,this._direction); }
 	)/*#/if*/,
 	
 	

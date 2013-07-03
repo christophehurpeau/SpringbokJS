@@ -6,11 +6,16 @@ includeCore('base/Model.QFind');
 	each:function(callback){
 		this.cursor(function(cursor){
 			/*#if NODE*/cursor.each(callback);
-			/*#else*/console.log(cursor);if(cursor){
-				callback(cursor.value,cursor.key);
-				cursor.continue();
+			/*#else*/if(cursor){
+				callback(this.toModel(cursor.value),cursor.key);
+				cursor['continue']();
 			}/*#/if*/
-		});
+		}.bind(this));
 	},
-	fetch:function(callback){ return this.cursor(function(cursor){ cursor.toArray(callback);}) }
+	fetch:function(callback){
+		return this.cursor(function(cursor){
+			cursor.toArray(callback)
+				.map(function(v){ return this.toModel(v); }.bind(this));
+		});
+	}
 });

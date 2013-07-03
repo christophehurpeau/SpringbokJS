@@ -14,27 +14,10 @@ global.$={
  * https://github.com/honza/140medley
  */
 
-/**
- * Enum for node type codes. https://developer.mozilla.org/en-US/docs/Web/API/Node.nodeType
- * @enum {number}
- */
-var NodeTypes={
-	ELEMENT: 1,
-	ATTRIBUTE: 2, //Deprecated
-	TEXT: 3,
-	CDATA_SECTION: 4, //Deprecated
-	ENTITY_REFERENCE: 5, //Deprecated
-	ENTITY: 6, //Deprecated
-	PROCESSING_INSTRUCTION: 7,
-	COMMENT: 8,
-	DOCUMENT: 9,
-	DOCUMENT_TYPE: 10,
-	DOCUMENT_FRAGMENT: 11,
-	NOTATION: 12 //Deprecated
-};
+includeCore('enums/NodeTypes');
 
 if(!global.$){
-	global.$=function(selector){
+	global.$=function(selector,context){
 		// HANDLE: $(""), $(null), $(undefined), $(false)
 		if( !selector ){
 			return '?';
@@ -42,16 +25,17 @@ if(!global.$){
 		
 		if( S.isString(selector) ){
 			if(selector.charAt(0)==='#') return $.byId(selector.substr(1));
-			var m = selector.match(/^(\.)?(\W)$/);
-			if(m) return $[m[1]?'byClassName':'byTagName'](m[2]);
-			return $.find(selector);
+			// TODO : is it an optimization ? Shouldn't this be done by the browser, in the native function querySelectorAll ?
+			var m = selector.match(/^(\.)?(\w+)$/);
+			if(m) return $[m[1]?'byClassName':'byTagName'](m[2],context);
+			return $.find(selector,context);
 		}else if(selector.nodeType){
 			//DOM element
 			return new S.Elt(selector);
 		}
 	};
 	
-	var results=Object.prototype.__proto__ !== null ? function(results){
+	$._toEltArray=Object.prototype.__proto__ !== null ? function(results){
 		if(!results) return new S.Elt.Array;
 		results.__proto__=S.Elt.Array.prototype;
 		return results;
@@ -76,21 +60,21 @@ if(!global.$){
 		}
 	};
 		
-	$.findFirst=function(selectors){
-		return new S.Elt(document.querySelector(selectors));
+	$.first=function(selectors,context){
+		return new S.Elt((context||document).querySelector(selectors));
 	};
-	$.find=function(selectors){
-		return results(document.querySelectorAll(selectors));
+	$.find=function(selectors,context){
+		return $._toEltArray((context||document).querySelectorAll(selectors));
 	};
 	
-	$.byClassName=function(names){
+	$.byClassName=function(names,context){
 		/* https://developer.mozilla.org/en-US/docs/Web/API/document.getElementsByClassName */
-		return results(document.getElementsByClassName(names));
+		return $._toEltArray((context||document).getElementsByClassName(names));
 	};
 	
-	$.byTagName=function(names){
+	$.byTagName=function(names,context){
 		/* https://developer.mozilla.org/en-US/docs/Web/API/document.getElementsByTagName */
-		return results(document.getElementsByTagName(names));
+		return $._toEltArray((context||document).getElementsByTagName(names));
 	}
 	
 	
@@ -108,7 +92,7 @@ if(!global.$){
 }else{
 	//TODO : jquery compat
 }
-'div,ul,li,create'.split(',').forEach(function(v){
+'div ul li span create'.split(' ').forEach(function(v){
 	$[v]=S.Elt[v];
 });
 /*#/if*/

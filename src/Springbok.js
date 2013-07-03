@@ -9,7 +9,7 @@ require('springboktools/UString/UString');
 require('springboktools/UFiles');
 require('springboktools/UDebug');
 
-
+require('./base/Listenable');
 
 S.log=console.log;//todo use CLogger
 

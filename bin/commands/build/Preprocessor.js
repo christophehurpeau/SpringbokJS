@@ -67,7 +67,7 @@ module.exports=function(defines,data,isBrowser,baseDir){
 						else
 							data = data.substring(0, match.index)+data.substring(data.indexOf("\n",Preprocessor.EXPR.lastIndex));
 					}else{
-						if(content.substr(0,1)==='!') include = !defines[content.substr(1).trim()]
+						if(content.charAt(0)==='!') include = !defines[content.substr(1).trim()]
 						else include = defines[content];
 					}
 				}
@@ -82,7 +82,7 @@ module.exports=function(defines,data,isBrowser,baseDir){
 				var before = stack.pop();
 				include = data.substring(before["lastIndex"], match.index);
 				if(before.include === 1 || before.include === 2){
-					if(include.substr(0,1)==='(' && include.slice(-1)===')') include=include.slice(1,-1);
+					if(include.charAt(0)==='(' && include.slice(-1)===')') include=include.slice(1,-1);
 					include=include.split('||');
 					if(include.length !== 2) throw new Error('ifelse : '+include.length+' != 2 : '+include.join('||'));
 					include=include[before.include-1];
@@ -92,7 +92,7 @@ module.exports=function(defines,data,isBrowser,baseDir){
 				if (instruction == "else" || instruction == "elif" || instruction == "elseif") {
 					if(instruction==='else') include=!before['include'];
 					else{
-						if(content.substr(0,1)==='!') include = !defines[content.substr(1).trim()]
+						if(content.charAt(0)==='!') include = !defines[content.substr(1).trim()]
 						else include = defines[content];
 					}
 					stack.push({ "include": !before["include"], "index": Preprocessor.EXPR.lastIndex, "lastIndex": Preprocessor.EXPR.lastIndex });

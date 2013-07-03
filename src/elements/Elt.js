@@ -1,9 +1,14 @@
+/*#if BROWSER*/
+includeCore('browser/base/');
+includeCore('enums/NodeTypes');
+/*#/if*/
+
 S.Elt=(function(){
 	function Elt(elt){
 		/*#if NODE*/
 		this._attributes={};
 		/*#else*/
-		this.a=elt;
+		this[0]=elt;
 		/*#/if*/
 	}
 	Elt.extend=S.extThis;
@@ -22,85 +27,7 @@ S.Elt=(function(){
 		return '<'+tagName+(attrs?_attrs(attrs):'')+(content===null?'/>':('>'+content+'</'+tagName+'>'));
 	};
 	/*#else*/
-	UObj.extend(Elt,{
-		attrs:function(elt,attrs){
-			for(var key in attrs) Elt.attr(elt,key,attrs[key]);
-		},
-		getAttr:function(elt,name){
-			if(elt.nodeType !== NodeTypes.ELEMENT) /*#if DEV*/throw new Error('get attr not allowed on non-element nodes');/*#else*/return;/*#/if*/
-			var result = elt.getAttribute(name);
-			return !result && name in elt ? elt[name] : result;
-		},
-		setAttr:function(elt,name,value){
-			if(elt.nodeType !== NodeTypes.ELEMENT) /*#if DEV*/throw new Error('set attr not allowed on non-element nodes');/*#else*/return;/*#/if*/
-			if(value===null) elt.removeAttribute(name);
-			else elt.setAttribute(name,value);
-		},
-		rmAttr:function(elt){
-			elt.removeAttribute(attrName);
-		},
-		setClass:function(elt,$class){
-			Elt.setAttr(elt,'class',$class);
-		},
-		id:function(elt,id){
-			Elt.setAttr(elt,'id',id);
-		},
-		addClass:function(elt,$class){
-			Elt.setAttr(elt,'class',Elt.getAttr(e,'class')+' '+$class);
-		},
-		hasClass:function(elt,$class){
-			if( elt.nodeType === NodeTypes.ELEMENT && (" " + elt.className + " ").replace(rclass, " ").indexOf( className ) >= 0 )
-				return true;
-		},
-		is:function(elt,selectors){
-			var matchesSelector=elt.webkitMatchesSelector || elt.mozMatchesSelector || elt.oMatchesSelector || elt.matchesSelector;
-			if (matchesSelector) return matchesSelector.call(elt, selectors);
-			// fall back to performing a selector:
-			return $(selector,elt.parentNode).indexOf(elt)
-		},
-		
-		
-		remove:function(e){
-			if(e.parentNode != null)
-				e.parentNode.removeChild(e);
-		},
-		
-		/* content */
-		doc:function(elt){ return elt && elt.ownerDocument || document; },
-		
-		text:function(e,content){ Elt.empty(e); Elt.aText(e,content); },
-		html:function(e,content){ Elt.empty(e); e.innerHTML=content; },
-		aText:function(e,content){ Elt.append(e,Elt.doc(e).createTextNode(content)); },
-		prependText:function(e,content){ Elt.prepend(e,Elt.doc(e).createTextNode(content)); },
-		aHtml:function(e,content){ },
-		empty:function(e){
-			if(e.nodeType == NodeTypes.ELEMENT)
-				$.disposeElements($.getAll(e,false))
-			while( e.firstChild )
-				e.removeChild( e.firstChild );
-		},
-		append:function(e,child){
-			/*#if DEV*/
-			if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
-				throw new Error('append not allowed on non-element|document nodes');
-			/*#/if*/
-			//for(var i=0,l=content.length;i<l;i++)
-			//	e.appendChild(content[i]);
-			e.appendChild(child.nodeType ? child : child.a);
-		},
-		prepend:function(e,child){
-			/*#if DEV*/
-			if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
-				throw new Error('append not allowed on non-element|document nodes');
-			/*#/if*/
-			e.insertBefore(child.nodeType ? child : child.a,e.firstChild);
-		},
-		
-		appendTo:function(e,parent){
-			Elt.append(parent.nodeType ? parent : parent.a,e);
-		}
-	});
-	Elt.setAttrs=Elt.attrs;
+	includeCore('elements/Elt.dom');
 	
 	/*#/if*/
 	Elt.prototype={
@@ -117,18 +44,37 @@ S.Elt=(function(){
 		getAttr:function(attrName){ return this._attributes[attrName]; },
 		hasAttr:function(attrName){ return this._attributes[attrName] !== undefined; },
 		/*#else*/
-		attr:function(attrName,value){
-			if(value===undefined)
-				return Elt.getAttr(this.a,attrName);
-			Elt.setAttr(this.a,attrName,value);
+		val:function(value){
+			if(arguments.length===0)
+				return Elt.getVal(this[0]);
+			Elt.setVal(this[0],value);
 			return this;
 		},
-		prop:function(attrName,value){
-			if(value===undefined)
-				return Elt.getAttr(this.a,attrName);
-			value ? Elt.setAttr(this.a,attrName,attrName) : Elt.rmAttr(this.a,attrName);
+		
+		on:function(eventName,callback){
+			this[0].addEventListener(eventName,callback,true);
 			return this;
+		},
+		off:function(eventName,callback){
+			this[0].removeEventListener(eventName,callback,true);
+			return this;
+		},
+		
+		/* TRAVERSING */
+		parent:function(){
+			return new Elt(this[0].parentNode);
+		},
+		children:function(){
+			return $._toEltArray(this[0].children);
+		},
+		find:function(selectors){
+			return $(selectors,this[0]);
+		},
+		first:function(selectors){
+			return $.first(selectors,this[0]);
 		}
+		
+		
 		/*#/if*/
 		
 	};
@@ -151,7 +97,6 @@ S.Elt=(function(){
 	/*#else*/
 	Elt.Basic=Elt.WithContent=Elt.extend({
 		ctor:function(){
-			console.log('(Elt.Basic|Elt.WithContent) ctor',this.tagName,this);
 			Elt.call(this,document.createElement(this.tagName));
 		}
 	});
@@ -169,37 +114,54 @@ S.Elt=(function(){
 		//map:Array.prototype.map,
 		//slice:Array.prototype.slice,
 		
-		attr:function(attrName,value){
-			/*#if DEV*/if(value===undefined) throw new Error('Cannot get value from an list of elements');/*#/if*/
-			this.forEach(function(e){ Elt.setAttr(e,attrName,value); });
+		val:function(attrName,value){
+			this.forEach(function(e){ Elt.setVal(e,attrName,value); });
 			return this;
 		},
 	};
 	
+	'attr prop'.split(' ').forEach(function(mName){
+		var mEltName=UString.ucFirst(mName);
+		Elt.prototype[mName]=function(name,value){
+			if(arguments.length===1)
+				return Elt['get'+mEltName].call(null,this[0],name);
+			Elt['set'+mEltName].call(null,this[0],name,value);
+			return this;
+		};
+		Elt.Array.prototype[mName]=function(name,value){
+			/*#if DEV*/if(value===undefined) throw new Error('Cannot get '+mName+' from an list of elements');/*#/if*/
+			this.forEach(function(e){ Elt['set'+mEltName].call(null,e,name,value) });
+			return this;
+		};
+	});
+	
 	'remove empty'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(){ Elt[mName].call(null,this.a); return this; };
+		Elt.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
 	'attrs setAttrs rmAttr id setClass addClass text html aText prependText aHtml append prepend appendTo'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this.a,arg1); return this; };
+		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
 	'is hasClass'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(arg1){ return Elt[mName].call(null,this.a,arg1); };
+		Elt.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
 		Elt.Array.prototype[mName]=function(){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
 	});
 	
-	'click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave keydown keypress keyup'
+	/*'click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave keydown keypress keyup'
 		.split(' ').forEach(function(mName){
-			Elt.prototype[mName]=function(arg1){ this.a.addEventListener(mName,arg1,true); return this; };
+			Elt.prototype[mName]=function(arg1){ this[0].addEventListener(mName,arg1,true); return this; };
 			Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e.addEventListener(mName,arg1,true); }); return this; };
+	});*/
+	'click select focus'.split(' ').forEach(function(mName){
+		Elt.prototype[mName]=function(){ this[0][mName](); return this; };
+		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e[mName](); }); return this; };
 	});
 	
 	/*#/if*/
 	
 	Elt.create=function(tag){
-		console.log('Creating a new Element: ',tag);
 		/*#if DEV*/if(!tag) new FatalError('tag=',tag);/*#/if*/
 		/*#if NODE*/
 		return new Elt.Basic(tag);
@@ -207,17 +169,9 @@ S.Elt=(function(){
 		return new Elt(document.createElement(tag));
 		/*#/if*/
 	};
-	'div,ul,li'.split(',').forEach(function(v){
+	'div ul li span'.split(' ').forEach(function(v){
 		Elt[v]=function(){ return Elt.create(v); };
 	});
 	
 	return Elt;
-	
-	
-	/* DOM */
-	//test if elt is DOMElement : elt.nodeType
-	Elt.createDom=function(html){
-		
-	}
-	
 })();

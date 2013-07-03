@@ -48,8 +48,8 @@ global.App={
 	
 	run:function(){
 		S.log('Running webapp...');
-		this.lang=$.findFirst('meta[name="language"]').attr('content');
-		this.topLayout.body=$.findFirst('body');
+		this.lang=$.first('meta[name="language"]').attr('content');
+		this.topLayout.body=$.first('body');
 		this.readyCallbacks.fire();
 		delete this.readyCallbacks;
 		App.load(S.History.getFragment(),function(){
