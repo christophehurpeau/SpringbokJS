@@ -4,6 +4,10 @@
   
         apt-get install imagemagick
 
+## Installation
+
+        sudo npm install -g springbokjs uglify-js
+
 ## Clone repository
 
         git clone https://github.com/christophehurpeau/SpringbokJS.git springbokjs
