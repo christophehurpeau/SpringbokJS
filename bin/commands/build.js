@@ -7,6 +7,7 @@ require('springboktools/UFiles');
 require('springboktools/UExec');
 
 var sysPath=require('path'),net=require('net');
+var portscanner=require('portscanner');
 var build=require('./build/');
 
 global.CORE_SRC=sysPath.join(__dirname,'/../../src/');
@@ -63,26 +64,32 @@ module.exports={
 		
 		if(persistent){
 			try{
-				var client=net.connect(7000,function(){
-					console.log('SpringbokWatcher Core connected');
-					client.once('data',function(data){
-						if(data.toString()!=='FileList SpringbokJS') client.end();
-						client.on('data',function(data){
-							data=data.toString();
-							if(data==='reload') sw.reload();
-							else if(data==='restart'){
-								console.log('RELOAD UNSUPPORTED YET: exiting....');
-								sw.close(function(){
-									process.exit(1);
-								});
-								
-							}
+				portscanner.checkPortStatus(7000,'127.0.0.1',function(error, status){
+					if(status==='open'){
+						var client=net.connect(7000,function(){
+							console.log('SpringbokWatcher Core connected');
+							client.once('data',function(data){
+								if(data.toString()!=='FileList SpringbokJS') client.end();
+								else{
+									client.on('data',function(data){
+										data=data.toString();
+										if(data==='reload') sw.reload();
+										else if(data==='restart'){
+											console.log('RELOAD UNSUPPORTED YET: exiting....');
+											sw.close(function(){
+												process.exit(1);
+											});
+											
+										}
+									});
+								}
+							})
+							client.on('end',function(){
+								console.log('SpringbokWatcher Core disconnected');
+							})
+							client.write('hello');
 						});
-					})
-					client.on('end',function(){
-						console.log('SpringbokWatcher Core disconnected');
-					})
-					client.write('hello');
+					}
 				});
 			}catch(err){}
 		}

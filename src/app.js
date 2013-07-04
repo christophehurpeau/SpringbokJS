@@ -31,7 +31,16 @@ App.CValidator=require('./components/CValidator');
 require('./base/i18n');
 
 App.start=function(port){
-	port=(port||3000);
+	if(port) App._start(port);
+	else{
+		var portscanner=require('portscanner');
+		portscanner.findAPortNotInUse(3000,4000,'localhost',function(err,port){
+			if(err) return console.error('Error, ',err);
+			port && App._start(port);
+		})
+	}
+};
+App._start=function(port){
 	S.log('Starting app on port '+port);
 	var t=this,dir=t.appDir;
 	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
@@ -232,20 +241,9 @@ App.start=function(port){
 					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
 				});
 				
-				
-				var successListenCallback=function(){ console.log("Listening on port "+port); }
-				app.on('error',function(e){
-					if (e.code == 'EADDRINUSE'){
-						console.log('Address in use, retrying...');
-						setTimeout(function(){
-							app.close(function(){
-								app.listen(++port,'localhost',successListenCallback);
-							});
-						});
-					}
-					console.log('there was an error:', err.message);
+				app.listen(port,'localhost',function(){
+					console.log("Listening on port "+port);
 				});
-				app.listen(port,'localhost',successListenCallback);
 			
 			onEnd();
 		}
