@@ -92,25 +92,37 @@ var FileList=S.extClass(EventEmitter,{
 			.forEach(this._compile.bind(this));
 	},
 	_compile:function(file){
-		this.compiling.push(file);
-		console.log("Compiling file: "+file.path+" ["+this.compiling.length+"]");
-		this._compileFile(file,function(error){
-			this.compiling.splice(this.compiling.indexOf(file),1);
-			if(error){
-				console.log('ERROR: '+file.path+': '+error);
-				this.errors[file.path]=error;
-				this.errorsCount++;
-				this._checkReady();
-				return false;
-			}
-			if(this.errors[file.path]){
-				this.errorsCount--;
-				delete this.errors[file.path];
-			}
-			console.log("Compiled file: "+file.path+' to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
-			this._compileDependentFiles(file.path);
-			this._checkReady();
-		}.bind(this))
+		var iFile=UArray.findKeyBy(this.compiling,'path',file.path),
+		 callback=function(){
+		 	this.compiling.push(file);
+			console.log("Compiling file: "+file.path+" ["+this.compiling.length+"]");
+			this._compileFile(file,function(error){
+				file.checkCancel(function(){
+					this.compiling.splice(this.compiling.indexOf(file),1);
+					if(error){
+						console.log('ERROR: '+file.path+': '+error);
+						this.errors[file.path]=error;
+						this.errorsCount++;
+						this._checkReady();
+						return false;
+					}
+					if(this.errors[file.path]){
+						this.errorsCount--;
+						delete this.errors[file.path];
+					}
+					
+					console.log("Compiled file: "+file.path+' to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
+					this._compileDependentFiles(file.path);
+					this._checkReady();
+				}.bind(this));
+			}.bind(this));
+		}.bind(this);
+		
+		if(iFile===false) callback();
+		else{
+			console.log('[!] file '+file.path+'is already in compiling...');
+			file.cancel(callback);
+		}
 	},
 	/* overridable */
 	_compileFile:function(file,onCompiled){

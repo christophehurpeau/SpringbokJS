@@ -125,87 +125,97 @@ module.exports={
 		
 		file.paths(function(err,paths){
 			if(err) return onEnd(err);
-			UArray.forEachAsync([
-						{path:paths.get('dev'),result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
-						{path:paths.get('prod'),result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
-						function(obj,onEnd){
-				var path=obj.path, result=obj.result;
-				console.log('optimize: '+path);
-				var slicedPath=path.slice(0,-3),srcPath=slicedPath+'.src.js',oldIePath=slicedPath+'.oldIe.js';
-				
-				module.exports.callUglifyJs(result,obj.defs,true,function(err,ieResult){
-					if(err) return onEnd(err);
-					fs.writeFile(srcPath,ieResult,function(err){
+			file.checkCancel(function(){
+				UArray.forEachAsync([
+							{path:paths.get('dev'),result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
+							{path:paths.get('prod'),result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
+							function(obj,onEnd){
+					var path=obj.path, result=obj.result;
+					console.log('optimize: '+path);
+					var slicedPath=path.slice(0,-3),srcPath=slicedPath+'.src.js',oldIePath=slicedPath+'.oldIe.js';
+					
+					module.exports.callUglifyJs(file,result,obj.defs,true,function(err,ieResult){
 						if(err) return onEnd(err);
-						
-						module.exports.callGoogleClosureCompiler(srcPath,oldIePath,true,false,function(err){
+						fs.writeFile(srcPath,ieResult,function(err){
 							if(err) return onEnd(err);
 							
-							/* now for modern browsers */
-							module.exports.callUglifyJs(result,obj.defs,false,function(err,modernResult){
+							module.exports.callGoogleClosureCompiler(file,srcPath,oldIePath,true,false,function(err){
 								if(err) return onEnd(err);
-								fs.writeFile(srcPath,modernResult,function(err){
+								
+								/* now for modern browsers */
+								module.exports.callUglifyJs(file,result,obj.defs,false,function(err,modernResult){
 									if(err) return onEnd(err);
-									
-									module.exports.callGoogleClosureCompiler(srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
-										obj.defs.DEV ? function(err){
-												if(err) return onEnd(err);
-												fs.appendFile(path,"\n//@ sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map',onEnd);
-											} : onEnd);
+									fs.writeFile(srcPath,modernResult,function(err){
+										if(err) return onEnd(err);
+										
+										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
+											obj.defs.DEV ? function(err){
+													if(err) return onEnd(err);
+													fs.appendFile(path,"\n//@ sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map',onEnd);
+												} : onEnd);
+									});
 								});
-							});
-						})
+							})
+						});
 					});
-				});
-				
-			},function(error){ if(error) console.error(error); onEnd(error || false); });
+					
+				},function(error){ if(error) console.error(error); onEnd(error || false); });
+			});
 		});
 	},
 	
-	callUglifyJs:function(code,defs,oldIe,onEnd){
-		try{
-			defs.OLD_IE=!!oldIe;
-			var toplevel=UglifyJS.parse(code,{});
-			toplevel.figure_out_scope();
-			var compressor = UglifyJS.Compressor({ /*lint:false,*/ unsafe:true, comparisons:true, global_defs:defs, sequences:false });
-			var compressed_ast = toplevel.transform(compressor);
-			
-			//var source_map = UglifyJS.SourceMap({});
-			var stream = UglifyJS.OutputStream({ beautify:true, comments:'all' /*source_map:source_map*/ });
-			compressed_ast.print(stream);
-			onEnd(null,stream.toString());
-		}catch(err){
-			if(err.line){
-				var ErrorWithContent=function(err){ this.err=err; };
-				ErrorWithContent.prototype.toString = function(){
-					return this.err.toString()
-							+ "\n\n File Content :\n"
-							+ code.split("\n").slice(this.err.line-2,this.err.line+3).join("\n");
-				};
-
-				err=new ErrorWithContent(err);
+	callUglifyJs:function(file,code,defs,oldIe,onEnd){
+		file.checkCancel(function(){
+			try{
+				defs.OLD_IE=!!oldIe;
+				var toplevel=UglifyJS.parse(code,{});
+				toplevel.figure_out_scope();
+				var compressor = UglifyJS.Compressor({ warnings:false, unsafe:true, comparisons:true, global_defs:defs, sequences:false });
+				var compressed_ast = toplevel.transform(compressor);
+				
+				//var source_map = UglifyJS.SourceMap({});
+				var stream = UglifyJS.OutputStream({ beautify:true, comments:'all' /*source_map:source_map*/ });
+				compressed_ast.print(stream);
+				file.checkCancel(function(){
+					onEnd(null,stream.toString());
+				});
+			}catch(err){
+				if(err.line){
+					var ErrorWithContent=function(err){ this.err=err; };
+					ErrorWithContent.prototype.toString = function(){
+						return this.err.toString()
+								+ "\n\n File Content :\n"
+								+ code.split("\n").slice(this.err.line-2,this.err.line+3).join("\n");
+					};
+	
+					err=new ErrorWithContent(err);
+				}
+				onEnd(err);
 			}
-			onEnd(err);
-		}
+		});
 	},
 	
-	callGoogleClosureCompiler:function(srcPath,output,forOldIe,sourceMap,onEnd){
-		var dir=process.cwd();
-		process.chdir(sysPath.dirname(srcPath));
-		console.log('GoogleClosure: compiling '+srcPath+' to '+output);
-		UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --compilation_level SIMPLE_OPTIMIZATIONS --language_in=ECMASCRIPT5_STRICT'
-						+' --js '+ UExec.escape(sysPath.basename(srcPath))+' --js_output_file '+ UExec.escape(sysPath.basename(output))
-						+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : ''),
-			function (error, stdout, stderr){
-				//console.error(error,"\n",stdout,"\n",stderr);
-				if (error) onEnd(stderr);
-				else{
-					console.log(stdout);
-					console.log(' '+ output + ' built.');
-					onEnd();
-				}
-			});
-		process.chdir(dir);
+	callGoogleClosureCompiler:function(file,srcPath,output,forOldIe,sourceMap,onEnd){
+		file.checkCancel(function(){
+			var dir=process.cwd();
+			process.chdir(sysPath.dirname(srcPath));
+			console.log('GoogleClosure: compiling '+srcPath+' to '+output);
+			UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --compilation_level SIMPLE_OPTIMIZATIONS --language_in=ECMASCRIPT5_STRICT'
+							+' --js '+ UExec.escape(sysPath.basename(srcPath))+' --js_output_file '+ UExec.escape(sysPath.basename(output))
+							+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : ''),
+				function (error, stdout, stderr){
+					//console.error(error,"\n",stdout,"\n",stderr);
+					if (error) onEnd(stderr);
+					else{
+						file.checkCancel(function(){
+							console.log(stdout);
+							console.log(' '+ output + ' built.');
+							onEnd();
+						});
+					}
+				});
+			process.chdir(dir);
+		});
 	},
 	
 	_checkTrailingSlash:function(inclPath){

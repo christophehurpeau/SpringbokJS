@@ -63,33 +63,63 @@ module.exports=S.newClass({
 		
 		
 		this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
+		this.cancel=function(callback){
+			this.cancel.isCanceled=true;
+			this.cancel.callback=callback;
+		};
 		Object.freeze(this);
 	},
 	
+	parse:function(fileContent,callback){
+		this.checkCancel(function(){
+			(this.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,callback);
+		});
+	},
+	
 	lint:function(file,data,callback){
-		var linters=this.linters,l=linters.length;
-		if(l===0) callback(null);
-		else{
-			var i=0,callbackLinters=function callbackLinters(err,file,data){
-				if(err) return callback(err);
-				if(i===l) return callback(null);
-				linters[i++].lint(file,data,callbackLinters);
+		this.checkCancel(function(){
+			var linters=this.linters,l=linters.length;
+			if(l===0) callback(null);
+			else{
+				var i=0,callbackLinters=function callbackLinters(err,file,data){
+					if(err) return callback(err);
+					if(i===l) return callback(null);
+					linters[i++].lint(file,data,callbackLinters);
+				}
+				callbackLinters(null,file,data);
 			}
-			callbackLinters(null,file,data);
-		}
+		});
 	},
 	optimize:function(file,devResult,prodResult,callback){
-		var optimizers=this.optimizers,l=optimizers.length;
-		if(l===0) callback(null,devResult,prodResult);
-		else{
-			var i=0,callbackOptimizer=function callbackOptimizer(err,devResult,prodResult){
-				if(err) return callback(err);
-				if(i===l) return callback(null,devResult,prodResult);
-				if(err===false) return callback(false);
-				optimizers[i++].optimize(file,devResult,prodResult,callbackOptimizer);
+		this.checkCancel(function(){
+			var optimizers=this.optimizers,l=optimizers.length;
+			if(l===0) callback(null,devResult,prodResult);
+			else{
+				var i=0,callbackOptimizer=function callbackOptimizer(err,devResult,prodResult){
+					if(err) return callback(err);
+					if(i===l) return callback(null,devResult,prodResult);
+					if(err===false) return callback(false);
+					optimizers[i++].optimize(file,devResult,prodResult,callbackOptimizer);
+				}
+				callbackOptimizer(null,devResult,prodResult);
 			}
-			callbackOptimizer(null,devResult,prodResult);
+		});
+	},
+	// real compilation
+	_compile:function(data,callback){
+		this.checkCancel(function(){
+			this.compiler.compile(this,data,callback);
+		});
+	},
+	
+	checkCancel:function(callback){
+		if(this.cancel.isCanceled){
+			console.log('Compilation canceled for '+this.path);
+			this.cancel.isCanceled=false;
+			callback=this.cancel.callback;
+			this.cancel.callback=undefined;
 		}
+		callback.call(this);
 	},
 	
 	// Reads file and compiles it with compiler. Data is cached
@@ -121,10 +151,10 @@ module.exports=S.newClass({
 				t.lint(t,fileContent,function(err){
 					if(err) return callbackError('Linting',err);
 					
-					(t.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,function(err,data){
+					t.parse(fileContent,function(err,data){
 						if(err) return callbackError('Parsing',err);
 						try{
-							t.compiler.compile(t,data,function(err,devResult,prodResult,dependencies){
+							t._compile(data,function(err,devResult,prodResult,dependencies){
 								if(err) return callbackError('Compiling',err);
 								if(err===false) return callback();
 								t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
@@ -185,11 +215,13 @@ module.exports=S.newClass({
 	},
 	
 	_write:function(parent,callback){
-		fs.exists(parent,function(exists){
-			exists ? callback() 
-				: mkdirp(parent,function(err){
-					callback(err);
-				});
+		this.checkCancel(function(){
+			fs.exists(parent,function(exists){
+				exists ? callback() 
+					: mkdirp(parent,function(err){
+						callback(err);
+					});
+			});
 		});
 	}
 });
