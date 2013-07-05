@@ -151,7 +151,7 @@ module.exports={
 										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
 											obj.defs.DEV ? function(err){
 													if(err) return onEnd(err);
-													fs.appendFile(path,"\n//@ sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map',onEnd);
+													fs.appendFile(path,"\n//# sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map',onEnd);
 												} : onEnd);
 									});
 								});
