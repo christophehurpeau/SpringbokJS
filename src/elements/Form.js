@@ -1,10 +1,11 @@
 includeCore('elements/');
+includeCore('helpers/');
 
 S.Form=S.Elt.WithContent.extend({
 	tagName:'form', _tagContainer:'div',
 	
 	/*#if NODE*/ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
-	/*#else*/ctor:function(method){ S.Elt.WithContent.call(this); this.attr('method',method); },
+	/*#else*/ctor:function(H,method){ this.H=H; S.Elt.WithContent.call(this); this.attr('method',method); },
 	/*#/if*/
 	
 	action:function(url,entry,full){ this.attr('action',this.H.url(url,entry,full)); return this; },
@@ -25,85 +26,144 @@ S.Form=S.Elt.WithContent.extend({
 	
 	
 	fieldsetStart:function(legend){
+		if(this._fieldsetStarted) throw new Error;
 		this._fieldsetStarted=1;
-		this.aHtml('<fieldset>');
-		if(legend) this.aHtml(S.Elt.create('legend').text(legend));
+		/*#if NODE*/
+		this.append('<fieldset>');
+		if(legend) this.append('<legend>').appendText(legend).append('</legend>');
+		/*#else*/
+		this._formElt=this[0];
+		this[0]=$.create('fieldset');
+		if(legend) this[0].append($.create('legend').text(legend));
+		this[0]=this[0][0];
+		/*#/if*/
 		return this;
 	},
 	fieldsetStop:function(){
-		this.elt=this._formElt.append(this.elt);
+		/*#if NODE*/
+		this.append('</fieldset>');
+		/*#else*/
+		var fieldset=this[0];
+		this[0]=this._formElt;
+		this.append(fieldset);
+		delete this._fieldsetStarted;
+		delete this._formElt;
+		/*#/if*/
 		return this;
 	},
 	
 	end:function(submitLabel){
 		if(submitLabel!=null) this.submit(submitLabel).end();
 		if(this._fieldsetStarted) this.fieldsetStop();
-		return this.toString();
+		return /*#ifelse NODE*/(this.toString()||this)/*#/if*/;
 	},
 	
-	_getValue:function(name){ return this._value && this._value[name]; }
+	_getValue:function(name){ return this._value && this._value[name]; },
+	
+	
+	/*#if BROWSER*/
+	onSubmit:function(callback){
+		var form=this,submit;
+		this.on('submit',function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			submit=form.find('[type="submit"]');
+			form.fadeTo(180,0.4);
+			var hasPlaceholders=form.hasClass('hasPlaceholders');
+			//if(window.tinyMCE!==undefined) tinyMCE.triggerSave();
+			//hasPlaceholder && form.defaultInput('beforeSubmit'); TODO : fire beforeSubmit
+			if((beforeSubmit && beforeSubmit()===false))
+				form.stop().fadeTo(0,1) && hasPlaceholder && form.defaultInput('afterSubmit');
+			else{
+				submit.hide().forEach(function(e){ e.appendNext(S.imgLoading()); });
+				callback(form,function(){
+					submit.show().blur(); form.find('.imgLoading').remove(); form.fadeTo(150,1);
+					hasPlaceholder && form.defaultInput('afterSubmit');
+				});
+			}
+			return false;
+		});
+		return this;
+	}
+	/*#/if*/
 });
 
-/*#if NODE*/
 S.extProto(S.Helpers,{
 	FormPost:function(){ return new S.Form(this,'post'); },
 	FormGet:function(){ return new S.Form(this,'get'); },
 	FormForModel:function(modelName,name,value){ return (new S.Form(this,'post')).setModelName(modelName,name,value); }
 });
-/*#else*/
-UObj.extend(S.Form,{
-	Post:function(){ return new this('post'); },
-	Get:function(){ return new this('get'); },
-	ForModel:function(modelName,name,value){ return (new this('post')).setModelName(modelName,name,value); },
-	extend:function(){//override
-		var o=S.extThis.apply(this,arguments);
-		o.Post=S.Form.Post;
-		o.Get=S.Form.Get;
-		o.ForModel=S.Form.ForModel;
-		return o;
-	}
-});
-/*#/if*/
-
 
 S.Form.Container=S.Elt.WithContent.extend({
 	ctor:function(contained,defaultClass){
 		this.tagName=contained._form._tagContainer;
-		console.log('S.Form.Container',this);
 		S.Elt.WithContent.call(this);
 		this._form=contained._form;
 		defaultClass && this.setClass(defaultClass);
+		/*#if NODE*/
 		this.html(contained.html());
+		/*#else*/
+		this.append(contained._container);//fragment
+		/*#/if*/
 	},
 	
 	//tagContainer:function(tag){ this.elt=$('<'+tag+'/>').attr(this.attr()) return this; }
-	before:function(content){ this.content=content+this.content; return this; },
-	after:function(content){ this.content+=content; return this; },
 	//error:function($message){ $this._error=message; return this; },
 	//noError:function(){ $this->error=false; return this; },
 	
-	end:function(){ return this._form.aHtml(this.toHtml()); }
+	end:function(){ return this._form.append(/*#ifelse NODE*/(this.toHtml()||this[0])/*#/if*/); }
 });
 
 S.Form.Containable=S.Elt.Basic.extend({
 	ctor:function(form,name){
-		if(!name){
+		/*#if DEV*/
+		if(!name && !(this instanceof S.Form.InputSubmit)){
 			console.error('name is undefined or empty',this);
 			throw new Error('name is undefined or empty');
 		}
+		/*#/if*/
 		S.Elt.Basic.call(this);
 		this._form=form; this._name=name;
+		/*#if BROWSER*/
+		this._container=document.createDocumentFragment();
+		this._container.appendChild(this[0]);
+		/*#/if*/
 	},
 	
 	placeholder:function(value){ this.attr('placeholder',value); return this; },
-	
-	label:function(value){ this._label=S.escape(value); return this; },
-	htmlLabel:function(value){ this._label=value; return this; },
-	noLabel:function(){ this._label=false; return this; },
+
+	//.text and .html is after for gzip
+	label:function(value){ this._label=$.create('label')/*#if BROWSER*/.prependTo(this._container)/*#/if*/.text(value); return this; },
+	htmlLabel:function(value){ this._label=$.create('label')/*#if BROWSER*/.prependTo(this._container)/*#/if*/.html(value); return this; },
+	noLabel:function(){
+		/*#if BROWSER*/this._label && this._container.removeChild(this._label);/*#/if*/
+		this._label=false;
+		return this;
+	},
 	noName:function(){ this.rmAttr('name'); return this; },
 	
-	between:function(content){ this._between=content; return this; },
-	noContainer:function(){ return this._form.aHtml(this.toHtml()); },
+	between:function(content){
+		/*#if NODE*/
+			this._between=content;
+		/*#else*/
+			content && S.Elt.appendBefore(this._container,this[0],content);
+		/*#/if*/
+		return this;
+	},
+	after:function(content){
+		/*#if NODE*/
+			this._after=content;
+		/*#else*/
+			content && S.Elt.append(this._container,content);
+		/*#/if*/
+	},
+	noContainer:function(){
+		/*#if NODE*/
+		return this._form.append(this.toHtml());
+		/*#else*/
+		return this._form.append(this[0]);
+		/*#/if*/
+	},
 	end:function(){ return this.container().end(); },
 	
 	container:function(){ return new S.Form.Container(this,this._getDefaultContainerClass ? this._getDefaultContainerClass() : this.tagName); },
@@ -121,11 +181,12 @@ S.Form.Containable=S.Elt.Basic.extend({
 	_attrName:function(){
 		return this._form._modelName != null ? this._form._name+'['+this._name+']' : this._name;
 	},
-	
+	/*#if NODE*/
 	toHtml:function(){
 		return (this._label===false?'':this._label)+(this._between||' ')
 			+S.Elt.toString(this.tagName,this._attributes,null);
 	},
+	/*#/if*/
 });
 
 includeCore('elements/FormInput');

@@ -1,2 +1,106 @@
-/* Copyright (c) 2010-2012 Marcus Westin */
-(function(){function o(){try{return r in t&&t[r]}catch(e){return!1}}var e={},t=window,n=t.document,r="localStorage",i="__storejs__",s;e.disabled=!1,e.set=function(e,t){},e.get=function(e){},e.remove=function(e){},e.clear=function(){},e.transact=function(t,n,r){var i=e.get(t);r==null&&(r=n,n=null),typeof i=="undefined"&&(i=n||{}),r(i),e.set(t,i)},e.getAll=function(){},e.serialize=function(e){return JSON.stringify(e)},e.deserialize=function(e){if(typeof e!="string")return undefined;try{return JSON.parse(e)}catch(t){return e||undefined}};if(o())s=t[r],e.set=function(t,n){return n===undefined?e.remove(t):(s.setItem(t,e.serialize(n)),n)},e.get=function(t){return e.deserialize(s.getItem(t))},e.remove=function(e){s.removeItem(e)},e.clear=function(){s.clear()},e.getAll=function(){var t={};for(var n=0;n<s.length;++n){var r=s.key(n);t[r]=e.get(r)}return t};else if(n.documentElement.addBehavior){var u,a;try{a=new ActiveXObject("htmlfile"),a.open(),a.write('<script>document.w=window</script><iframe src="/favicon.ico"></iframe>'),a.close(),u=a.w.frames[0].document,s=u.createElement("div")}catch(f){s=n.createElement("div"),u=n.body}function l(t){return function(){var n=Array.prototype.slice.call(arguments,0);n.unshift(s),u.appendChild(s),s.addBehavior("#default#userData"),s.load(r);var i=t.apply(e,n);return u.removeChild(s),i}}var c=new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]","g");function h(e){return e.replace(c,"___")}e.set=l(function(t,n,i){return n=h(n),i===undefined?e.remove(n):(t.setAttribute(n,e.serialize(i)),t.save(r),i)}),e.get=l(function(t,n){return n=h(n),e.deserialize(t.getAttribute(n))}),e.remove=l(function(e,t){t=h(t),e.removeAttribute(t),e.save(r)}),e.clear=l(function(e){var t=e.XMLDocument.documentElement.attributes;e.load(r);for(var n=0,i;i=t[n];n++)e.removeAttribute(i.name);e.save(r)}),e.getAll=l(function(t){var n=t.XMLDocument.documentElement.attributes,r={};for(var i=0,s;s=n[i];++i){var o=h(s.name);r[s.name]=e.deserialize(t.getAttribute(o))}return r})}try{e.set(i,i),e.get(i)!=i&&(e.disabled=!0),e.remove(i)}catch(f){e.disabled=!0}e.enabled=!e.disabled,typeof module!="undefined"&&module.exports?module.exports=e:typeof define=="function"&&define.amd?define(e):this.store=e})()
+S.store=(function(){
+	if(doc.documentElement.addBehavior){
+		/* https://github.com/marcuswestin/store.js/blob/master/store.js */
+		var localStorageName = 'localStorage',
+			storageOwner,storageContainer,
+			serialize=JSON.stringify,
+			deserialize=function(value){ return value && JSON.parse(value); };
+		// Since #userData storage applies only to specific paths, we need to
+		// somehow link our data to a specific path. We choose /favicon.ico
+		// as a pretty safe option, since all browsers already make a request to
+		// this URL anyway and being a 404 will not hurt us here. We wrap an
+		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+		// since the iframe access rules appear to allow direct access and
+		// manipulation of the document element, even for a 404 page. This
+		// document can be used instead of the current document (which would
+		// have been limited to the current path) to perform #userData storage.
+		
+		try {
+			storageContainer = new ActiveXObject('htmlfile')
+			storageContainer.open()
+			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
+			storageContainer.close()
+			storageOwner = storageContainer.w.frames[0].document
+			storage = storageOwner.createElement('div')
+		} catch(e) {
+			// somehow ActiveXObject instantiation failed (perhaps some special
+			// security settings or otherwse), fall back to per-path storage
+			storage = doc.createElement('div')
+			storageOwner = doc.body
+		}
+		var withIEStorage=function(storeFunction) {
+			return function() {
+				var args = Array.prototype.slice.call(arguments, 0)
+				args.unshift(storage)
+				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+				storageOwner.appendChild(storage)
+				storage.addBehavior('#default#userData')
+				storage.load(localStorageName)
+				var result = storeFunction.apply(store, args)
+				storageOwner.removeChild(storage)
+				return result
+			}
+		}
+			
+		// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
+		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g");
+		var ieKeyFix=function(key){ return key.replace(forbiddenCharsRegex, '___') }
+		
+		return {
+			get:withIEStorage(function(storage, key){
+				key = ieKeyFix(key);
+				return deserialize(storage.getAttribute(key));
+			}),
+			set:withIEStorage(function(storage, key, val){
+				key = ieKeyFix(key);
+				if (val === undefined) { return store.remove(key) }
+				storage.setAttribute(key, serialize(val));
+				storage.save(localStorageName);
+			}),
+			remove:withIEStorage(function(storage, key){
+				key = ieKeyFix(key);
+				storage.removeAttribute(key);
+				storage.save(localStorageName);
+			}),
+			clear:withIEStorage(function(storage, key){
+				var attributes = storage.XMLDocument.documentElement.attributes;
+				storage.load(localStorageName);
+				for (var i=0, attr; attr=attributes[i]; i++)
+					storage.removeAttribute(attr.name)
+				storage.save(localStorageName);
+			}),
+			iterator:withIEStorage(function(storage, key){
+				var attributes = storage.XMLDocument.documentElement.attributes, i=0;
+				return {
+					next:function(){
+						if (i >= attributes.length)
+							throw StopIteration;
+						var attr=attributes[i++], key=ieKeyFix(attr.name);
+						return [attr.name, deserialize(storage.getAttribute(key)) ];
+					}
+				};
+			}),
+			forEach:function(callback){
+				var it=S.iterator(this);
+				while(it.hasNext())
+					callback.apply(null,it.next());
+			}
+		}
+	}
+	
+	
+	// well, only thing left, is to use an object, only valid for this page...
+	var object={};
+	return {
+		get:function(key){ return object[key]; },
+		set:function(key,value){ object[key] = value; },
+		remove:function(key){ delete object[key]; },
+		clear:function(){ object={}; },
+		forEach:function(callback){ UObj.forEach(object,callback); },
+		iterator:function(){
+			return UObj.iterator(object);
+		}
+	}
+})();

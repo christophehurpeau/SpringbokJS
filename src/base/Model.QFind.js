@@ -21,6 +21,7 @@
 	/*#/if*/
 
 	fields:function(fields){ this._fields=fields; return this; },
+	query:function(query){ this._query=query; return this; },
 	
 	cursor:/*#ifelse NODE*/(
 		function(callback){ callback(this._fields ? this.model.collection.find(this._query,this._fields)

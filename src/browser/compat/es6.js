@@ -16,6 +16,7 @@
 	
 	// document.head (HTML5)
 	document.head = document.head || document.getElementsByTagName('head')[0];
+	window.StopIteration=window.StopIteration || {};
 
 	/* DOM-shim */
 

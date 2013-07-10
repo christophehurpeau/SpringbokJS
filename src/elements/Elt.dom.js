@@ -99,12 +99,12 @@ UObj.extend(Elt,{
 	id:function(elt,id){
 		Elt.setAttr(elt,'id',id);
 	},
-	addClass:function(elt,$class){
-		Elt.setAttr(elt,'class',Elt.getAttr(e,'class')+' '+$class);
+	addClass:function(elt,_class){
+		Elt.setAttr(elt,'class',Elt.getAttr(elt,'class')+' '+_class);
 	},
 	hasClass:function(elt,className){
 		/*#if DEV*/
-		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('removeClass not allowed on non-element nodes');
+		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
 		if(!S.isString(className)) throw new Error('className must be a string');
 		if(className.indexOf(' ') !== -1) throw new Error('className must have no spaces');
 		/*#/if*/
@@ -214,11 +214,10 @@ UObj.extend(Elt,{
 	/* content */
 	doc:function(elt){ return elt && elt.ownerDocument || document; },
 	
-	text:function(e,content){ Elt.empty(e); Elt.aText(e,content); },
+	text:function(e,content){ Elt.empty(e); Elt.appendText(e,content); },
 	html:function(e,content){ Elt.empty(e); e.innerHTML=content; },
-	aText:function(e,content){ Elt.append(e,Elt.doc(e).createTextNode(content)); },
+	appendText:function(e,content){ Elt.append(e,Elt.doc(e).createTextNode(content)); },
 	prependText:function(e,content){ Elt.prepend(e,Elt.doc(e).createTextNode(content)); },
-	aHtml:function(e,content){ },
 	empty:function(e){
 		if(e.nodeType == NodeTypes.ELEMENT)
 			$.disposeElements($.getAll(e,false))
@@ -236,11 +235,15 @@ UObj.extend(Elt,{
 		e.appendChild(child.nodeType ? child : (S.isString(child) ? Elt.parse(child) : child[0]));
 	},
 	prepend:function(e,child){
+		this.appendBefore(e,e.firstChild,child);
+	},
+	
+	appendBefore:function(e,node,child){
 		/*#if DEV*/
 		if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
 			throw new Error('append not allowed on non-element|document nodes');
 		/*#/if*/
-		e.insertBefore(child.nodeType ? child : (S.isString(child) ? Elt.parse(child) : child[0]),e.firstChild);
+		e.insertBefore(child.nodeType ? child : (S.isString(child) ? Elt.parse(child) : child[0]),node.nodeType ? node : node[0]);
 	},
 	
 	appendTo:function(e,parent){

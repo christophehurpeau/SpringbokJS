@@ -4,27 +4,19 @@ App.Controller = (function(){
 			beforeDispatch:function(){}
 		},
 		
-		dispatch:function(route){
+		dispatch:function(route,req){
 			if(this.beforeDispatch) this.beforeDispatch();
 			route.sParams.unshift(route.nParams);
 			var m=this[UString.ucFirst(route.action)];
 			/*#if DEV*/ if(!m) console.log('This action doesn\'t exists: "'+route.action+'".'
 							+' Known methods: '+Object.keys(this).filter(function(m){ return m[0]===m[0].toUpperCase() })); /*#/if*/
 			if(!m) throw HttpException.notFound();
-			m.apply(this,route.sParams);
+			m.call(this,req,App.helpers);
 		},
 		layout:function(name,callback){
 			if(!callback){ callback=name; name=this.defaultLayout; }
 			/*#if DEV*/if(!L.has(name)) throw new Error("This layout doesn't exists: "+name);/*#/if*/
 			L.get(name).render(callback.bind(this));
-		},
-		check:function(){
-			if(!S.CSecure.checkAccess()) throw new S.Controller.Stop();
-		},
-		
-		redirect:function(to,exit){
-			App.load(to);
-			if(exit) throw new S.Controller.Stop();
 		},
 		dispose:function(){
 		}

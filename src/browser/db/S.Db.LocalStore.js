@@ -1,13 +1,10 @@
-includeCore('browser/components/S.Db');
+includeCore('browser/db/S.Db');
+includeCore('browser/base/S.store');
 
 if( !window.indexedDB ){
 	// shim to WebSQL : 
 	S_loadSyncScript('compat/IndexedDBShim');
 	
-	if( !window.indexedDB ){
-		// local storage (using userData for IE6/7
-		S_loadSyncScript('compat/store');
-	}
 	
 	/*if (!window.indexedDB)
 		window.alert("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");*/
@@ -25,7 +22,7 @@ S.Db.LocalDbStore=S.newClass({
 	},
 	_beforeInsert:function(data){
 		if(!data[this.model.keyPath])
-			data[this.model.keyPath]=S.alphaNumber.encode(Date.now())+'-'+/*TODO : session id ? or something unique for this browser / client ?*/'0';
+			data[this.model.keyPath]=S.alphaNumber.html.encode(Date.now())+'-'+/*TODO : session id ? or something unique for this browser / client ?*/'0';
 		return data;
 	},
 	insert:function(data,options,r){

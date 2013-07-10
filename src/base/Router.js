@@ -161,30 +161,30 @@ App.Router.prototype={
 		S.log('route=',route);
 		return route;
 	},
-	getLink:function(lang,entry,url){
-		return S.isString(url) ? this.getStringLink(lang,entry,url) : this.getArrayLink(lang,entry,url);
+	getLink:function(lang,/*#if NODE*/entry,/*#/if*/url){
+		return S.isString(url) ? this.getStringLink(lang,/*#if NODE*/entry,/*#/if*/url) : this.getArrayLink(lang,/*#if NODE*/entry,/*#/if*/url);
 	},
-	getArrayLink:function(lang,entry,params){},
-	getStringLink:function(lang,entry,params){
-		S.log([lang,entry,params,UString.explode(UString.trim(params,'/'),'/',3)]);
+	getArrayLink:function(lang,/*#if NODE*/entry,/*#/if*/params){},
+	getStringLink:function(lang,/*#if NODE*/entry,/*#/if*/params){
+		S.log([lang,/*#if NODE*/entry,/*#/if*/params,UString.explode(UString.trim(params,'/'),'/',3)]);
 		var route = UString.explode(UString.trim(params,'/'),'/',3),
 			controller = route[0],
 			action = route[1] || DEFAULT.action,
 			params = route[2] || '';
 		S.log([route,controller,action,params]);
-		route = this.routes[entry]['/:controller(/:action/*)?'];
+		route = this.routes.get(/*#ifelse NODE*/entry||'main'/*#/if*/).get('/:controller(/:action/*)?');
 		S.log(route);
 		var froute = action === DEFAULT.action ? '/' + this.translate(lang,controller) : UString.format((route[lang]||route._)[1], this.translate(lang,controller), this.translate(lang,action), params ? '/' + params : '');
 		return froute + (route.ext && !froute.endsWith('.' + route.ext) ? '.' + route.ext : '');
 	},
 	translate:function(lang,string){
-		return this.routesLangs['->' + lang][string] || string;
+		return this.routesLangs.get('->' + lang).get(string) || string;
 	},
 	untranslate:function(lang,string){
 		/*#if DEV*/
-		if(!this.routesLangs[lang + '->']) throw new Error('Missing lang "'+lang+'"');
-		if(!this.routesLangs[lang + '->'][string]) throw new Error('Missing translation for string "'+string+'"');
+		if(!this.routesLangs.has(lang + '->')) throw new Error('Missing lang "'+lang+'"');
+		if(!this.routesLangs.get(lang + '->').has(string)) throw new Error('Missing translation for string "'+string+'"');
 		/*#/if*/
-		return this.routesLangs[lang + '->'][string] || string;
+		return this.routesLangs.get(lang + '->').get(string) || string;
 	}
 };

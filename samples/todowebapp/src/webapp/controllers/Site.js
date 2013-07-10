@@ -5,9 +5,9 @@ S.require('vL/default','m/todos',function(){
 	})
 	
 	App.Controller('Site',{
-		Index:App.Controller.Action(function(req,res){
+		Index:App.Controller.Action(function(req,H){
 			this.layout('default',function(l){
-				var form=S.Form.ForModel('Todo');
+				var form=H.FormForModel('Todo');
 				
 				var ul=$.ul().id('todos').setClass('nobullets');
 				$.li().append(

@@ -1,6 +1,6 @@
-includeCore('browser/components/S.Db');
-includeCore('browser/components/S.Db.LocalStore');
-includeCore('browser/components/S.Db.ServerStore');
+includeCore('browser/db/S.Db');
+includeCore('browser/db/S.Db.LocalStore');
+includeCore('browser/db/S.Db.ServerStore');
 
 //if indexeddb is not available, only use server
 S.Db.LocalSyncedStore=S.newClass({

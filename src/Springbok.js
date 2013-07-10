@@ -26,6 +26,7 @@ process.on('uncaughtException',function(err){
 });
 
 
+var http = require('http');
 
 global.App={
 	behaviours:[],
@@ -55,6 +56,12 @@ global.App={
 		return UFiles.readYamlSync(this.appDir+'config/'+path+'.yml');
 	},
 	
+	require:function(path){
+		return require('./'+path);
+	},
+	loadComponent:function(component){
+		S.extProto(http.IncomingMessage,component.requestMethods);
+	},
 	
 	_init:function(){
 		

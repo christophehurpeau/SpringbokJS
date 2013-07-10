@@ -1,64 +1,22 @@
 includeCore('elements/');
 S.extProto(S.Helpers,{
-	doctype:function(){
-		return (this._isIElt8=this.req.isIElt8())
-			? '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'
-			: '<!DOCTYPE html>';
-	},
-	
-	linkRSS:function(title,url){
-		return '<link rel="alternate" type="application/rss+xml" href="'+this.url(url)+'" title="'+title+'"/>';
-	},
-	linkAtom:function(title,url){
-		return '<link rel="alternate" type="application/atom+xml" href="'+this.url(url)+'" title="'+title+'"/>';
-	},
-	
-	metaCharset:function(encoding){
-		encoding=encoding||'utf-8';
-		return this._isIElt8
-			? '<meta http-equiv="Content-Type" content="text/html; charset='+encoding+'"/>'
-			: '<meta charset="'+encoding+'">';
-	},
-	metaLanguage:function(){
-		var lang='en';
-		return '<meta name="language" content="'+lang+'"/><meta http-equiv="content-language" content="'+lang+'"/>';
-	},
-	
-	cssLink:function(url,media){
-		if(!url) url='/main';
-		return '<link rel="stylesheet" type="text/css" href="'+this.staticUrl(url+'.css')+'"'+(media?' media="'+media+'"':'')+'/>';
-	},
-	jsLink:function(url){
-		return '<script type="text/javascript" src="'+this.staticUrl(url+'.js')+'"></script>';
-	},
-	favicon:function(imgUrl){
-		if(!imgUrl) imgUrl=='favicon.png';
-		var href=STATIC_URL+'img/'+imgUrl;
-		return '<link rel="icon" type="image/vnd.microsoft.icon" href="'+href+'"/>'
-			+'<link rel="shortcut icon" type="image/x-icon" href="'+href+'"/>';
-	},
-	
-	jsI18n:function(url){
-		if(!url) url='/main';
-		return this.jsLink(url+'.en');//TODO use CLang
-	},
-	
-	
 	
 	link:function(title,url,options){
-		return this.linkHtml(S.escape(title),url,options);
+		options.escape=true;
+		return this.linkHtml(title,url,options);
 	},
 	linkHtml:function(title,url,options){
 		options=options||{};
 		
-		if(url===false) url=this.url(url,options.fullUrl);
-		else if(!url) title=url=this.url(title,options.fullUrl);
+		if(url===false) url=this.url(url,/*#if NODE*/options.entry,/*#/if*/options);
+		else if(!url) title=url=this.url(title,/*#if NODE*/options.entry,/*#/if*/options);
 		else if(url!=='#' && url[0]!=='?'
 					&& (S.isArray(url) || ((url.length < 11 || url.substr(0,11)!=='javascript:')
-					&& (url.length < 7 || url.substr(0,7)!=='mailto:')))) url=this.url(url,options.fullUrl);
-		delete options.fullUrl;
+					&& (url.length < 7 || url.substr(0,7)!=='mailto:')))) url=this.url(url,/*#if NODE*/options.entry,/*#/if*/options);
+		delete options.full;
 		
-		var a=$.create('a').html(title),current=false;
+		var a=$.create('a')[options.escape ? 'text' : 'html'](title),current=false;
+		delete options.escape;
 		
 		if(options.current !== undefined){
 			if(options.current===1) current=true;
@@ -74,59 +32,9 @@ S.extProto(S.Helpers,{
 		return a.attr('href',url);
 	},
 	
-	/* Exemples :
-	* S.html.url(['/:id-:slug',post.id,post.slug])
-	* S.html.url('/site/login')
-	* S.html.url(['/:id-:slug',post.id,post.slug,{'target':'_blank','?':'page=2'}])
-	* 
-	* 
-	* 
-		if($entry===null){
-			$entry=Springbok::$scriptname;
-			if($full===true) $full=Config::$siteUrl[$entry];
-		}elseif(($entry!==Springbok::$scriptname && $full===null) || $full===true) $full=Config::$siteUrl[$entry];
-		if(is_array($url)){
-			$url=(!$full?'':($full===true?FULL_BASE_URL:$full)).BASE_URL.CRoute::getArrayLink($entry,$url);
-			$escape=false;
-		}else{
-			if(empty($url) || $url==='/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL/*#if DEV *\/.CRoute::$_prefix/*#/if*\/.'/';
-			else{
-				if(strpos($url,'://')>0) return $url;
-				if(substr($url,0,2)==='\/') $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).substr($url,1);
-				elseif($url[0]==='/'){$url=substr($url,1); $url=($full===false?'':($full===true?FULL_BASE_URL:$full)).BASE_URL.CRoute::getStringLink($entry,$url);}
-			}
-		}
-		return $escape?h($url,false):$url;
-	*/
-	url:function(url,entry,options){
-		if(!S.isObj(options)) options={full:options};
-		/*#if DEV*/ if(entry===false || entry===true) throw new Error('Entry param cannot be false or true'); /*#/if*/
-		if(entry==null){
-			entry=this.req.entry;
-			options.full=/*#ifelse DEV */('/~'+entry||options.full===true ? Config.siteUrl[entry] : '')/*#/if*/;
-		}else if((entry !== this.req.entry && options.full!==false) || options.full===true) options.full=/*#ifelse DEV */('/~'+entry||Config.siteUrl[entry])/*#/if*/;
-		else options.full=/*#ifelse DEV */('/~'+entry||'')/*#/if*/;
-		
-		if(S.isString(url) || !url){
-			if(url) url=url.trim();
-			if(!url || url==='/') return options.full+ '/';
-			else{
-				if(url.contains('://')) return url;
-				if(url.startsWith('\\/')) return url.substr(1);
-				if(url.charAt(0)==='/') return options.full + this.router.getStringLink(this.req.lang,entry,url.substr(1));
-			}
-		}else{
-			return (full || '') + this.router.getArrayLink(this.req.lang,entry,url);
-		}
-	},
-	urlEscape:function(url,entry,options){
-		return S.escapeUrl(this.url(url,entry,options));
-	},
-	
-	
-	
-	
+	/*#if NODE*/
 	jsInline:function(content){
 		return '<script type="text/javascript">//<![CDATA['+"\n"+content.trim()+"//]]>\n</script>";
 	}
+	/*#/if*/
 });

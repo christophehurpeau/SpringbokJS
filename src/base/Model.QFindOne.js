@@ -2,7 +2,7 @@
 includeCore('base/Model.QFind');
 
 /*#ifelse BROWSER*/(var QFindOne||module.exports)/*#/if*/=QFind.extend({
-	fetch:function(callback){
+	_fetch:function(callback){
 		/*#if NODE */
 		if(this.H){
 			var truecallback=callback;
@@ -18,10 +18,15 @@ includeCore('base/Model.QFind');
 			}.bind(this);
 		});
 		return this.cursor(function(transaction,objectStore,cursor){
-			callback(cursor ? cursor.value : null);
+			callback(cursor ? cursor.value : undefined);
 		});
 		
 		/*#/if*/
+	},
+	fetch:function(callback){
+		this._fetch(function(result){
+			callback(this.toModel(result));
+		}.bind(this));
 	},
 	byId:function(id){
 		/*#if NODE */this._query={_id:id};

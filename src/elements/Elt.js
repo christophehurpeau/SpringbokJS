@@ -44,6 +44,7 @@ S.Elt=(function(){
 		getAttr:function(attrName){ return this._attributes[attrName]; },
 		hasAttr:function(attrName){ return this._attributes[attrName] !== undefined; },
 		/*#else*/
+		getAttr:function(attrName){ return Elt.getAttr(this[0],attrName); },
 		val:function(value){
 			if(arguments.length===0)
 				return Elt.getVal(this[0]);
@@ -51,12 +52,28 @@ S.Elt=(function(){
 			return this;
 		},
 		
-		on:function(eventName,callback){
+		on:function(eventName,selector,callback){
+			if(S.isFunc(selector)){ callback=selector; selector=undefined; }
+			var originalCallback=callback,$thisElt=this;
+			if(selector){
+				if(!callback._originalEventListener) callback._originalEventListener={};
+				/*#if DEV*/if(originalCallback._originalEventListener[selector]) throw new Error;/*#/if*/
+				callback=originalCallback._originalEventListener[selector]=function(e){
+					if(Elt.is(e.target,selector))
+						originalCallback.call($thisElt,e);
+				}
+				
+			}else{
+				/*#if DEV*/if(callback._originalEventListener) throw new Error;/*#/if*/
+				callback=originalCallback._originalEventListener=function(e){
+					originalCallback.call($thisElt,e);
+				}
+			}
 			this[0].addEventListener(eventName,callback,true);
 			return this;
 		},
-		off:function(eventName,callback){
-			this[0].removeEventListener(eventName,callback,true);
+		off:function(eventName,selector,callback){
+			this[0].removeEventListener(eventName,selector?callback._originalEventListener[selector]:callback._originalEventListener,true);
 			return this;
 		},
 		
@@ -83,16 +100,16 @@ S.Elt=(function(){
 	Elt.WithContent=Elt.extend({
 		text:function(content){ this.content=S.escape(content); return this; },
 		html:function(content){ this.content=content; return this; },
-		aText:function(content){ this.content+=S.escape(content); return this; },
+		appendText:function(content){ this.content+=S.escape(content); return this; },
 		prependText:function(content){ this.content=this.content+S.escape(content); return this; },
-		aHtml:function(content){ this.content+=content; return this; },
+		append:function(content){ this.content+=content; return this; },
 		toHtml:function(){ return _toHtml(this.tagName,this._attributes,this.content); },
 		toString:function(){ return this.toHtml(); }
 	});
 	
 	Elt.Basic=Elt.WithContent.extend({
 		ctor:function(tagName){ this.tagName=tagName; this._attributes={}; },
-		toHtml:function(){ return Elt.Basic.super_.toString.call(this); }
+		toHtml:function(){ return Elt.Basic.super_.toHtml.call(this); }
 	});
 	/*#else*/
 	Elt.Basic=Elt.WithContent=Elt.extend({
@@ -106,16 +123,16 @@ S.Elt=(function(){
 		reduce:Array.prototype.reduce,
 		/* some executes the callback function once for each element present in the array until it finds one where callback returns a true value.
 		 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Some */
-		some:Array.prototype.reduce,
-		_push:Array.prototype.push,
+		some:Array.prototype.some,
+		push:Array.prototype.push,
 		sort:Array.prototype.sort,
 		indexOf:Array.prototype.indexOf,
 		concat:Array.prototype.concat,
 		//map:Array.prototype.map,
 		//slice:Array.prototype.slice,
 		
-		val:function(attrName,value){
-			this.forEach(function(e){ Elt.setVal(e,attrName,value); });
+		val:function(value){
+			this.forEach(function(e){ Elt.setVal(e,value); });
 			return this;
 		},
 	};
@@ -140,7 +157,7 @@ S.Elt=(function(){
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
-	'attrs setAttrs rmAttr id setClass addClass text html aText prependText aHtml append prepend appendTo'.split(' ').forEach(function(mName){
+	'attrs setAttrs rmAttr id setClass addClass text html append prepend appendText prependText appendTo prependTo'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
@@ -154,9 +171,17 @@ S.Elt=(function(){
 			Elt.prototype[mName]=function(arg1){ this[0].addEventListener(mName,arg1,true); return this; };
 			Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e.addEventListener(mName,arg1,true); }); return this; };
 	});*/
-	'click select focus'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(){ this[0][mName](); return this; };
-		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e[mName](); }); return this; };
+	'click select focus blur'.split(' ').forEach(function(mName){
+		Elt.prototype[mName]=function(){
+			/*#if DEV*/if(arguments.length) throw new Error('this function doesnt take arguments');/*#/if*/
+			this[0][mName]();
+			return this;
+		};
+		Elt.Array.prototype[mName]=function(){
+			/*#if DEV*/if(arguments.length) throw new Error('this function doesnt take arguments');/*#/if*/
+			this.forEach(function(e){ e[mName](); });
+			return this;
+		};
 	});
 	
 	/*#/if*/

@@ -4,11 +4,13 @@ includeCore('browser/base/S.History');
 includeCore('browser/base/S.require');
 includeCore('elements/');
 includeCore('elements/Form');
+includeCore('helpers/');
 S.require.prefix=Config.id+'/';
 
 global.FatalError=function(error){
 	alert(this.error=error);
-	$('#jsAppLoadingMessage').setClass('message error').text(error);
+	var appLoadingMessage=$('#jsAppLoadingMessage');
+	appLoadingMessage && appLoadingMessage.setClass('message error').text(error);
 	throw this;
 };
 global.FatalError.toString=function(){ return 'Fatal Error: '+this.error; }
@@ -52,9 +54,18 @@ global.App={
 		this.topLayout.body=$.first('body');
 		this.readyCallbacks.fire();
 		delete this.readyCallbacks;
+		this.request=new App.Request;
+		this.request.lang=this.lang;
+		this.helpers=new S.Helpers(this.router,this.request);
 		App.load(S.History.getFragment(),function(){
 			App.loading=false;
 		});
+	},
+	
+	setLang:function(lang){
+		this.lang=lang;
+		this.request.lang=lang;
+		//refresh interface
 	},
 	
 	load:function(url,callback){
@@ -69,11 +80,11 @@ global.App={
 					var c=C[route.controller];
 					/*#if DEV*/ if(!c) console&&console.log('This controller doesn\'t exists: "'+route.controller+'".'); /*#/if*/
 					if(!c) throw HttpException.notFound();
-					c.dispatch(route);
+					c.dispatch(route,this.request,this.helpers);
 				}catch(err){
 					App.handleError(err);
 				}
-			});
+			}.bind(this));
 		}catch(err){
 			App.handleError(err);
 		}
@@ -95,3 +106,4 @@ includeCore('base/HttpException');
 includeCore('base/Router');
 includeCore('browser/webapp/Controller');
 includeCore('browser/webapp/Layout');
+includeCore('browser/webapp/Request');

@@ -10,7 +10,7 @@ var fs=require('fs'), sysPath=require('path'), diveSync=require('diveSync'), asy
 
 require('./Springbok');
 
-require('./helpers');
+require('./helpers/helpers');
 require('./db/');
 
 require.extensions['.ejs']=require.extensions['.js'];
@@ -26,7 +26,7 @@ App.BasicController=App.Controller=require('./base/Controller');
 require('./base/Model');
 App.Model=S.Model;
 //App.View=require('./base/View');
-App.CValidator=require('./components/CValidator');
+App.loadComponent(require('./components/CValidator'));
 
 require('./base/i18n');
 
@@ -212,11 +212,13 @@ App._start=function(port){
 								}else req.entry='main';
 							}else req.entry='main';
 						}else{
+							console.log('host= '+host);
 						/*#/if*/
 						req.entry=Config.reversedEntries[host];
 						/*#if DEV*/
 						}
 						
+						if(!req.entry) throw new Error('Entry undefined');
 						if(!Config.entries[req.entry]) throw new Error('This entry doesn\'t exists : "'+req.entry+'"');
 						/*#/if*/
 						
@@ -241,7 +243,7 @@ App._start=function(port){
 					//res.send('Hello' + JSON.stringify(t.controllers) + JSON.stringify(Config));
 				});
 				
-				app.listen(port,'localhost',function(){
+				app.listen(port,/*'localhost',*/function(){
 					console.log("Listening on port "+port);
 				});
 			

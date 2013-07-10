@@ -25,12 +25,12 @@ S.extProto(S.Helpers,{
 			},options);
 		var t=this,ul=$.create('ul').html('');
 		links.forEach(function(item){
-			if(!item[0]){ ul.aHtml($.create('li',{'class':'separator'},this.separator,1)); return; }
+			if(!item[0]){ ul.append($.create('li',{'class':'separator'},this.separator,1)); return; }
 			var linkOptions=UObj.extend(options.linkoptions,item[2]);
 			
 			if(linkOptions.visible===false) return;
 			delete linkOptions.visible;
-			ul.aHtml(t.linkMenu(item[0],item[1],linkOptions,{startsWith:options.startsWith},options.lioptions));
+			ul.append(t.linkMenu(item[0],item[1],linkOptions,{startsWith:options.startsWith},options.lioptions));
 		});
 		return options.tagName==='ul' ? ul : $.create(options.tagName).attrs(options.menuAttributes).html(ul);
 		/*return $('<div/>').html(res).html(); //TODO à revoir*/

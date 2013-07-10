@@ -1,3 +1,3 @@
 
-includeCore('browser/components/S.Db');
-includeCore('browser/components/S.Db.LocalStore');
+includeCore('browser/db/S.Db');
+includeCore('browser/db/S.Db.LocalStore');

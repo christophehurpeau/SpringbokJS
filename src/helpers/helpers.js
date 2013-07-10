@@ -1,6 +1,13 @@
+/*#if NODE */
 var http=require('http');
 S.Helpers=function(app,controller){ this.controller=controller; this.req=controller.req;this.res=controller.res;this.router=app.router; };
+/*#else*/
+S.Helpers=function(router,req){ this.router=router; this.req=req };
+/*#/if*/
+
 S.extProto(S.Helpers,{
+	/*#if NODE */
+	
 	/* https://github.com/jed/locale/blob/master/src/index.coffee */
 	locale:function(){
 		var locale,accept=this.req.headers['accept-language'];
@@ -63,6 +70,7 @@ S.extProto(S.Helpers,{
 		console.log('renderLayout:',layout||this.controller.self.layout||(this.req.entry+'/default'),data.layoutContent);
 		return this.render(layout||this.controller.self.layout||(this.req.entry+'/default'),data,'layouts');
 	},
+	/*#/if*/
 	
 	
 	/* translations */
@@ -71,7 +79,11 @@ S.extProto(S.Helpers,{
 	tC:function(string){ return string; },
 	tF:function(modelName,string){ return string; }
 });
-require('./Url');
-require('./Html');
-require('./Menu');
+
+includeCore('helpers/Url');
+includeCore('helpers/Html');
+/*#if NODE */
+	includeCore('helpers/HtmlHead');
+/*#/if*/
+includeCore('helpers/Menu');
 /*global.H=S.extObjs({},require('./Html'));*/

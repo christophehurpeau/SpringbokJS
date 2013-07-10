@@ -72,7 +72,7 @@ module.exports={
 					+"includeCore('browser/webapp/');\n"
 					+('App.preinit('+JSON.stringify(UFiles.readYamlSync(configPath+'routes.yml'))
 						+','+JSON.stringify(UFiles.readYamlSync(configPath+'routesLangs.yml'))+');')
-					+data
+					+"\n"+data+"\n"
 					+'App.run();';
 			}else if(file.isWebAppModel){
 				var folder=file.srcPath.slice(0,-3)+'/',folderName=file.basename.slice(0,-3);
@@ -151,7 +151,7 @@ module.exports={
 										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
 											obj.defs.DEV ? function(err){
 													if(err) return onEnd(err);
-													fs.appendFile(path,"\n//# sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map',onEnd);
+													fs.appendFile(path,"\n//# sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map?'+Date.now(),onEnd);
 												} : onEnd);
 									});
 								});
@@ -183,9 +183,10 @@ module.exports={
 				if(err.line){
 					var ErrorWithContent=function(err){ this.err=err; };
 					ErrorWithContent.prototype.toString = function(){
+						var currentLine=this.err.line-2;
 						return this.err.toString()
 								+ "\n\n File Content :\n"
-								+ code.split("\n").slice(this.err.line-2,this.err.line+3).join("\n");
+								+ code.split("\n").slice(currentLine,this.err.line+3).map(function(l){ return currentLine++ +': '+ l}).join("\n");
 					};
 	
 					err=new ErrorWithContent(err);
