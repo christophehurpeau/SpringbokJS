@@ -61,9 +61,10 @@ var optionValue=function(){
 	return val != null ? val : elt.text;
 };
 
+//var eventChange=new Event('change');
 
 UObj.extend(Elt,{
-	/* NODE ATTRIBUTES */
+	/* NODE ATTRIBUTES AND PROPERTIES */
 	nodeName:function(elt){
 		return elt.nodeName.toLowerCase();
 	},
@@ -89,8 +90,8 @@ UObj.extend(Elt,{
 		return elt[name]=value;
 	},
 	
-	rmAttr:function(elt){
-		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('rmAttr not allowed on non-element nodes'); /*#/if*/
+	removeAttr:function(elt){
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('removeAttr not allowed on non-element nodes'); /*#/if*/
 		elt.removeAttribute(attrName);
 	},
 	setClass:function(elt,$class){
@@ -100,25 +101,21 @@ UObj.extend(Elt,{
 		Elt.setAttr(elt,'id',id);
 	},
 	addClass:function(elt,_class){
-		Elt.setAttr(elt,'class',Elt.getAttr(elt,'class')+' '+_class);
+		var _e_class=Elt.getAttr(elt,'class');
+		Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
 	},
-	hasClass:function(elt,className){
+	hasClass:function(elt,_class){
 		/*#if DEV*/
 		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
-		if(!S.isString(className)) throw new Error('className must be a string');
-		if(className.indexOf(' ') !== -1) throw new Error('className must have no spaces');
+		if(!S.isString(_class)) throw new Error('className must be a string');
+		if(_class.contains(' ')) throw new Error('className must have no spaces');
 		/*#/if*/
-		if( elt.nodeType === NodeTypes.ELEMENT && (' ' + elt.className + ' ').indexOf(' ' + className + ' ') >= 0 )
+		if( elt.className && (' ' + elt.className + ' ').indexOf(' ' + _class + ' ') >= 0 )
 			return true;
 	},
-	removeClass:function(elt,className){
-		/*#if DEV*/
-		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('removeClass not allowed on non-element nodes');
-		if(!S.isString(className)) throw new Error('className must be a string');
-		if(className.indexOf(' ') !== -1) throw new Error('className must have no spaces');
-		/*#/if*/
-		if(Elt.hasClass(elt,className))
-			elt.className = elt.className.replace(new RegExp("(^|\\s)" + className + "(\\s|$)"), " ").replace(/\s$/, "");
+	removeClass:function(elt,_class){
+		if(Elt.hasClass(elt,_class))
+			elt.className = elt.className.replace(new RegExp("(^|\\s)" + _class + "(\\s|$)"), " ").replace(/\s$/, "");
 	},
 	
 	getVal:function(elt){
@@ -170,7 +167,10 @@ UObj.extend(Elt,{
 			case 'option':
 				throw new Error;
 				//Todo : Elt.setVal(option. [ select parent ],optionValue(opt))
+			default:
+				throw new Error;
 		}
+		//elt.dispatchEvent(eventChange);
 	},
 	
 	getStyle:function(elt,prop){
@@ -189,6 +189,25 @@ UObj.extend(Elt,{
 		// fall back to performing a selector: TODO : this doesnt work
 		return $(selector,elt.parentNode).indexOf(elt)
 	},
+	
+	/* // now use FormData !
+	serialize:function(elt){
+		if(!elt.elements) throw new Error;
+		var res='';
+		Array.forEach(elt.elements,function(e){
+			if(!e.name || e.disabled || e.type == 'file' || e.type == 'submit') return;
+			var value=Elt.hasClass(e,'placeholder') ? '' : Elt.getVal(e);
+			if(value != null)
+				res+='&'+encodeURIComponent(e.name)+'='
+					+encodeURIComponent(value.replace(/(\r)?\n/,'\r\n')).replace('%20','+');
+		});
+		return res && res.substr(1);
+	},
+	*/
+	formData:function(e){
+		return new FormData(e);
+	},
+	
 	/* VISIBILITY */
 	
 	isVisible:function(e){

@@ -34,7 +34,7 @@ module.exports={
 */
 			var sprites=new StylusSprites({
 				prefix:file.basename==='main'?'':file.basename,
-				path:file.rootPath+'src/'+file.dirname,
+				path:file.fullDirnamePath(),
 				outputPath:[pathDev+'/',pathProd+'/']
 			}),spritesfn=sprites.stylus();
 			

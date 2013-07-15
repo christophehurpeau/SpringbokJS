@@ -29,11 +29,20 @@ S.extProto(App.Request,{
 				reconnect:function(){
 					this.setConnected(false);
 					this.checkAccess();
-					throw new App.Controller.Stop();
+					throw App.Controller.Stop;
 				},
 				
 				setConnected:function(userId,token){
 					S.store.set('S.CSecure',{ connected: (_connected=userId), token: (_token=token) });
+				},
+				
+				redirectIfConnected:function(){
+					if(this.isConnected())
+						throw new Error;
+				},
+				redirectAfterConnection:function(){
+					App.load('/');
+					throw App.Controller.Stop;
 				}
 			});
 			Object.defineProperty(this,'secure',{ value:secure });

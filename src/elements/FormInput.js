@@ -18,7 +18,8 @@ S.Form.Input=S.Form.Containable.extend({
 				}
 				
 				if(fModel[1]){
-					if(fModel[1].minL || fModel[1].required) this.attr('required',true);
+					v=fModel[1].label && this.label(fModel[1].label);
+					if(fModel[1].minL || fModel[1].required) this.prop('required','required');//this.prop('required',true);
 					if(v=fModel[1].min) this.attr('min',v);
 					if(v=fModel[1].max) this.attr('max',v);
 					if(v=fModel[1].maxL){
@@ -40,8 +41,9 @@ S.Form.Input=S.Form.Containable.extend({
 		this._setAttrId(); this._setAttrName();
 		
 	},
-	
+	/*#if NODE*/
 	val:function(val){ this.attr('value',val); return this; },
+	/*#/if*/
 	wp100:function(){ this.addClass('wp100'); return this; },
 	
 	_getDefaultContainerClass:function(){

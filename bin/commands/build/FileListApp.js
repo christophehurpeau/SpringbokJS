@@ -16,13 +16,15 @@ module.exports=FileList.extend({
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
 		}
 		process.nextTick(function(){
-			'es5,IndexedDBShim'.split(',').forEach(function(fileName){
+			'es5 es6 oldIe EventSource IndexedDBShim requestAnimationFrame store xhr2'.split(' ').forEach(function(fileName){
 				this._change(this.rootPath+'src/web/compat/'+fileName+'.js',
 					{ srcPath: CORE_SRC+'browser/compat/'+fileName+'.js', compiledPath: 'web/compat/'+fileName+'.js' });
 			}.bind(this));
 			
-			this._change(this.rootPath+'src/web/compat/es6.js',UObj.extend(PluginsList.find('a.js'),{
-					srcPath: CORE_SRC+'browser/compat/es6.js', compiledPath: 'web/compat/es6.js' }));
+			/*'es6'.split(' ').forEach(function(fileName){
+				this._change(this.rootPath+'src/web/compat/'+fileName+'.js',UObj.extend(PluginsList.find('a.js'),{
+						srcPath: CORE_SRC+'browser/compat/'+fileName+'.js', compiledPath: 'web/compat/'+fileName+'.js' }));
+			}.bind(this));*/
 		}.bind(this));
 	},
 	isConfig:function(path){

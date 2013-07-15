@@ -34,6 +34,9 @@ S.require('vL/default','m/todos',function(){
 						ul.append(todo.toLi());
 					});
 			});
+		}),
+		RedirectToIndex:App.Controller.Action(function(req,H){
+			H.redirect('/');
 		})
 	});
 });

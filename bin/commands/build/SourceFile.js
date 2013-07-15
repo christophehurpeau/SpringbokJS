@@ -70,6 +70,10 @@ module.exports=S.newClass({
 		Object.freeze(this);
 	},
 	
+	fullDirnamePath:function(middleFolder){
+		return this.rootPath+(middleFolder||'src')+'/'+this.dirname;
+	},
+	
 	parse:function(fileContent,callback){
 		this.checkCancel(function(){
 			(this.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,callback);

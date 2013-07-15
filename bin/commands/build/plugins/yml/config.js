@@ -7,7 +7,7 @@ module.exports=function(file,data,callback){
 		console.log("TODO");
 	}else if(configname.charAt(0)==='_'){
 		var t=this,config=(data);
-		var config_=UFiles.readYamlSync(file.rootPath+'src/'+file.dirname+'_.yml');
+		var config_=UFiles.readYamlSync(file.fullDirnamePath()+'_.yml');
 		config=UObj.union(config,config_);
 		if(!config.entries) return callback('config.entries must be set in your config file "'+configname+'"');
 		

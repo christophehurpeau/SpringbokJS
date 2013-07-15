@@ -50,4 +50,4 @@ App.Controller = (function(){
 	};
 	return createF(Controller);
 })();
-App.Controller.Stop=function(){};
+App.Controller.Stop='App.Controller.Stop';

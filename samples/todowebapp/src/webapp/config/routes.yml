@@ -1,2 +1,2 @@
 "/": ["Site.Index"]
-"/:controller(/:action/*)?": ["!.!"]
+"/*": ["Site.RedirectToIndex"]

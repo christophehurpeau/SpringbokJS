@@ -46,7 +46,9 @@ S.extProto(S.Helpers,{
 		S.log(body);
 		this.res.end(body);
 	},
-	
+	redirectPermanent:function(to,entry){
+		this.redirect(to,entry,301);
+	},
 	
 	render:function(template,data,entry){
 		entry=entry||this.req.entry;
@@ -70,6 +72,13 @@ S.extProto(S.Helpers,{
 		console.log('renderLayout:',layout||this.controller.self.layout||(this.req.entry+'/default'),data.layoutContent);
 		return this.render(layout||this.controller.self.layout||(this.req.entry+'/default'),data,'layouts');
 	},
+	
+	/*#else*/
+	redirect:function(to){
+		App.load(this.url(to));
+		throw App.Controller.Stop;
+	},
+	
 	/*#/if*/
 	
 	

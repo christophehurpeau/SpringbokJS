@@ -1,0 +1,17 @@
+#!/usr/bin/node
+
+var fs=require('fs'), Preprocessor=require('../../../bin/commands/build/Preprocessor');
+
+var data='(function(global){'
+	+fs.readFileSync('../../../node_modules/springboktools/es6/String.js')+"\n"
+	+fs.readFileSync('../../../node_modules/springboktools/es6/Array.js')+"\n"
+	+fs.readFileSync('../../../node_modules/springboktools/es6/Map.js')+"\n"
+	+fs.readFileSync('./es6_internal.js')
+	+'})(window);';
+
+fs.writeFileSync('./es6.js',Preprocessor({},data,true));
+
+fs.writeFileSync('./oldIe.js',''
+	+fs.readFileSync('./es5.js')+"\n"
+	+fs.readFileSync('./es6.js')+"\n"
+);

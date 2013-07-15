@@ -91,7 +91,8 @@ global.App={
 	},
 	
 	handleError:function(err){
-		if(err instanceof App.Controller.Stop) return;
+		//if(err instanceof App.Controller.Stop) return;
+		if(err===App.Controller.Stop) return;
 		if(err instanceof HttpException){
 			console&&console.log("APP : catch HttpException :",err);
 			if(App.loading) new FatalError('404 Not Found');

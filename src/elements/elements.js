@@ -1,10 +1,7 @@
 includeCore('elements/Elt');
 
 /*#if NODE*/
-global.$={
-	div:S.Elt.div,
-	create:S.Elt.create
-}
+global.$={}
 /*#else*/
 
 /*
@@ -88,11 +85,18 @@ if(!global.$){
 			elt.dispatchEvent($.disposeElements.event);
 		});
 	};
-	$.disposeElements.event=new CustomEvent('dispose');
+	//https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Events/Creating_and_triggering_events
+	$.disposeElements.event=new Event('dispose');
 }else{
 	//TODO : jquery compat
 }
-'div ul li span create'.split(' ').forEach(function(v){
-	$[v]=S.Elt[v];
-});
+window.$document=$(document);
+window.$head=$(document.head);
+window.$body=$(document.body);
+
 /*#/if*/
+$.create=S.Elt.create;
+'div p ul li span'.split(' ').forEach(function(v){
+	//Elt[v]=function(){ return Elt.create(v); };
+	$[v]=S.Elt.create.bind(null,v);
+});

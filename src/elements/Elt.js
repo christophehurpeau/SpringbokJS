@@ -52,9 +52,9 @@ S.Elt=(function(){
 			return this;
 		},
 		
-		on:function(eventName,selector,callback){
+		on:function(eventNames,selector,callback){
 			if(S.isFunc(selector)){ callback=selector; selector=undefined; }
-			var originalCallback=callback,$thisElt=this;
+			var originalCallback=callback,$thisElt=this,nodeElement=this[0];
 			if(selector){
 				if(!callback._originalEventListener) callback._originalEventListener={};
 				/*#if DEV*/if(originalCallback._originalEventListener[selector]) throw new Error;/*#/if*/
@@ -69,15 +69,24 @@ S.Elt=(function(){
 					originalCallback.call($thisElt,e);
 				}
 			}
-			this[0].addEventListener(eventName,callback,true);
+			eventNames.split(' ').forEach(function(eventName){
+				nodeElement.addEventListener(eventName,callback,true);
+			});
 			return this;
 		},
-		off:function(eventName,selector,callback){
-			this[0].removeEventListener(eventName,selector?callback._originalEventListener[selector]:callback._originalEventListener,true);
+		off:function(eventNames,selector,callback){
+			callback=selector?callback._originalEventListener[selector]:callback._originalEventListener;
+			var nodeElement=this[0];
+			eventNames.split(' ').forEach(function(eventName){
+				nodeElement.removeEventListener(eventName,callback,true);
+			})
 			return this;
 		},
 		
 		/* TRAVERSING */
+		firstChild:function(){
+			return new Elt(this[0].firstChild);
+		},
 		parent:function(){
 			return new Elt(this[0].parentNode);
 		},
@@ -157,13 +166,13 @@ S.Elt=(function(){
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
-	'attrs setAttrs rmAttr id setClass addClass text html append prepend appendText prependText appendTo prependTo'.split(' ').forEach(function(mName){
+	'attrs setAttrs removeAttr id setClass addClass removeClass text html append prepend appendText prependText appendTo prependTo'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
-		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
+		Elt.Array.prototype[mName]=function(arg1){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
-	'is hasClass'.split(' ').forEach(function(mName){
+	'is hasClass formData nodeName'.split(' ').forEach(function(mName){
 		Elt.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
-		Elt.Array.prototype[mName]=function(){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
+		Elt.Array.prototype[mName]=function(arg1){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
 	});
 	
 	/*'click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave keydown keypress keyup'
@@ -194,9 +203,6 @@ S.Elt=(function(){
 		return new Elt(document.createElement(tag));
 		/*#/if*/
 	};
-	'div ul li span'.split(' ').forEach(function(v){
-		Elt[v]=function(){ return Elt.create(v); };
-	});
 	
 	return Elt;
 })();

@@ -86,9 +86,13 @@ module.exports={
 		}
 		
 		
-		this[file.isBrowser ? 'includesBrowser' : 'includesNode' ](data,file.dirname,file.rootPath+'src/'+file.dirname,function(data,includes){
+		this[file.isBrowser ? 'includesBrowser' : 'includesNode' ](data,file,function(data,includes){
 			//console.log("----","\n",data,"\n","----")
 			
+			if(file.isWebAppEntry){
+				includes[''][file.webApp+'/config/routes.yml']=1;
+				includes[''][file.webApp+'/config/routesLangs.yml']=1;
+			}
 			
 			
 			data=data.replace('__SPRINGBOK_COMPILED_TIME__',Date.now());
@@ -151,7 +155,7 @@ module.exports={
 										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
 											obj.defs.DEV ? function(err){
 													if(err) return onEnd(err);
-													fs.appendFile(path,"\n//# sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map?'+Date.now(),onEnd);
+													fs.appendFile(path,"\n//@ sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map?'+Date.now(),onEnd);
 												} : onEnd);
 									});
 								});
@@ -170,7 +174,7 @@ module.exports={
 				defs.OLD_IE=!!oldIe;
 				var toplevel=UglifyJS.parse(code,{});
 				toplevel.figure_out_scope();
-				var compressor = UglifyJS.Compressor({ warnings:false, unsafe:true, comparisons:true, global_defs:defs, sequences:false });
+				var compressor = UglifyJS.Compressor({ warnings:false, unsafe:!oldIe, comparisons:true, global_defs:defs, sequences:false });
 				var compressed_ast = toplevel.transform(compressor);
 				
 				//var source_map = UglifyJS.SourceMap({});
@@ -203,7 +207,8 @@ module.exports={
 			console.log('GoogleClosure: compiling '+srcPath+' to '+output);
 			UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --compilation_level SIMPLE_OPTIMIZATIONS --language_in=ECMASCRIPT5_STRICT'
 							+' --js '+ UExec.escape(sysPath.basename(srcPath))+' --js_output_file '+ UExec.escape(sysPath.basename(output))
-							+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : ''),
+							+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : '')
+							+( forOldIe ? ' --formatting=pretty_print':''),
 				function (error, stdout, stderr){
 					//console.error(error,"\n",stdout,"\n",stderr);
 					if (error) onEnd(stderr);
@@ -227,39 +232,49 @@ module.exports={
 		return inclPath;
 	},
 	
-	includesNode:function(data,dirname,dirpath,callback,includes){
-		data=data.replace(/^[\t ]*include(Core|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+	includesNode:function(data,file,callback,includes){
+		data=data.replace(/^[\t ]*include(Core|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
 			inclPath=this._checkTrailingSlash(inclPath);
 			if(from==='Core') inclPath=this.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
 			else if(from==='Plugin'){
 				inclPath='TODO';
 			}else if(inclPath[0]!=='.'&&inclPath[0]!=='/') inclPath='./'+inclPath;
 			
-			if(inclPath[0]==='/') inclPath=('../'.repeat(UString.trimRight(dirname,'\/').split('/').length)||'./')+inclPath.substr(1);
+			if(inclPath[0]==='/') inclPath=('../'.repeat(UString.trimRight(file.dirname,'\/').split('/').length)||'./')+inclPath.substr(1);
 			return 'require("'+inclPath+'");';
 		}.bind(this));
 		callback(data,{});
 	},
-	includesBrowser:function(data,dirname,dirpath,callback,includes){
-		if(!includes) includes={'':{},Core:{},CoreUtils:{},'Plugin':{}};
-		data=data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+	includesBrowser:function(data,file,callback,includes){
+		if(!includes) includes={'':{},Core:{},CoreUtils:{},'Plugin':{}};//TODO use Map<String,Set<String>>
+		data=data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)(\;|,)$/mg,function(match,from,inclPath,lastChar){
 			if(inclPath.slice(-1)==='/') inclPath+=sysPath.basename(inclPath)+'.js';
 			
 			if(from==='JsCore') from='Core';
-			if(includes[from][inclPath]) return '';
-			includes[from][inclPath]=1;
+			
 			var path;
 			if(from==='Core') path=CORE_SRC;
 			else if(from==='CoreUtils') path=CORE_MODULES+'springboktools/';
 			else if(from==='Plugin') path='TODO';
-			else path=dirpath;
+			else if(from==='Action') path=CORE_SRC+'browser/actions/';
+			else{
+				path=file.rootPath+'src/';
+				inclPath=file.dirname+inclPath;
+			}
+			
+			if(from!=='Action'){
+				if(includes[from][inclPath]) return '';
+				includes[from][inclPath]=1;
+			}
 			
 			path+=inclPath;
 			if(inclPath.slice(-3)!=='.js') path+='.js';
 			
 			if(!fs.existsSync(path)) throw new Error("file doesn't exists: "+path+"\nline= "+match);
 			
-			return this.includesBrowser(fs.readFileSync(path,'utf-8'),dirname,dirpath,false,includes);
+			var content=fs.readFileSync(path,'utf-8');
+			if(lastChar===',' && content.trim().slice(-1)!==',') content+=',';
+			return this.includesBrowser(content,file,false,includes);
 		}.bind(this));
 		callback&&callback(data,includes);
 		return data;

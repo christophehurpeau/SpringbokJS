@@ -3,6 +3,7 @@ includeCore('helpers/');
 
 S.Form=S.Elt.WithContent.extend({
 	tagName:'form', _tagContainer:'div',
+	_eventBeforeSubmit:new Event('beforeSubmit'),
 	
 	/*#if NODE*/ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
 	/*#else*/ctor:function(H,method){ this.H=H; S.Elt.WithContent.call(this); this.attr('method',method); },
@@ -53,7 +54,7 @@ S.Form=S.Elt.WithContent.extend({
 	},
 	
 	end:function(submitLabel){
-		if(submitLabel!=null) this.submit(submitLabel).end();
+		if(submitLabel!=false) this.submit(submitLabel).end();
 		if(this._fieldsetStarted) this.fieldsetStop();
 		return /*#ifelse NODE*/(this.toString()||this)/*#/if*/;
 	},
@@ -130,17 +131,44 @@ S.Form.Containable=S.Elt.Basic.extend({
 		/*#/if*/
 	},
 	
-	placeholder:function(value){ this.attr('placeholder',value); return this; },
+	placeholder:function(placeholder){
+		/*#if NODE*/
+			this.attr('placeholder',placeholder);
+		/*#else*/
+			var $this=this;
+			this.attr('title',placeholder)
+				.on('focus',function(){ if($this.hasClass('placeholder') || $this.val()===placeholder) $this.removeClass('placeholder').val('') })
+				.on('blur',function(){ if(!$this.hasClass('placeholder') && !$this.val()) $this.addClass('placeholder').val(placeholder); })
+				.on('change',function(){
+					if($this.hasClass('placeholder')){
+						if(!$this.val()) $this.removeClass('placeholder');
+						else $this.val(placeholder);
+					}else if(!$this.val()){
+						$this.addClass('placeholder').val(placeholder);
+					}
+				});
+			if(!this.val()) this.addClass('placeholder').val(placeholder);
+		/*#/if*/
+		return this;
+	},
 
 	//.text and .html is after for gzip
-	label:function(value){ this._label=$.create('label')/*#if BROWSER*/.prependTo(this._container)/*#/if*/.text(value); return this; },
-	htmlLabel:function(value){ this._label=$.create('label')/*#if BROWSER*/.prependTo(this._container)/*#/if*/.html(value); return this; },
+	label:function(value){
+		/*#if BROWSER*/ if(this._label) this._label.text(value); else /*#/if*/
+		this._label=$.create('label').attr('for',this.getAttr('id'))/*#if BROWSER*/.prependTo(this._container)/*#/if*/.text(value);
+		return this;
+	},
+	htmlLabel:function(value){
+		/*#if BROWSER*/ if(this._label) this._label.html(value); else /*#/if*/
+		this._label=$.create('label').attr('for',this.getAttr('id'))/*#if BROWSER*/.prependTo(this._container)/*#/if*/.html(value);
+		return this;
+	},
 	noLabel:function(){
 		/*#if BROWSER*/this._label && this._container.removeChild(this._label);/*#/if*/
 		this._label=false;
 		return this;
 	},
-	noName:function(){ this.rmAttr('name'); return this; },
+	noName:function(){ this.removeAttr('name'); return this; },
 	
 	between:function(content){
 		/*#if NODE*/
