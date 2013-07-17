@@ -100,11 +100,15 @@ UObj.extend(Elt,{
 	id:function(elt,id){
 		Elt.setAttr(elt,'id',id);
 	},
-	addClass:function(elt,_class){
+	addClass: document.documentElement.classList && document.documentElement.classList.add ? function(elt,_class){
+		elt.classList.add(_class);
+	} : function(elt,_class){
 		var _e_class=Elt.getAttr(elt,'class');
 		Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
 	},
-	hasClass:function(elt,_class){
+	hasClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
+		elt.classList.contains(_class);
+	} : function(elt,_class){
 		/*#if DEV*/
 		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
 		if(!S.isString(_class)) throw new Error('className must be a string');
@@ -112,11 +116,25 @@ UObj.extend(Elt,{
 		/*#/if*/
 		if( elt.className && (' ' + elt.className + ' ').indexOf(' ' + _class + ' ') >= 0 )
 			return true;
-	},
-	removeClass:function(elt,_class){
-		if(Elt.hasClass(elt,_class))
+	}),
+	removeClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
+		elt.classList.remove(_class);
+	} : function(elt,_class){
+		if(Elt.hasClass(elt,_class)){
 			elt.className = elt.className.replace(new RegExp("(^|\\s)" + _class + "(\\s|$)"), " ").replace(/\s$/, "");
-	},
+			return true;
+		}
+		return false;
+	}),
+	
+	toggleClass: (document.documentElement.classList && document.documentElement.classList.toggle ? function(elt,_class){
+		elt.classList.toggle(_class);
+	} : (document.documentElement.classList &&  document.documentElement.classList.contains ? function(elt,_class){
+			elt.classList.contains(_class) ? Elt.removeClass(elt,_class) : Elt.addClass(elt,_class);
+		} : function(elt,_class){
+			Elt.removeClass(elt,_class) || Elt.addClass(elt,_class);
+		})
+	),
 	
 	getVal:function(elt){
 		switch(Elt.nodeName(elt)){
@@ -285,6 +303,6 @@ UObj.extend(Elt,{
 			fragment.appendChild(node);
 		fragment.removeChild(tmp);
 		return fragment;
-	}
+	},
 });
 Elt.setAttrs=Elt.attrs;

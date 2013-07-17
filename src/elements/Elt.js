@@ -4,14 +4,21 @@ includeCore('enums/NodeTypes');
 /*#/if*/
 
 S.Elt=(function(){
-	function Elt(elt){
+	var Element=function(elt){
+		/*#if DEV*/ if(this instanceof S.Elt) throw new Error;/*#/if*/
 		/*#if NODE*/
 		this._attributes={};
 		/*#else*/
 		this[0]=elt;
+		elt.$elt=this;
+		elt.addEventListener('dispose',function(){
+			Object.keys(this).forEach(function(key){
+				delete this[key];
+			}.bin(this));
+		}.bind(this),false);
 		/*#/if*/
 	}
-	Elt.extend=S.extThis;
+	Element.extend=S.extThis;
 	
 	/*#if NODE*/
 	var _attrs=function(attrs){
@@ -27,10 +34,9 @@ S.Elt=(function(){
 		return '<'+tagName+(attrs?_attrs(attrs):'')+(content===null?'/>':('>'+content+'</'+tagName+'>'));
 	};
 	/*#else*/
-	includeCore('elements/Elt.dom');
 	
 	/*#/if*/
-	Elt.prototype={
+	Element.prototype={
 		/*#if NODE*/
 		attrs:function(attrs){ UObj.extend(this._attributes,attrs); return this; },
 		setAttrs:function(attrs){ this._attributes=attrs; return this; },
@@ -49,37 +55,6 @@ S.Elt=(function(){
 			if(arguments.length===0)
 				return Elt.getVal(this[0]);
 			Elt.setVal(this[0],value);
-			return this;
-		},
-		
-		on:function(eventNames,selector,callback){
-			if(S.isFunc(selector)){ callback=selector; selector=undefined; }
-			var originalCallback=callback,$thisElt=this,nodeElement=this[0];
-			if(selector){
-				if(!callback._originalEventListener) callback._originalEventListener={};
-				/*#if DEV*/if(originalCallback._originalEventListener[selector]) throw new Error;/*#/if*/
-				callback=originalCallback._originalEventListener[selector]=function(e){
-					if(Elt.is(e.target,selector))
-						originalCallback.call($thisElt,e);
-				}
-				
-			}else{
-				/*#if DEV*/if(callback._originalEventListener) throw new Error;/*#/if*/
-				callback=originalCallback._originalEventListener=function(e){
-					originalCallback.call($thisElt,e);
-				}
-			}
-			eventNames.split(' ').forEach(function(eventName){
-				nodeElement.addEventListener(eventName,callback,true);
-			});
-			return this;
-		},
-		off:function(eventNames,selector,callback){
-			callback=selector?callback._originalEventListener[selector]:callback._originalEventListener;
-			var nodeElement=this[0];
-			eventNames.split(' ').forEach(function(eventName){
-				nodeElement.removeEventListener(eventName,callback,true);
-			})
 			return this;
 		},
 		
@@ -105,8 +80,20 @@ S.Elt=(function(){
 		
 	};
 	
+	var Elt=function(elt){
+		/*#if NODE*/
+		return new Element(elt);
+		/*#else*/
+		return elt.$elt || new Element(elt);
+		/*#/if*/
+	}
+	/*#if BROWSER*/
+	includeCore('elements/Elt.dom');
+	includeCore('elements/Elt.dom.events');
+	/*#/if*/
+	
 	/*#if NODE*/
-	Elt.WithContent=Elt.extend({
+	Elt.WithContent=Element.extend({
 		text:function(content){ this.content=S.escape(content); return this; },
 		html:function(content){ this.content=content; return this; },
 		appendText:function(content){ this.content+=S.escape(content); return this; },
@@ -121,9 +108,9 @@ S.Elt=(function(){
 		toHtml:function(){ return Elt.Basic.super_.toHtml.call(this); }
 	});
 	/*#else*/
-	Elt.Basic=Elt.WithContent=Elt.extend({
+	Elt.Basic=Elt.WithContent=Element.extend({
 		ctor:function(){
-			Elt.call(this,document.createElement(this.tagName));
+			Element.call(this,document.createElement(this.tagName));
 		}
 	});
 	Elt.Array=function(){ this.length=0; };
@@ -148,8 +135,8 @@ S.Elt=(function(){
 	
 	'attr prop'.split(' ').forEach(function(mName){
 		var mEltName=UString.ucFirst(mName);
-		Elt.prototype[mName]=function(name,value){
-			if(arguments.length===1)
+		Element.prototype[mName]=function(name,value){
+			if(arguments.length === 1)
 				return Elt['get'+mEltName].call(null,this[0],name);
 			Elt['set'+mEltName].call(null,this[0],name,value);
 			return this;
@@ -162,17 +149,31 @@ S.Elt=(function(){
 	});
 	
 	'remove empty'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
+		Element.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
 		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
+	/* one arg, return this */
 	'attrs setAttrs removeAttr id setClass addClass removeClass text html append prepend appendText prependText appendTo prependTo'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
+		Element.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
 		Elt.Array.prototype[mName]=function(arg1){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
+	/* one arg, return result */
 	'is hasClass formData nodeName'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
+		Element.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
 		Elt.Array.prototype[mName]=function(arg1){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
+	});
+	/* unlimited args */
+	'on off fire'.split(' ').forEach(function(mName){
+		Element.prototype[mName]=function(){
+			var args=arguments; Array.unshift(args,this[0]);
+			Elt[mName].apply(null,args);
+			return this;
+		};
+		Elt.Array.prototype[mName]=function(){
+			var args=Array.unshift(arguments,null);
+			this.some(function(e){ args[0]=e; return Elt[mName].apply(null,args) }); };
+			return this;
 	});
 	
 	/*'click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave keydown keypress keyup'
@@ -181,7 +182,7 @@ S.Elt=(function(){
 			Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ e.addEventListener(mName,arg1,true); }); return this; };
 	});*/
 	'click select focus blur'.split(' ').forEach(function(mName){
-		Elt.prototype[mName]=function(){
+		Element.prototype[mName]=function(){
 			/*#if DEV*/if(arguments.length) throw new Error('this function doesnt take arguments');/*#/if*/
 			this[0][mName]();
 			return this;
@@ -200,7 +201,7 @@ S.Elt=(function(){
 		/*#if NODE*/
 		return new Elt.Basic(tag);
 		/*#else*/
-		return new Elt(document.createElement(tag));
+		return Elt(document.createElement(tag));
 		/*#/if*/
 	};
 	

@@ -232,7 +232,7 @@ S.ready(function(){
 	};
 	//TODO trigger events to be able to be used by inputListHandler
 	
-	S.FormValidator.getValidator(form){
+	S.FormValidator.getValidator=function(form){
 		var validator=form.data('sValidator');
 		!validator && (validator=new S.FormValidator(form));
 		return validator;

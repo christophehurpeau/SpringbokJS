@@ -7,6 +7,7 @@ module.exports={
 	type:'javascript',
 	extension:'js',
 	priority:0,
+	compileOldIE:false,
 	//_enums:fs.readFileSync(CORE_SRC+'browser/_enums.js'),
 	
 	init:function(config){
@@ -138,7 +139,7 @@ module.exports={
 					console.log('optimize: '+path);
 					var slicedPath=path.slice(0,-3),srcPath=slicedPath+'.src.js',oldIePath=slicedPath+'.oldIe.js';
 					
-					module.exports.callUglifyJs(file,result,obj.defs,true,function(err,ieResult){
+					module.exports.callUglifyJs(file,module.exports.compileOldIE?'':result,obj.defs,true,function(err,ieResult){
 						if(err) return onEnd(err);
 						fs.writeFile(srcPath,ieResult,function(err){
 							if(err) return onEnd(err);

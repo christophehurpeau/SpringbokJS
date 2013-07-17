@@ -43,7 +43,31 @@ S.Form.Input=S.Form.Containable.extend({
 	},
 	/*#if NODE*/
 	val:function(val){ this.attr('value',val); return this; },
+	/*#else*/
+	
+	placeholder:function(placeholder){
+		/*#if NODE*/
+			this.attr('placeholder',placeholder);
+		/*#else*/
+			var $this=this;
+			this.attr('title',placeholder)
+				.on('focus',function(){ if($this.hasClass('placeholder') || $this.val()===placeholder) $this.removeClass('placeholder').val('') })
+				.on('blur',function(){ if(!$this.hasClass('placeholder') && !$this.val()) $this.addClass('placeholder').val(placeholder); })
+				.on('change',function(){
+					if($this.hasClass('placeholder')){
+						if(!$this.val()) $this.removeClass('placeholder');
+						else $this.val(placeholder);
+					}else if(!$this.val()){
+						$this.addClass('placeholder').val(placeholder);
+					}
+				});
+			if(!this.val()) this.addClass('placeholder').val(placeholder);
+		/*#/if*/
+		return this;
+	},
+
 	/*#/if*/
+
 	wp100:function(){ this.addClass('wp100'); return this; },
 	
 	_getDefaultContainerClass:function(){

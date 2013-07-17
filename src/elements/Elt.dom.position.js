@@ -1,0 +1,3 @@
+Elt.position=function(){
+	
+}

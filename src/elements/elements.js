@@ -28,7 +28,7 @@ if(!global.$){
 			return $.find(selector,context);
 		}else if(selector.nodeType){
 			//DOM element
-			return new S.Elt(selector);
+			return S.Elt(selector);
 		}
 	};
 	
@@ -53,12 +53,12 @@ if(!global.$){
 			// Handle the case where IE and Opera return items
 			// by name instead of ID ===> SEE es5-compat
 
-			return new S.Elt(elem);
+			return S.Elt(elem);
 		}
 	};
 		
 	$.first=function(selectors,context){
-		return new S.Elt((context||document).querySelector(selectors));
+		return S.Elt((context||document).querySelector(selectors));
 	};
 	$.find=function(selectors,context){
 		return $._toEltArray((context||document).querySelectorAll(selectors));

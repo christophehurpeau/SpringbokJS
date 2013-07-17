@@ -131,27 +131,6 @@ S.Form.Containable=S.Elt.Basic.extend({
 		/*#/if*/
 	},
 	
-	placeholder:function(placeholder){
-		/*#if NODE*/
-			this.attr('placeholder',placeholder);
-		/*#else*/
-			var $this=this;
-			this.attr('title',placeholder)
-				.on('focus',function(){ if($this.hasClass('placeholder') || $this.val()===placeholder) $this.removeClass('placeholder').val('') })
-				.on('blur',function(){ if(!$this.hasClass('placeholder') && !$this.val()) $this.addClass('placeholder').val(placeholder); })
-				.on('change',function(){
-					if($this.hasClass('placeholder')){
-						if(!$this.val()) $this.removeClass('placeholder');
-						else $this.val(placeholder);
-					}else if(!$this.val()){
-						$this.addClass('placeholder').val(placeholder);
-					}
-				});
-			if(!this.val()) this.addClass('placeholder').val(placeholder);
-		/*#/if*/
-		return this;
-	},
-
 	//.text and .html is after for gzip
 	label:function(value){
 		/*#if BROWSER*/ if(this._label) this._label.text(value); else /*#/if*/
