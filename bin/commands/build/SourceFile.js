@@ -2,8 +2,8 @@ var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=r
 
 var regexpSubfolders=/^([a-zA-Z]+)\/(?:([a-zA-Z]+)\/)?(?:([a-zA-Z]+)\/)?/,webAppFolders={controllers:'c',models:'m',views:'v',viewsLayouts:'vL'};
 
-module.exports=S.newClass({
-	ctor:function(fileList,path,compilerLintersOptimizers){
+module.exports = S.newClass({
+	ctor: function(fileList,path,compilerLintersOptimizers){
 		this.fileList=fileList;
 		this.rootPath=fileList.rootPath; this.path=path;
 		this.srcPath=fileList.rootPath+'src/'+path; //must be before (cand be overrided by extends)
@@ -49,7 +49,7 @@ module.exports=S.newClass({
 									this.isBrowser=true;
 									this.compiledPath='web/'+this.webApp+'/'+webAppFolders[mSubfolder[2]]+'/'+this.compiledPath.substr(mSubfolder[0].length);
 									if(mSubfolder[2].substr(0,5)==='views' && this.compiledPath.slice(0,-4)==='.ejs')
-										this.compiledPath=this.compiledPath.slice(0,-3)+'js';
+										this.compiledPath = this.compiledPath.slice(0,-3)+'js';
 									break;
 								case 'locales':
 									break;
@@ -70,17 +70,17 @@ module.exports=S.newClass({
 		Object.freeze(this);
 	},
 	
-	fullDirnamePath:function(middleFolder){
+	fullDirnamePath: function(middleFolder){
 		return this.rootPath+(middleFolder||'src')+'/'+this.dirname;
 	},
 	
-	parse:function(fileContent,callback){
+	parse: function(fileContent,callback){
 		this.checkCancel(function(){
 			(this.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,callback);
 		});
 	},
 	
-	lint:function(file,data,callback){
+	lint: function(file,data,callback){
 		this.checkCancel(function(){
 			var linters=this.linters,l=linters.length;
 			if(l===0) callback(null);
@@ -94,7 +94,7 @@ module.exports=S.newClass({
 			}
 		});
 	},
-	optimize:function(file,devResult,prodResult,callback){
+	optimize: function(file,devResult,prodResult,callback){
 		this.checkCancel(function(){
 			var optimizers=this.optimizers,l=optimizers.length;
 			if(l===0) callback(null,devResult,prodResult);
@@ -110,13 +110,13 @@ module.exports=S.newClass({
 		});
 	},
 	// real compilation
-	_compile:function(data,callback){
+	_compile: function(data,callback){
 		this.checkCancel(function(){
 			this.compiler.compile(this,data,callback);
 		});
 	},
 	
-	checkCancel:function(callback){
+	checkCancel: function(callback){
 		if(this.cancel.isCanceled){
 			console.log('Compilation canceled for '+this.path);
 			this.cancel.isCanceled=false;
@@ -127,7 +127,7 @@ module.exports=S.newClass({
 	},
 	
 	// Reads file and compiles it with compiler. Data is cached
-	compile:function(callback){
+	compile: function(callback){
 		var callbackError=function(type,strOrErr){
 			/*if(strOrErr instanceof Array){
 				var i,finalStr='Errors :';
@@ -184,7 +184,7 @@ module.exports=S.newClass({
 		}
 	},
 	
-	paths:function(callback,results,write,destinationPath){
+	paths: function(callback,results,write,destinationPath){
 		var paths=new Map;
 		async.forEach(['dev','prod'],function(dir,callback){
 			if(results && results[dir]==null) return callback();
@@ -202,10 +202,20 @@ module.exports=S.newClass({
 		}.bind(this),function(err){ callback(err,paths); });
 	},
 	
-	write:function(devResultOptimized,prodResultOptimized,callback,destinationPath){
+	write: function(devResultOptimized,prodResultOptimized,callback,destinationPath){
 		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true,destinationPath);
 	},
-	copy:function(callback){
+	
+	remove: function(){
+		async.forEach(['dev','prod'],function(dir,callback){
+			var path = this.rootPath+dir+'/'+this.compiledPath;
+			fs.exists(path,function(exists){
+				exists && fs.unlink( path );
+			});
+		});
+	},
+	
+	copy: function(callback){
 		var srcPath=this.srcPath;
 		async.forEach(['dev','prod'],function(dir,callback){
 			this._write(this.rootPath+dir+'/'+this.compiledPathDirname,function(err){
@@ -218,7 +228,7 @@ module.exports=S.newClass({
 		}.bind(this),callback);
 	},
 	
-	_write:function(parent,callback){
+	_write: function(parent,callback){
 		this.checkCancel(function(){
 			fs.exists(parent,function(exists){
 				exists ? callback() 

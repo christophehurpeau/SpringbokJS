@@ -57,8 +57,6 @@ module.exports={
 	
 	compile:function(file,data,callback){
 		if(file.isWebApp){
-			console.log('COMPILING WEBAPP : '+file.path);
-			
 			if(file.isWebAppEntry){
 				var configPath=file.fileList.rootPath+'src/'+file.webApp+'/config/',
 					config=UFiles.readYamlSync(configPath+'/config.yml');
@@ -91,8 +89,8 @@ module.exports={
 			//console.log("----","\n",data,"\n","----")
 			
 			if(file.isWebAppEntry){
-				includes[''][file.webApp+'/config/routes.yml']=1;
-				includes[''][file.webApp+'/config/routesLangs.yml']=1;
+				includes.app[file.webApp+'/config/routes.yml']=1;
+				includes.app[file.webApp+'/config/routesLangs.yml']=1;
 			}
 			
 			
@@ -121,7 +119,7 @@ module.exports={
 			if(data.match(/\/\*\s+\/?(NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD)\s+\*\//))
 				return callback('error match NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD');
 			
-			callback(null,devResult,prodResult,includes['']);
+			callback(null,devResult,prodResult,includes);
 		});
 	},
 	
@@ -247,37 +245,40 @@ module.exports={
 		callback(data,{});
 	},
 	includesBrowser:function(data,file,callback,includes){
-		if(!includes) includes={'':{},Core:{},CoreUtils:{},'Plugin':{}};//TODO use Map<String,Set<String>>
-		data=data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)(\;|,)$/mg,function(match,from,inclPath,lastChar){
-			if(inclPath.slice(-1)==='/') inclPath+=sysPath.basename(inclPath)+'.js';
+		if(!includes) includes = { app: {}, Core: {}, CoreUtils: {}, Plugin: {} };//TODO use Map<String,Set<String>>
+		data = data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)(\;|,)$/mg,function(match,from,inclPath,lastChar){
+			if(inclPath.slice(-1) === '/') inclPath += sysPath.basename(inclPath) + '.js';
 			
-			if(from==='JsCore') from='Core';
+			if(from === 'JsCore') from = 'Core';
 			
 			var path;
-			if(from==='Core') path=CORE_SRC;
-			else if(from==='CoreUtils') path=CORE_MODULES+'springboktools/';
-			else if(from==='Plugin') path='TODO';
-			else if(from==='Action') path=CORE_SRC+'browser/actions/';
+			if(from === 'Core') path = CORE_SRC;
+			else if(from === 'CoreUtils') path = CORE_MODULES + 'springboktools/';
+			else if(from === 'Plugin') path = 'TODO';
+			else if(from === 'Action') path = CORE_SRC + 'browser/actions/';
 			else{
-				path=file.rootPath+'src/';
-				inclPath=file.dirname+inclPath;
+				path = file.rootPath + 'src/';
+				inclPath = file.dirname + inclPath;
 			}
 			
-			if(from!=='Action'){
+			if(from === 'Action'){
+				includes['Core'][ 'browser/actions/' + inclPath ] = 1;
+			}else{
+				if(!from) from = 'app';
 				if(includes[from][inclPath]) return '';
-				includes[from][inclPath]=1;
+				includes[from][inclPath] = 1;
 			}
 			
-			path+=inclPath;
-			if(inclPath.slice(-3)!=='.js') path+='.js';
+			path += inclPath;
+			if(inclPath.slice(-3) !== '.js') path += '.js';
 			
 			if(!fs.existsSync(path)) throw new Error("file doesn't exists: "+path+"\nline= "+match);
 			
-			var content=fs.readFileSync(path,'utf-8');
-			if(lastChar===',' && content.trim().slice(-1)!==',') content+=',';
+			var content = fs.readFileSync(path,'utf-8');
+			if(lastChar === ',' && content.trim().slice(-1) !== ',') content += ',';
 			return this.includesBrowser(content,file,false,includes);
 		}.bind(this));
-		callback&&callback(data,includes);
+		callback && callback(data,includes);
 		return data;
 	}
 }

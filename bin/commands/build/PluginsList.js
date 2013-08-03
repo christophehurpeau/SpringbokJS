@@ -1,6 +1,6 @@
 var diveSync=require('diveSync');
 
-var plugins={all:[],compilers:[],linters:[],optimizers:[]},callbacks=[];
+var plugins = { all:[], compilers:[], linters:[], optimizers:[]}, callbacks = [];
 
 function isPluginFor(path){
 	return function(plugin){
@@ -8,8 +8,8 @@ function isPluginFor(path){
 	}
 }
 
-module.exports={
-	init:function(fileList,pluginsDir){
+module.exports = {
+	init: function(fileList,pluginsDir){
 		diveSync(pluginsDir || __dirname + '/plugins',function(err,path){
 			if(err) console.error(err.stack);
 			else if(/\.js$/.test(path)){
@@ -25,15 +25,15 @@ module.exports={
 				plugins.all.push(plugin);
 			}
 		});
-		plugins.compilers=UArray.sortBy(plugins.compilers,'priority',true,'number');
+		plugins.compilers = UArray.sortBy(plugins.compilers,'priority',true,'number');
 		//callbacks.push(onCompile);
-		var callCompileCallbacks=function(generatedFiles){
+		var callCompileCallbacks = function(generatedFiles){
 			callbacks.forEach(function(callback){ callback(generatedFiles); });
 		}
 	},
 	
-	find:function(path){
-		var ispluginforpath=isPluginFor(path);
+	find: function(path){
+		var ispluginforpath = isPluginFor(path);
 		return {
 			compiler: plugins.compilers.filter(ispluginforpath)[0],
 			linters: plugins.linters.filter(ispluginforpath),

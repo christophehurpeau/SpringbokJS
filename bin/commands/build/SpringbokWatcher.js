@@ -1,23 +1,24 @@
-var fs=require('fs'), diveSync=require('diveSync'), async=require('async'),
-		chokidar=require('chokidar'),PluginsList=require('./PluginsList');
+var fs = require('fs'), diveSync = require('diveSync'), async = require('async'),
+		chokidar = require('chokidar'), PluginsList = require('./PluginsList');
 
 
-var SpringbokWatcher=function(fileList,persistent,startServer,pluginsDir){
-	this.fileList=fileList; this.persistent=persistent;
-	this.startServer=startServer;
-	this.pluginsDir=pluginsDir;
+var SpringbokWatcher=  function(fileList,persistent,startServer,pluginsDir){
+	this.fileList = fileList;
+	this.persistent = persistent;
+	this.startServer = startServer;
+	this.pluginsDir = pluginsDir;
 	
 	
 };
-SpringbokWatcher.prototype={
-	init:function(){
+SpringbokWatcher.prototype = {
+	init: function(){
 		//initizalize todo : initialize(fileList,persistent,startServer,pluginsDir,function(err, watcher, server, compile, reload)
 		//if(err) return console.error(err);
 		
 		PluginsList.init(this.fileList,this.pluginsDir);
 		
 		//start Server
-		this.server=this.persistent && this.startServer ? require('./Server') : null;
+		this.server = this.persistent && this.startServer ? require('./Server') : null;
 		/*
 		 * var requestHandler = require('./myRequestHandler');
 	
@@ -39,7 +40,7 @@ SpringbokWatcher.prototype={
 		*/
 		this.initWatcher();
 	},
-	initWatcher:function(){
+	initWatcher: function(){
 		if(this.persistent && this.server) this.fileList.on('ready',
 					function(){ this.fileList.hasErrors() ? (this.server && this.server.close && this.server.close())
 											 : this.server.restart(); }.bind(this));
@@ -55,7 +56,7 @@ SpringbokWatcher.prototype={
 		}.bind(this));
 	},
 	
-	compiled:function(startTime){
+	compiled: function(startTime){
 		var log="Compiled in "+(Date.now() - startTime)+"ms";
 		if(this.fileList.hasErrors()){
 			log+=' with '+this.fileList.errorsCount+' errors [!]';
@@ -70,11 +71,11 @@ SpringbokWatcher.prototype={
 		}else{
 			this.watcher.close();
 			process.on('exit',function(previousCode){
-				process.exit(false&&/*logger.errorHappened?1:*/previousCode);
+				process.exit( false && /*logger.errorHappened?1:*/previousCode);
 			})
 		}
 	},
-	reload:function(reInstall){
+	reload: function(reInstall){
 		console.log("RELOAD");
 		this.watcher.close();
 		this.close(function(){
@@ -83,20 +84,20 @@ SpringbokWatcher.prototype={
 			}.bind(this));
 		}.bind(this));
 	},
-	close:function(callback){
+	close: function(callback){
 		if(this.server && this.server.close) this.server.close(callback);
 		else callback();
 	},
 	
-	_onChangedFile:function(){
-		if(this._start==null) this._start=Date.now();
+	_onChangedFile: function(){
+		if(this._start==null) this._start = Date.now();
 	},
-	_endCompilation:function(){
-		var start=this._start;
-		this._start=null;
+	_endCompilation: function(){
+		var start = this._start;
+		this._start = null;
 		return start;
 	},
-	bindWatcherEvents:function(){
+	bindWatcherEvents: function(){
 		this.watcher
 			.on('add',function(path){
 				this._onChangedFile();
@@ -112,7 +113,7 @@ SpringbokWatcher.prototype={
 			}.bind(this))
 			.on('unlink',function(path){
 				/*if path is config.paths.config or path is config.paths.packageConfig
-	        logger.info "Detected removal of config.coffee / package.json.
+			logger.info "Detected removal of config.coffee / package.json.
 	Exiting."
 			process.exit(0)*/
 				this._onChangedFile();
@@ -122,8 +123,8 @@ SpringbokWatcher.prototype={
 };
 
 
-module.exports={
-	init:function(fileList,persistent,startServer,pluginsDir){
+module.exports = {
+	init: function(fileList,persistent,startServer,pluginsDir){
 		var sw=new SpringbokWatcher(fileList,persistent,startServer,pluginsDir);
 		sw.init();
 		return sw;

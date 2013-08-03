@@ -69,7 +69,7 @@ module.exports={
 				
 				sprites.build(result,function(err,result){
 					if(err) return callback(err);
-					callback(null,result,result,includes['']);
+					callback(null,result,result,includes);
 				});
 			});
 		});
@@ -77,20 +77,31 @@ module.exports={
 	
 	includes:function(data,dirname,callback,includes){
 		var t=this;
-		if(!includes) includes={'':{},Core:{},'Plugin':{}};
-		data=data.replace(/^@include(Core|Plugin|) \'([\w\s\._\-\/]+)\'\;$/mg,function(match,from,inclPath){
-			if(includes[from][inclPath]) return '';
-			includes[from][inclPath]=1;
-			var path;
-			if(from==='Core') path=CORE_INCLUDES+'styl/';
-			else if(from==='Plugin') path='TODO';
-			else path=dirname;
+		if(!includes) includes={ app: {}, Includes: {}, 'Plugin': {} };
+		data=data.replace(/^@include(Core|Plugin|) \'([\w\s\._\-\/]+)\'\;?$/mg,function(match,from,inclPath){
 			
-			path+=inclPath;
-			if(inclPath.slice(-5)!=='.styl'&&inclPath.slice(-4)!=='.css') path+='.styl';
+			var path;
+			if(from === 'Core'){
+				from = 'Includes';
+				path = CORE_INCLUDES;
+				inclPath = 'styl/' + inclPath;
+			}else if(from === 'Plugin'){
+				path='TODO';
+			}else{
+				from = 'app';
+				inclPath = file.dirname + inclPath;
+				path = file.rootPath + 'src/';
+			}
+			
+			if(inclPath.slice(-5) !== '.styl' && inclPath.slice(-4)!=='.css') inclPath += '.styl';
+			
+			if(includes[from][inclPath]) return '';
+			includes[from][inclPath] = 1;
+			
+			path += inclPath;
 			return t.includes(fs.readFileSync(path,'utf-8'),dirname,false,includes);
 		});
-		callback&&callback(data,includes);
+		callback && callback(data,includes);
 		return data;
 	}
 };

@@ -1,11 +1,12 @@
-var FileList=require('./FileList'), sysPath=require('path'),fs=require("fs"), PluginsList=require('./PluginsList');;
+var FileList = require('./FileList'),  PluginsList = require('./PluginsList');
+var sysPath = require('path'), fs = require("fs");
 
-module.exports=FileList.extend({
-	config:{},
-	isCore:false,
+module.exports = FileList.extend({
+	config: {},
+	isCore: false,
 	
 	
-	init:function(){
+	init: function(){
 		if(fs.existsSync(this.rootPath+'src/config/_.yml')){
 			this.config=UFiles.readYamlSync(this.rootPath+'src/config/_.yml');
 			this.config.plugins=this.config.plugins||{};
@@ -27,14 +28,17 @@ module.exports=FileList.extend({
 			}.bind(this));*/
 		}.bind(this));
 	},
-	isConfig:function(path){
+	isConfig: function(path){
 		return path===this.rootPath+'package.json' || path===this.rootPath+'src/config/build.yml';
 	},
 	
-	_ignored:function(path){
-		if(path==='package.json' || path.startsWith('src/tests/')) return true;
+	_ignored: function(path,basename){
+		if(path==='package.json' || path.startsWith('src/tests/') || path.contains('/.git/')) return true;
 		if(path.substr(0,11)==='src/config/') return false;
-		var basename=sysPath.basename(path);
-		return basename.startsWith('_') || basename.startsWith('.');
+		return basename.startsWith('.');
+	},
+	_notcompilable: function(path,basename){
+		if(path.substr(0,11)==='src/config/') return false;
+		return basename.startsWith('_');
 	}
 });
