@@ -14,7 +14,7 @@ S.Elt=(function(){
 		elt.addEventListener('dispose',function(){
 			Object.keys(this).forEach(function(key){
 				delete this[key];
-			}.bin(this));
+			}.bind(this));
 		}.bind(this),false);
 		/*#/if*/
 	}
@@ -170,7 +170,7 @@ S.Elt=(function(){
 	});
 	
 	/* no args, return this */
-	'remove empty show hide'.split(' ').forEach(function(mName){
+	'remove empty show hide stop'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
 		Elt.Array.prototype[mName]=function(){ this._each(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
@@ -181,11 +181,28 @@ S.Elt=(function(){
 	});
 	
 	/* one arg, return this */
-	('attrs setAttrs removeAttr id setClass addClass removeClass text html append prepend appendText prependText appendTo prependTo'
-		+' fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
+	('attrs setAttrs removeAttr id setClass addClass removeClass text html'
+		+' fadeTo fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
 		Elt.Array.prototype[mName]=function(arg1){ this._each(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
+	
+	
+	var toNodeElt=function(elementOrString){
+		return elementOrString.nodeType ? elementOrString : (S.isString(elementOrString) ? Elt.parse(elementOrString) : elementOrString[0]);
+	};
+
+	'append prepend appendText prependText appendTo prependTo insertBefore insertAfter'.split(' ').forEach(function(mName){
+		Element.prototype[mName]=function(elementOrString){ Elt[mName].call(null,this[0],toNodeElt(elementOrString)); return this; };
+		Elt.Array.prototype[mName]=function(elementOrString){
+			if(this.length){
+				var newElt=toNodeElt(elementOrString);
+				this._each(function(e,i){ Elt[mName].call(null,e,i===0 ? newElt : newElt.clone(true)) });
+			}
+			return this;
+		};
+	});
+	
 	/* one arg, return result */
 	'is hasClass formData nodeName'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };

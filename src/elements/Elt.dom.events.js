@@ -6,7 +6,7 @@ UObj.extend(Elt,(function(){
 		var type = event.type, target = event.target, //event.srcElement for IE is not necessary because handled by base2 in es5.js
 			$elt = this, $target = event.$target = target && S.Elt(target),
 			handlers= $elt._events;
-		console.log('Event: '+type,target,handlers);
+		//console.log('Event: '+type,target,handlers);
 		
 		if(!handlers || !handlers.has(type)) return;
 		
@@ -39,7 +39,7 @@ UObj.extend(Elt,(function(){
 					var capture=eventName == 'blur' || eventName == 'focus';
 					if(!elt._eventsCallback) elt._eventsCallback=_callback.bind($elt);
 					elt.addEventListener(eventName,elt._eventsCallback,capture);
-					console.log('Register event: '+eventName,elt);
+					//console.log('Register event: '+eventName,elt);
 				}
 				events.get(eventName).push({selector:selector,callback:callback});
 			});

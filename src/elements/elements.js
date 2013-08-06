@@ -101,3 +101,4 @@ $.create=S.Elt.create;
 	//Elt[v]=function(){ return Elt.create(v); };
 	$[v]=S.Elt.create.bind(null,v);
 });
+$.imgLoading=function(){ return $.span().attr('class','img imgLoading'); };

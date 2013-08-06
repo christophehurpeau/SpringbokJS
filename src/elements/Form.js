@@ -3,7 +3,8 @@ includeCore('helpers/');
 
 S.Form=S.Elt.WithContent.extend({
 	tagName:'form', _tagContainer:'div',
-	_eventBeforeSubmit:new Event('beforeSubmit'),
+	_eventBeforeSubmit:new Event('form.beforeSubmit'),
+	_eventAfterSubmit:new Event('form.afterSubmit'),
 	
 	/*#if NODE*/ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
 	/*#else*/ctor:function(H,method){
@@ -68,28 +69,39 @@ S.Form=S.Elt.WithContent.extend({
 	
 	
 	/*#if BROWSER*/
-	onSubmit:function(callback){
-		var form=this,submit;
+	onSubmit: function(options){
+		var $form=this,submit;
+		if(!S.isObj(options)) options = { success: options };
 		this.on('submit',function(evt){
 			evt.preventDefault();
 			evt.stopPropagation();
-			submit=form.find('[type="submit"]');
-			form.fadeTo(180,0.4);
-			var hasPlaceholders=form.hasClass('hasPlaceholders');
-			//if(window.tinyMCE!==undefined) tinyMCE.triggerSave();
-			//hasPlaceholder && form.defaultInput('beforeSubmit'); TODO : fire beforeSubmit
-			if((beforeSubmit && beforeSubmit()===false))
-				form.stop().fadeTo(0,1) && hasPlaceholder && form.defaultInput('afterSubmit');
+			submit=this.find('[type="submit"]');
+			this.fadeTo(0.4, 180);
+			this.fire(this._eventBeforeSubmit);
+			if(options.beforeSubmit && options.beforeSubmit()===false)
+				this.stop().style('opacity',1) && hasPlaceholders && this.resetPlaceholders();
 			else{
-				submit.hide().forEach(function(e){ e.appendNext(S.imgLoading()); });
-				callback(form,function(){
-					submit.show().blur(); form.find('.imgLoading').remove(); form.fadeTo(150,1);
-					hasPlaceholder && form.defaultInput('afterSubmit');
-				});
+				submit.hide().forEach(function($e){ $e.insertAfter($.imgLoading()); });
+				options.success(this,function(){
+					submit.show().blur(); this.find('.imgLoading').remove(); this.fadeTo(1, 150);
+					this.fire(this._eventAfterSubmit);
+				}.bind(this));
 			}
 			return false;
 		});
 		return this;
+	},
+	ajax: function(options){
+		var success;
+		if(S.isObj(options)) success=options.success;
+		else{
+			success=options;
+			options={};
+		}
+		options.success=function(){
+			//TODO ajax request
+		};
+		this.onSubmit(options);
 	}
 	/*#/if*/
 });
@@ -158,7 +170,7 @@ S.Form.Containable=S.Elt.Basic.extend({
 		/*#if NODE*/
 			this._between=content;
 		/*#else*/
-			content && S.Elt.appendBefore(this._container,this[0],content);
+			content && S.Elt.insertBefore(this[0],content);
 		/*#/if*/
 		return this;
 	},

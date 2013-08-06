@@ -158,7 +158,7 @@ S.ready(function(){
 		},*/
 		check:function(){
 			var radioNames=[],error;
-			this.form.find(selectorAllElements).forEach(function($elt){
+			this.$form.find(selectorAllElements).forEach(function($elt){
 				if($elt.is('input[type="radio"]')){
 					var name=$elt.attr('name');
 					if(UArray.has(radioNames,name)) return;
@@ -213,13 +213,12 @@ S.ready(function(){
 			else if(error!=null){
 				/*#if DEV*/ if(!i18nc['validation.'+error]) S.error('Unknown validation translation error: '+error); /*#/if*/
 				error=i18nc['validation.'+error];
-				console.log(error);
 			}
 			if(error){
 				!$elt.sValidationMessage && ($elt.sValidationMessage=new validationBox($elt));
 				$elt.sValidationMessage.$div.empty().append($.div().attr('class','content').text(error));
-				if($elt.is(':focus')) $elt.sValidationMessage.showDiv(); // TODO prop focused ?
-				else if(checkAllAndFirstError) $elt.focus();
+				if($elt.is(':focus')) $elt.sValidationMessage.showDiv();
+				else if(checkAllAndFirstError) $elt.focus().sValidationMessage.showDiv();
 			}
 		},
 		checkPassed:function($elt){

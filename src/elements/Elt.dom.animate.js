@@ -90,6 +90,7 @@
 	})();
 	*/
 	var parseDuration=function(duration){
+		if(duration===0) throw new Error('Duration must not be === 0');
 		if(!S.isString(duration)) return duration;
 		return duration.contains('ms') ? parseInt(duration, 10) : parseInt(duration, 10) * 1000; 
 	};
@@ -127,7 +128,7 @@
 		Elt.anim=function(e,animName,duration,callback){
 			if(S.isFunc(duration)){ callback = duration; duration = undefined; }
 			duration=parseDuration(duration) || 700;
-			Elt.setStyle(e,cssprefix+'animation',animName+' '+duration+'ms');
+			Elt.setStyle(e,animationstring,animName+' '+duration+'ms');
 			
 			/*#if DEV*/if(!animations[animName]) throw new Error;/*#/if*/
 			
@@ -220,12 +221,18 @@
 		var properties=animations[animName];
 		/*#if DEV*/if(!properties) throw new Error;/*#/if*/
 		Elt.transition(elt,properties,duraction,callback);
-	}
+	};
 	Elt.transition.create=function(properties){
 		return function(elt,duration,callback){
 			return Elt.transition(elt,properties,duration,callback);
 		}
-	}
+	};
+	
+	Elt.stop=function(e){
+		//TODO : $e._animationTimeouts
+		animation && Elt.setStyle(e,animationstring,'none');
+		transition && Elt.setStyle(e,transitionstring,'none');
+	};
 	
 	// S.Elt.transition.chain('fadeOut','fadeIn')($.first('form')[0])
 	'anim transition'.split(' ').forEach(function(methodName){
@@ -256,6 +263,9 @@ Elt.slideUp=anim.create({ opacity:0, width:0 });
 'fadeIn fadeOut slideDown slideUp'.split(' ').forEach(function(transitionName){
 	Elt[transitionName]=function(e,duration,callback){ Elt.transition(e,transitionName,duration,callback); };
 });
+Elt.fadeTo = function(e, opacity, duration, callback){
+	Elt.transition(e,{ opacity: opacity }, duration, callback);
+};
 
 	/*Elt.fadeIn=Elt.transition.create({ opacity:1 });
 	Elt.fadeOut=Elt.transition.create({ opacity:0 });

@@ -10,12 +10,12 @@ App.Controller.Action(function(req,H){
 						.input('pwd').end()
 						.submit('Login').container().addClass('center').end()
 					.end(false)
-					.onSubmit(function(form,onEnd){
-						var pError=form.find('p.error');
+					.onSubmit(function($form,onEnd){
+						var pError=$form.find('p.error');
 						pError && pError.empty();
-						S.post('/api/site/login').form(form).send(function(data){
+						S.post('/api/site/login').form($form).send(function(data){
 							if(data==='0'){
-								pError=pError||$.p().setClass('message error').appendTo(form[0].firstChild);
+								pError=pError||$.p().setClass('message error').appendTo($form[0].firstChild);
 								pError.text('Authentification failed !');
 								onEnd();
 							}else{

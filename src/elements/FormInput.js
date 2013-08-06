@@ -3,18 +3,16 @@ S.Form.Input=S.Form.Containable.extend({
 	
 	ctor:function(form,name,largeSize){
 		S.Form.Containable.call(this,form,name);
-		this.attr('type','text');
 		
 		if(form._modelName){
 			var model=M[form._modelName],fModel=model.Fields[name],v,e;
 			if(fModel){
-				switch(fModel[0]){
-					case 'i': this.attr('type','number'); break;
-					case 's':
-						if(name==='pwd' || name==='password') this.attr('type','password').attr('value','');
-						else if(name==='email' || name==='mail') this.attr('type','email');
-						else if(name==='url' || name==='website') this.attr('type','url');
-						break; 
+				if(fModel[0] === Number)
+					this.attr('type','number');
+				else if(fModel[0] === String){
+					if(name==='pwd' || name==='password') this.attr('type','password').val('');
+					else if(name==='email' || name==='mail') this.attr('type','email');
+					else if(name==='url' || name==='website') this.attr('type','url');
 				}
 				
 				if(fModel[1]){
@@ -37,36 +35,45 @@ S.Form.Input=S.Form.Containable.extend({
 				}
 			}
 		}
+		//if(!this.prop('type')) this.attr('type','text');
 		if(this.attr('type')!=='password') this._setAttrValue();
 		this._setAttrId(); this._setAttrName();
 		
 	},
-	/*#if NODE*/
-	val:function(val){ this.attr('value',val); return this; },
-	/*#else*/
+	
+	//override (browser)
+	val:function(val){
+		/*#if NODE*/
+			this.attr('value',val);
+		/*#else*/
+			if(arguments.length===0) return this.prop('value');
+			this.prop('value',val);
+		/*#/if*/
+		return this;
+	},
 	
 	placeholder:function(placeholder){
 		/*#if NODE*/
 			this.attr('placeholder',placeholder);
 		/*#else*/
-			var $this=this;
+			var cleanPlaceholder=function(){ if(this.hasClass('placeholder') || this.val()===placeholder) this.removeClass('placeholder').val('') }.bind(this);
+			this._form.on('form.beforeSubmit',cleanPlaceholder);
 			this.attr('title',placeholder)
-				.on('focus',function(){ if($this.hasClass('placeholder') || $this.val()===placeholder) $this.removeClass('placeholder').val('') })
-				.on('blur',function(){ if(!$this.hasClass('placeholder') && !$this.val()) $this.addClass('placeholder').val(placeholder); })
+				.on('dispose',function(){ this._form.off('form.beforeSubmit',cleanPlaceholder); }.bind(this))
+				.on('focus',cleanPlaceholder)
+				.on('blur',function(){ if(!this.hasClass('placeholder') && !this.val()) this.addClass('placeholder').val(placeholder); }.bind(this))
 				.on('change',function(){
-					if($this.hasClass('placeholder')){
-						if(!$this.val()) $this.removeClass('placeholder');
-						else $this.val(placeholder);
-					}else if(!$this.val()){
-						$this.addClass('placeholder').val(placeholder);
+					if(this.hasClass('placeholder')){
+						if(!this.val()) this.removeClass('placeholder');
+						else this.val(placeholder);
+					}else if(!this.val()){
+						this.addClass('placeholder').val(placeholder);
 					}
-				});
+				}.bind(this));
 			if(!this.val()) this.addClass('placeholder').val(placeholder);
 		/*#/if*/
 		return this;
 	},
-
-	/*#/if*/
 
 	wp100:function(){ this.addClass('wp100'); return this; },
 	

@@ -298,25 +298,28 @@ UObj.extend(Elt,{
 		/*#/if*/
 		//for(var i=0,l=content.length;i<l;i++)
 		//	e.appendChild(content[i]);
-		e.appendChild(child.nodeType ? child : (S.isString(child) ? Elt.parse(child) : child[0]));
+		e.appendChild(child);
 	},
 	prepend:function(e,child){
-		this.appendBefore(e,e.firstChild,child);
+		e.insertBefore(child,e.firstChild);
 	},
 	
-	appendBefore:function(e,node,child){
-		/*#if DEV*/
-		if(!UArray.has([NodeTypes.ELEMENT,NodeTypes.DOCUMENT_FRAGMENT,NodeTypes.DOCUMENT],e.nodeType))
-			throw new Error('append not allowed on non-element|document nodes');
-		/*#/if*/
-		e.insertBefore(child.nodeType ? child : (S.isString(child) ? Elt.parse(child) : child[0]),node.nodeType ? node : node[0]);
+	insertBefore:function(e,sibling){
+		e.parentNode.insertBefore(sibling,e);
+	},
+	insertAfter:function(e,sibling){
+		var parent = e.parentNode;
+		if(parent.lastChild == e)
+			parent.appendChild(sibling);
+		else
+			parent.insertBefore(sibling, e.nextSibling);
 	},
 	
 	appendTo:function(e,parent){
-		Elt.append(parent.nodeType ? parent : (S.isString(parent) ? Elt.parse(parent) : parent[0]),e);
+		Elt.append(parent,e);
 	},
 	prependTo:function(e,parent){
-		Elt.prepend(parent.nodeType ? parent : (S.isString(parent) ? Elt.parse(parent) : parent[0]),e);
+		Elt.prepend(parent,e);
 	},
 	
 	parse:function(string,context){
