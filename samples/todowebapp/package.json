@@ -12,7 +12,7 @@
 	"scripts":{ "start":"node start.js" },
 	
 	"dependencies":{
-    	"springbokjs": "/home/christophe/Travail/ProgrammationWEB/springbok/springbok/core/nodejs/springbokjs/"
+    	"springbokjs": ">=0.0.14"
 	},
 	"devDependencies": {
 	}

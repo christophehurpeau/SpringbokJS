@@ -1,2 +1,2 @@
 compile:
-	node --harmony /usr/bin/sJs w
+	node --harmony node_modules/springbokjs/bin/sJs.js b
