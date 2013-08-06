@@ -14,12 +14,18 @@
         cd springbokjs
         git submodule init && git submodule update
 
-## Launch Todo Webapp
+## Test SpringbokJS
+
+### Compile core
 
         cd springbokjs
-        sh ./watch.sh
-        
-Then, in an other terminal :
+        make
+        # first time only : npm link
+
+### Launch Todo Webapp
 
         cd samples/todowebapp
+        # first time only : npm link springbokjs
         make
+        node start.js
+        
