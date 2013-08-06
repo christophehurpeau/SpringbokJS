@@ -38,9 +38,10 @@ if(!global.$){
 		return results;
 	} : function(results){
 		var ret=new S.Elt.Array;
-		Array.forEach(results,function(r){
+		/*Array.forEach(results,function(r){
 			ret[ret.length++]=r;
-		});
+		});*/
+		Array.prototype.push.apply(ret,results);
 		return ret;
 	};
 	

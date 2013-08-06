@@ -23,7 +23,29 @@ S.store=(function(){
 			get:function(key){ deserialize(storage[key]); },
 			set:function(key,val){ storage[key]=serialize(val); },
 			remove:function(key){ storage.removeItem(key); },
-			clear:function(){ storage.clear(); }
+			clear:function(){ storage.clear(); },
+			iterator:function(){
+				var i=0;
+				return Object.freeze({
+					hasNext:function(){
+						return i < storage.length;
+					},
+					next:function(){
+						if ( ! this.hasNext() )
+							throw StopIteration;
+						
+						var key = storage.key(i++);
+						return [ key, storage[key] ];
+					}
+				});
+			},
+			forEach:function(callback){
+				var iter = this.iterator();
+				while(iter.hasNext()){
+					var current = iter.next();
+					callbackfn.call(this,current[0],current[1]);
+				}
+			}
 		})
 	}
 })();

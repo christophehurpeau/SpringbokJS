@@ -16,6 +16,7 @@ if(OLD_IE){
 	if(!Object.keys || !String.contains || !(window.Map && window.Map.prototype.forEach)){ // not String.prototype.contains : the generic version
 		//$.ajax({ url:webUrl+'js/es5-compat.js', global:false, async:false, cache:true, dataType:'script' });
 		Object.keys || S_loadSyncScript('compat/es5');
+		/* !String.contains || !(window.Map && window.Map.prototype.forEach) */
 		S_loadSyncScript('compat/es6');
 	}
 }
@@ -28,7 +29,15 @@ includeCore('base/Listenable');
 includeCoreUtils('Callbacks/CallbacksOnce');
 
 UObj.extend(S,{
-	ready:function(callback){
+	/*#if DEV*/
+	error: function(m){
+		console.error('S.error',m);
+		if(m === S.error.lastError) return;
+		S.error.lastError=m;
+		alert(m);
+	},
+	/*#/if*/
+	ready: function(callback){
 		if(!this.readyCallbacks){
 			if(document.readyState === "complete" )
 				return setTimeout(callback);

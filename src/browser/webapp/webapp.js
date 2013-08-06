@@ -1,10 +1,11 @@
-includeCore('browser/base/');
-includeCore('browser/base/S.Ajax');
-includeCore('browser/base/S.History');
-includeCore('browser/base/S.require');
-includeCore('elements/');
-includeCore('elements/Form');
-includeCore('helpers/');
+includeJsCore('browser/base/');
+includeJsCore('browser/base/S.Ajax');
+includeJsCore('browser/base/S.History');
+includeJsCore('browser/base/S.require');
+includeJsCore('elements/');
+includeJsCore('elements/Form');
+includeJsCore('helpers/');
+includeJsCore('browser/ui/validation');
 S.require.prefix=Config.id+'/';
 
 global.FatalError=function(error){

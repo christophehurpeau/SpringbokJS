@@ -19,7 +19,7 @@ S.Form.Input=S.Form.Containable.extend({
 				
 				if(fModel[1]){
 					v=fModel[1].label && this.label(fModel[1].label);
-					if(fModel[1].minL || fModel[1].required) this.prop('required','required');//this.prop('required',true);
+					if(fModel[1].minL || fModel[1].required) this.prop('required',true);
 					if(v=fModel[1].min) this.attr('min',v);
 					if(v=fModel[1].max) this.attr('max',v);
 					if(v=fModel[1].maxL){

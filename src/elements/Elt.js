@@ -20,6 +20,14 @@ S.Elt=(function(){
 	}
 	Element.extend=S.extThis;
 	
+	var Elt=function(elt){
+		/*#if NODE*/
+		return new Element(elt);
+		/*#else*/
+		return elt.$elt || new Element(elt);
+		/*#/if*/
+	}
+	
 	/*#if NODE*/
 	var _attrs=function(attrs){
 		var res='';
@@ -59,38 +67,21 @@ S.Elt=(function(){
 		},
 		
 		/* TRAVERSING */
-		firstChild:function(){
-			return new Elt(this[0].firstChild);
-		},
-		parent:function(){
-			return new Elt(this[0].parentNode);
-		},
-		children:function(){
-			return $._toEltArray(this[0].children);
-		},
+		/*use child() instead firstChild:function(){
+			return Elt(this[0].firstChild);
+		},*/
+		
 		find:function(selectors){
 			return $(selectors,this[0]);
 		},
 		first:function(selectors){
 			return $.first(selectors,this[0]);
-		}
+		},
 		
 		
 		/*#/if*/
 		
 	};
-	
-	var Elt=function(elt){
-		/*#if NODE*/
-		return new Element(elt);
-		/*#else*/
-		return elt.$elt || new Element(elt);
-		/*#/if*/
-	}
-	/*#if BROWSER*/
-	includeCore('elements/Elt.dom');
-	includeCore('elements/Elt.dom.events');
-	/*#/if*/
 	
 	/*#if NODE*/
 	Elt.WithContent=Element.extend({
@@ -115,56 +106,93 @@ S.Elt=(function(){
 	});
 	Elt.Array=function(){ this.length=0; };
 	Elt.Array.prototype={
-		forEach:Array.prototype.forEach,
-		reduce:Array.prototype.reduce,
+		forEach:function(callback){
+			this._each(function(e){
+				callback.call(this,Elt(e));
+			});
+		},
+		some:function(callback){
+			var results = new Elt.Array;
+			this._some(function(e){
+				results.push(e);
+				return callback.call(this,Elt(e));
+			});
+			return results;
+		},
+		_each:Array.prototype.forEach,
+		_reduce:Array.prototype.reduce,
 		/* some executes the callback function once for each element present in the array until it finds one where callback returns a true value.
 		 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Some */
-		some:Array.prototype.some,
-		push:Array.prototype.push,
-		sort:Array.prototype.sort,
-		indexOf:Array.prototype.indexOf,
-		concat:Array.prototype.concat,
+		_some:Array.prototype.some,
+		_push:Array.prototype.push,
+		_sort:Array.prototype.sort,
+		_indexOf:Array.prototype.indexOf,
 		//map:Array.prototype.map,
 		//slice:Array.prototype.slice,
 		
 		val:function(value){
-			this.forEach(function(e){ Elt.setVal(e,value); });
+			this._each(function(e){ Elt.setVal(e,value); });
 			return this;
 		},
 	};
 	
-	'attr prop'.split(' ').forEach(function(mName){
+	
+	/*#if BROWSER*/
+	includeCore('elements/Elt.dom');
+	includeCore('elements/Elt.dom.events');
+	includeCore('elements/Elt.dom.animate');
+	includeCore('elements/Elt.dom.traversing');
+	
+	/*#/if*/
+	
+	
+	'attr prop style'.split(' ').forEach(function(mName){
 		var mEltName=UString.ucFirst(mName);
 		Element.prototype[mName]=function(name,value){
-			if(arguments.length === 1)
+			if(arguments.length === 1){
+				if(S.isObj(name)){
+					var elt=this[0], fn=Elt['set'+mEltName];
+					UObj.forEach(name,function(name,value){
+						fn.call(null,elt,name,value);
+					});
+					return this;
+				}
 				return Elt['get'+mEltName].call(null,this[0],name);
+			}
 			Elt['set'+mEltName].call(null,this[0],name,value);
 			return this;
 		};
 		Elt.Array.prototype[mName]=function(name,value){
 			/*#if DEV*/if(value===undefined) throw new Error('Cannot get '+mName+' from an list of elements');/*#/if*/
-			this.forEach(function(e){ Elt['set'+mEltName].call(null,e,name,value) });
+			this._each(function(e){ Elt['set'+mEltName].call(null,e,name,value) });
 			return this;
 		};
 	});
 	
-	'remove empty'.split(' ').forEach(function(mName){
+	/* no args, return this */
+	'remove empty show hide'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
-		Elt.Array.prototype[mName]=function(){ this.forEach(function(e){ Elt[mName].call(null,e) }); return this; };
+		Elt.Array.prototype[mName]=function(){ this._each(function(e){ Elt[mName].call(null,e) }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
+	/* no args, return result */
+	'width height'.split(' ').forEach(function(mName){
+		Element.prototype[mName]=function(){ return Elt[mName].call(null,this[0]); };
+	});
+	
 	/* one arg, return this */
-	'attrs setAttrs removeAttr id setClass addClass removeClass text html append prepend appendText prependText appendTo prependTo'.split(' ').forEach(function(mName){
+	('attrs setAttrs removeAttr id setClass addClass removeClass text html append prepend appendText prependText appendTo prependTo'
+		+' fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
-		Elt.Array.prototype[mName]=function(arg1){ this.forEach(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
+		Elt.Array.prototype[mName]=function(arg1){ this._each(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
 	});
 	/* one arg, return result */
 	'is hasClass formData nodeName'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
-		Elt.Array.prototype[mName]=function(arg1){ return this.some(function(e){ return Elt[mName].call(null,e,arg1) }); };
+		Elt.Array.prototype[mName]=function(arg1){ return this._some(function(e){ return Elt[mName].call(null,e,arg1) }); };
 	});
 	/* unlimited args */
-	'on off fire'.split(' ').forEach(function(mName){
+	'on off fire anim'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(){
 			var args=arguments; Array.unshift(args,this[0]);
 			Elt[mName].apply(null,args);
@@ -172,7 +200,7 @@ S.Elt=(function(){
 		};
 		Elt.Array.prototype[mName]=function(){
 			var args=Array.unshift(arguments,null);
-			this.some(function(e){ args[0]=e; return Elt[mName].apply(null,args) }); };
+			this._some(function(e){ args[0]=e; return Elt[mName].apply(null,args) }); };
 			return this;
 	});
 	

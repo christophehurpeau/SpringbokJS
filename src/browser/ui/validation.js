@@ -1,10 +1,12 @@
-includeJsCore('browser/ui/inputbox');
+includeJsCore('browser/ui/InputBox');
 
 S.ready(function(){
 	/*#if DEV*/
 		if($.ht5ifv) alert('Please do not use ht5ifv !');
 	/*#/if*/
-	
+	$('form:not([novalidate])').forEach(function($form){
+		S.FormValidator.getValidator($form);
+	});
 });
 (function(){
 	var checkTimeFormat=function(val){
@@ -72,7 +74,8 @@ S.ready(function(){
 				
 				//http://www.w3.org/TR/html5/common-microsyntaxes.html#real-numbers
 				number:function($node,val){
-					return !/^-?[0-9]+(\.[0-9]*)?(E(-|\+)?[0-9]+)?$/i.test(val) || ((val=parseInt(val,10))===NaN)
+					var valAsNumber = $node.prop('valueAsNumber');
+					return !( (valAsNumber && (val=valAsNumber)) || ( /^-?[0-9]+(\.[0-9]*)?(E(-|\+)?[0-9]+)?$/i.test(val) && ((val=parseInt(val,10))!==NaN)))
 						|| checkMinAndMax($node,val,function(v){ return parseInt(v,10); });
 				},
 				range:function($node,val){ return restrictions.input.type.number.text($node,val); },
@@ -104,29 +107,29 @@ S.ready(function(){
 			maxlength:function(minlength,val,$node){ return val.length > minlength; },
 			'data-same':function(dataSame,val,$node){ return val != $.first(dataSame).val(); }
 		},
-		checkbox:function($node){ return !(!$node.prop('required') || $node.prop('checked')); },
+		checkbox:function($node){ return !(!$node[0].required || $node[0].checked); },
 		select:function($node){ return $node.val() == null; },
 		textarea:function($node){ return false; },
 		radio:function($radioGroup,$node){ return $radioGroup.filter(':checked').length > 0 }
 	};
 	
-	//TODO : required, pattern, data-same, data-min-length
-	
-	var selectorAllElements='input:not([type="reset"],[type="submit"],[type="image"],[type="button"]),textarea,select',
+	var //selectorAllElements='input:not([type="reset"],[type="submit"],[type="image"],[type="button"]) textarea select',
+	selectorAllElements='input:not([type="reset"]):not([type="submit"]):not([type="image"]):not([type="button"]), textarea, select',
 		validationBox=S.ui.InputBox.extend({
 			ctor:function(input){
 				S.ui.InputBox.call(this,input,'sValidationMessage');
 			},
-			createDiv:function(){ return $('<div class="divInputBox hidden boxError"/>'); }//TODO : add an arrow, remove css validation-error
+			createDiv:function(){ return $.div().attr('class','divInputBox hidden boxError'); }//TODO : add an arrow, remove css validation-error
 		});
-	S.FormValidator=function(form,eventsName){
-		this.form=form.attr('novalidate','novalidate').data('sValidator',this);
+	S.FormValidator=function($form,eventsName){
+		this.$form=$form.attr('novalidate','novalidate');
+		$form.sValidator=this;
 		var t=this;
 		//form.on('sValidation.clear',selectorAllElements,this.check);
-		form.on(this.eventsName=((eventsName||S.FormValidator.eventsName)+' validation.check'),
-			selectorAllElements,this.listenFormF=function(){ t.checkElement($(this)) })
-				.submit(this.listenSubmitF=this.check.bind(this))
-				.bind('dispose',this.listenDispose=function(){ t.dispose(true); });
+		$form.on(this.eventsName=((eventsName||S.FormValidator.eventsName)+' validation.check'),
+			selectorAllElements,this.listenFormF=function(event){ t.checkElement($(event.target)) })
+				.on('submit',this.listenSubmitF = this.check.bind(this))
+				.on('dispose',this.listenDispose = function(){ t.dispose(true); });
 	};
 	S.FormValidator.eventsName='blur focus change keyup';
 	S.FormValidator.addRestriction=function(name,f){
@@ -136,13 +139,13 @@ S.ready(function(){
 	};
 	S.FormValidator.prototype={
 		dispose:function(removedForm){
-			if(this.form){
-				if(!removedForm){ //TODO : do that in widget or listenable
-					this.form.off(this.eventsName,selectorAllElements,this.listenFormF)
+			if(this.$form){
+				if(!removedForm){
+					this.$form.off(this.eventsName,selectorAllElements,this.listenFormF)
 						.off('submit',this.listenSubmitF)
-						.off('dispose',this.listtenDispose);
+						.off('dispose',this.listenDispose);
 				}
-				delete this.form;
+				delete this.$form;
 			}
 		},
 		/*updateElements:function(){
@@ -154,101 +157,101 @@ S.ready(function(){
 			this.selects=this.elements.filter('select');
 		},*/
 		check:function(){
-			var t=this,radioNames=[],error;
-			this.form.find(selectorAllElements).forEach(function(){
-				var elt=$(this);
-				if(elt.is('input[type="radio"]')){
-					var name=elt.attr('name');
+			var radioNames=[],error;
+			this.form.find(selectorAllElements).forEach(function($elt){
+				if($elt.is('input[type="radio"]')){
+					var name=$elt.attr('name');
 					if(UArray.has(radioNames,name)) return;
 					radioNames.push(name);
 				}
-				if(!t.checkElement(elt,error==undefined)) error=true;
-			});
+				if(!this.checkElement($elt,error==undefined)) error=true;
+			}.bind(this));
 			return !error;
 		},
-		checkElement:function(elt,checkAllAndFirstError){
-			if(elt.prop('disabled')){
-				this.cleanElement(elt);
+		checkElement:function($elt,checkAllAndFirstError){
+			if($elt.prop('disabled')){
+				this.cleanElement($elt);
 				return true;
 			}
 			
-			var tagName=elt.nodeName(),isInput=tagName==='input',type=isInput ? elt.attr('type')||'text' : undefined,error;
+			var tagName=$elt.nodeName(),isInput=tagName==='input',type=isInput ? $elt.attr('type')||'text' : undefined,error;
 			if(isInput && type==='radio'){
 				
 			}else if(isInput && type==='checkbox'){
 				error=restrictions.checkbox(elt);
-				if(error!==false) return this.checkFailed(elt,'checkbox',checkAllAndFirstError);
+				if(error!==false) return this.checkFailed($elt,'checkbox',checkAllAndFirstError);
 			}else{
-				var val=elt.val();
+				var val=$elt.val();
 				if(val==''){
-					if(elt.prop('required')) return this.checkFailed(elt,'required',checkAllAndFirstError);
+					if($elt.prop('required')) return this.checkFailed($elt,'required',checkAllAndFirstError);
 				}else if(type!=='hidden'){
 					/*#if DEV*/
 					if(isInput && !restrictions.input.type[type]) S.error('Unknown input type: '+type);
 					if(isInput && !S.isFunc(restrictions.input.type[type])) S.error('input type: '+type+' is not a function');
 					/*#/if*/
-					error=isInput ? restrictions.input.type[type](elt,val)
-							: restrictions[tagName](elt,val);
-					if(error!==false) return this.checkFailed(elt,error===true?type||'required':error,checkAllAndFirstError);
+					error=isInput ? restrictions.input.type[type]($elt,val)
+							: restrictions[tagName]($elt,val);
+					if(error!==false) return this.checkFailed($elt,error===true?type||'required':error,checkAllAndFirstError);
 					if(isInput){
-						var restrictionsInput=restrictions.input.restrictions;
-						for(var i=0,l=restrictionsInput.length,r,attr;i<l;i++){
-							r=restrictionsInput[i]; attr=elt.attr(r);
+						restrictions.input.restrictions.forEach(function(r){
+							var attr=$elt.attr(r);
 							if(attr!=null){
-								error=restrictions.input[r](attr,val,elt);
-								if(error!==false) return this.checkFailed(elt,error===true?[r,attr]:error,checkAllAndFirstError);//probleme : must not be in function => use for
+								error = restrictions.input[r](attr,val,$elt);
+								if(error!==false) return this.checkFailed($elt,error===true?[r,attr]:error,checkAllAndFirstError);//probleme : must not be in function => use for
 							}
-						}
+						});
 					}
 				}
 			}
-			this.checkPassed(elt);
+			this.checkPassed($elt);
 			return true;
 		},
-		checkFailed:function(elt,error,checkAllAndFirstError){
-			elt.removeClass('validation-valid').addClass('validation-invalid');
-			var ib=elt.data('sValidationMessage'),attrs;
+		checkFailed:function($elt,error,checkAllAndFirstError){
+			$elt.removeClass('validation-valid').addClass('validation-invalid');
+			var attrs;
 			if(S.isArray(error)) error=UString.vformat(i18nc['validation.'+error[0]],UArray.slice1(error));
 			else if(error!=null){
+				/*#if DEV*/ if(!i18nc['validation.'+error]) S.error('Unknown validation translation error: '+error); /*#/if*/
 				error=i18nc['validation.'+error];
-				/*#if DEV*/ if(!error) S.error('Unknown validation translation error: '+error); /*#/if*/
+				console.log(error);
 			}
 			if(error){
-				!ib && (ib=new validationBox(elt));
-				ib.div.html($('<div class="content">').text(error));
-				if(elt.is(':focus')) ib.showDiv();
-				else if(checkAllAndFirstError) elt.focus();
+				!$elt.sValidationMessage && ($elt.sValidationMessage=new validationBox($elt));
+				$elt.sValidationMessage.$div.empty().append($.div().attr('class','content').text(error));
+				if($elt.is(':focus')) $elt.sValidationMessage.showDiv(); // TODO prop focused ?
+				else if(checkAllAndFirstError) $elt.focus();
 			}
 		},
-		checkPassed:function(elt){
-			this.cleanElement(elt);
-			elt.addClass('validation-valid');
+		checkPassed:function($elt){
+			this.cleanElement($elt);
+			$elt.addClass('validation-valid');
 		},
-		cleanElement:function(elt){
-			elt.removeClass('validation-invalid');
-			var ib=elt.data('sValidationMessage');
-			if(ib){ ib.div.empty(); ib.hideDiv(); }
+		cleanElement:function($elt){
+			$elt.removeClass('validation-invalid');
+			var ib=$elt.sValidationMessage;
+			if(ib){ ib.$div.empty(); ib.hideDiv(); }
 		}
 	};
 	//TODO trigger events to be able to be used by inputListHandler
+	var checkEvent = new Event('validation.check');
 	
-	S.FormValidator.getValidator=function(form){
-		var validator=form.data('sValidator');
-		!validator && (validator=new S.FormValidator(form));
+	S.FormValidator.getValidator=function($form){
+		var validator=$form.sValidator;
+		!validator && (validator=new S.FormValidator($form));
 		return validator;
 	};
-	S.FormValidator.checkForm=function(form){
-		return S.FormValidator.getValidator(form).check();
+	S.FormValidator.checkForm=function($form){
+		return S.FormValidator.getValidator($form).check();
 	};
 	
 	$document.on('focus','form:not([novalidate])',function(e){
-		var v=new S.FormValidator($(this)),target;
+		var v=new S.FormValidator(this),target;
 		if(e.target){
 			target=$(e.target);
-			if(target.is(selectorAllElements)) target.trigger('validation.check');
+			if(target.is(selectorAllElements)) target.fire(checkEvent);
 		}
 	});
 	$document.on('submit','form:not([novalidate])',function(){
-		return (new S.FormValidator($(this))).check();
+		return S.FormValidator.checkForm(this);
 	});
 })();

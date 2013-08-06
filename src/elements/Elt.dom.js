@@ -1,65 +1,86 @@
 /* https://raw.github.com/julienw/dollardom/master/dollardom-full.debug.js */
 
-var _docElt = document.documentElement, _regexp_get_alias = /-(\w)/g, _regexp_singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
-var _getStyle = (document.defaultView && document.defaultView.getComputedStyle) ?
+var _regexp_get_alias = /-(\w)/g, _regexp_singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
+var _getStyle = window.getComputedStyle ?
 		function (elm, property) {
-			var prop = _getStyleAlias(property), handler = styleHandlers[prop];
-			return handler && handler.get ?
-				handler.get(elm) :
-				elm.ownerDocument.defaultView.getComputedStyle(elm, null).getPropertyValue(property);
+			var prop = _getStyleAlias(property), handler = Elt.styleHooks[property];
+			if(handler && handler.get) return handler.get(elm);
+			var computed = getComputedStyle(elm, null);
+			return computed.getPropertyValue(property) || computed[property];
 		}
 	:
 		function (elm, property) {
-			var prop = _getStyleAlias(property), handler = styleHandlers[prop];
+			var prop = _getStyleAlias(property), handler = Elt.styleHooks[prop];
 			return ((handler && handler.get) ? handler.get(elm) : elm.currentStyle[prop]);
 		}
 	,
-	styleAlias = { "float": "cssFloat" in _docElt.style ? "cssFloat" : "styleFloat" },
+	styleAlias = {  },
 	_getStyleAlias=function(property){
 		return styleAlias[property] || (styleAlias[property] = property.replace(_regexp_get_alias, function (m, l) { return l.toUpperCase(); }));
-	},
-
-	styleHandlers = {
-		borderWidth: {
-			get:function(e){
-				return _getStyle(e, "border-left-width");
-			}
-		},
-		padding: {
-			get: function (e) {
-				return _getStyle(e, "padding-left");
-			}
-		},
-		margin: {
-			get: function (e) {
-				return _getStyle(e, "margin-left");
-			}
-		}
 	};
-
-// Internet Explorer style handlers
-if (! ("opacity" in _docElt.style) && ("filters" in _docElt)) {
-	styleHandlers.opacity = {
-		set: function (e, v) {
-			var f = e.filters.alpha;
-			
-			if (!f)
-				e.style.filter += " Alpha(opacity=" + (v * 100) + ")";
-			else
-				f.opacity = v * 100;
-		},
-		get: function (e) {
-			var f = e.filters.alpha;
-			return f ? f.opacity / 100 : 1;
-		}
-	};
-}
-
 
 var optionValue=function(){
 	var val=Elt.getAttr(elt,'value');
 	return val != null ? val : elt.text;
 };
+
+
+Elt.attrHooks={};
+Elt.propHooks={};
+Elt.styleAlias={ 'float': "cssFloat" in document.documentElement.style ? "cssFloat" : "styleFloat"};
+Elt.styleHooks={
+	borderWidth: {
+		get: function(e){
+			return _getStyle(e, "border-left-width");
+		}
+	},
+	padding: {
+		get: function (e) {
+			return _getStyle(e, "padding-left");
+		}
+	},
+	margin: {
+		get: function (e) {
+			return _getStyle(e, "margin-left");
+		}
+	}
+};
+
+(function(){
+	var inputTest=document.createElement('input');
+	
+	//https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
+	//TODO : in compat script instead !
+	
+	//pattern, placeholder, required properties 	(Yes) 	4.0 (2) 	(Yes) 	(Yes) 	(Yes)
+	if( inputTest.required === undefined ){
+		Elt.propHooks.required={
+			get:function(e){
+				return e.getAttribute('required');
+			},
+			set:function(e){
+				e.setAttribute('required','required');
+				e.required=true;
+			}
+		};
+	}
+	
+	// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement
+	if( inputTest.offsetLeft ){
+		Elt.propHooks.offsetLeft={
+			get:function(e){
+				
+			}
+		};
+		Elt.propHooks.offsetTop={
+			get:function(e){
+				
+			}
+		}
+	}
+	
+	inputTest=null;
+})();
 
 //var eventChange=new Event('change');
 
@@ -74,6 +95,7 @@ UObj.extend(Elt,{
 	},
 	getAttr:function(elt,name){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('getAttr not allowed on non-element nodes'); /*#/if*/
+		if(Elt.attrHooks[name] && Elt.attrHooks[name].get) return Elt.attrHooks[name].get(elt);
 		return elt.getAttribute(name) || null;
 	},
 	setAttr:function(elt,name,value){
@@ -83,10 +105,12 @@ UObj.extend(Elt,{
 	},
 	getProp:function(elt,name){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('getProp not allowed on non-element nodes'); /*#/if*/
-		return elt[name] || null;
+		if(Elt.propHooks[name] && Elt.propHooks[name].get) return Elt.propHooks[name].get(elt);
+		return elt[name];
 	},
 	setProp:function(elt,name,value){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setProp not allowed on non-element nodes'); /*#/if*/
+		if(Elt.propHooks[name] && Elt.propHooks[name].set) return Elt.propHooks[name].set(elt,value);
 		return elt[name]=value;
 	},
 	
@@ -172,7 +196,7 @@ UObj.extend(Elt,{
 				}
 				break;
 			case 'select':
-				var options = elem.options, index = elem.selectedIndex;
+				var options = elt.options;
 				if(!S.isFunc(value))
 					value=S.isArray(value) ? function(value){ return values.indexOf(value)!==-1; }.bind(value)
 								: function(value){ return this===value; }.bind(value);
@@ -196,16 +220,21 @@ UObj.extend(Elt,{
 	},
 	
 	setStyle:function(elt,prop,value){
-		var prop = _getStyleAlias(property), handler = styleHandlers[prop];
-		return (handler && handler.set) ? handler.set(elm, value) : elm.style[prop] = value;
+		var prop = _getStyleAlias(prop), hook = Elt.styleHooks[prop];
+		return (hook && hook.set) ? hook.set(elt, value) : elt.style[prop] = value;
 	},
 	
 	
 	is:function(elt,selectors){
-		var matchesSelector=elt.webkitMatchesSelector || elt.mozMatchesSelector || elt.oMatchesSelector || elt.matchesSelector;
+		var matchesSelector=elt.webkitMatchesSelector || elt.mozMatchesSelector || elt.oMatchesSelector || elt.matchesSelector || elt.matches;
 		if (matchesSelector) return matchesSelector.call(elt, selectors);
 		// fall back to performing a selector: TODO : this doesnt work
 		return $(selector,elt.parentNode).indexOf(elt)
+	},
+	
+	isEditable:function(elt){
+		if(Elt.nodeName(elt) === 'input')
+			return !elt.disabled && !elt.readonly;
 	},
 	
 	/* // now use FormData !

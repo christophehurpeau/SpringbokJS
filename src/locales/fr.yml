@@ -1,0 +1,64 @@
+'Loading...': 'Chargement...'
+
+# Basic
+Yes: Oui
+No: Non
+'#': 'n°'
+Date: Date
+Name: Nom
+Title: Titre
+Created: Créé le
+Updated: Mise à jour le
+
+# Pagination
+Start: Début
+Previous: Précédent
+Next: Suivant
+End: Fin
+
+# Actions & Display
+Cancel: Annuler
+Close: Fermer
+Create: Créer
+Modify: Modifier
+Update: Modifier
+Edit: Editer
+Delete: Supprimer
+Rename: Renommer
+View: Afficher
+Disable: Désactiver
+Enable: Activer
+Error: Erreur
+'Error:': 'Erreur :'
+'Are you sure ?': 'Êtes-vous sûr ?'
+
+# User : Log in/out
+Log in: Connexion
+Log out: Déconnexion
+Sign in: Connexion
+Sign out: Déconnexion
+Sign up: Inscription
+Register: "S'enregister"
+'Password lost ?': 'Mot de passe perdu ?'
+User: Utilisateur
+Guest: Invité
+Basic user: Utilisateur basique
+
+# Validation
+'validation.required': 'Veuillez remplir ce champ'
+'validation.maxlength': 'This field should have  maximum de %s caractères'
+'validation.minlength': 'Ce champ doit avoir une taille minimum de %s caractères'
+'validation.maxsize': 'La valeur ne doit pas être supérieure à %s'
+'validation.minsize': 'La valeur ne doit pas être inférieure à %s'
+'validation.email': "Entrez l'adresse email sous la forme username@example.com"
+'validation.pattern': 'Ce champ doit valider : %s'
+'validation.color': 'Écrivez une couleur sous la forme : #FFF ou #000000'
+'validation.date': 'Écrivez une date sous la forme AAAA-MM-JJ'
+'validation.datetime': 'Écrivez une date avec heure sous la forme AAAA-MM-JJ HH:MM'
+'validation.time': "Écrivez l'heure sous la forme HH:MM"
+'validation.month': 'Écrivez une date sous la forme MM-JJ'
+'validation.number': 'Entrez un nombre'
+'validation.range': ''
+'validation.text': ''
+'validation.url': 'Entrez une url sous la forme http://www.example.com/'
+'validation.checkbox': 'Cochez la case'

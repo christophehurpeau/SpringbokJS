@@ -11,7 +11,7 @@ S.History=(function(){
 			if (started) throw new Error/*#if DEV*/("history has already been started")/*#/if*/;
 			started=true;
 			
-			var fragment=this.getFragment(),docMode=document.documentMode;
+			var fragment=this.getFragment()/*, docMode=document.documentMode*/;
 			
 			if(OLD_IE){
 				this.iframe = $('<iframe src="javascript:0" tabindex="-1" />').hide().appendTo('body')[0].contentWindow;

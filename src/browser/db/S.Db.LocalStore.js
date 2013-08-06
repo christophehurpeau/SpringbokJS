@@ -82,12 +82,17 @@ S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend(
 	cursor:function(callback,range,direction){
 		if(range||direction) throw new Error('range or direction is not supported');
 		var prefix=this.model.modelName+'___';
-		/*store.forEach(function(key,value){
-			if(key.startsWith(prefix)){
-				
+		var iter = S.store.iterator();
+		callback(Object.freeze({
+			next:function(){
+				while(iter.hasNext()){
+					var current=iter.next();
+					if(current[0].startsWith(prefix)){
+						//TODO
+						break;
+					}
+				}
 			}
-		})*/
-		new Cursor();//TODO
-		store.cursor();
+		}));
 	},
 });

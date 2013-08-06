@@ -6,7 +6,12 @@ S.Form=S.Elt.WithContent.extend({
 	_eventBeforeSubmit:new Event('beforeSubmit'),
 	
 	/*#if NODE*/ctor:function(H,method){ this.H=H; this._attributes={method:method}; this.content=''; },
-	/*#else*/ctor:function(H,method){ this.H=H; S.Elt.WithContent.call(this); this.attr('method',method); },
+	/*#else*/ctor:function(H,method){
+		this.H=H;
+		S.Elt.WithContent.call(this);
+		this.attr('method',method);
+		S.FormValidator && S.FormValidator.getValidator(this);
+	},
 	/*#/if*/
 	
 	action:function(url,entry,full){ this.attr('action',this.H.url(url,entry,full)); return this; },

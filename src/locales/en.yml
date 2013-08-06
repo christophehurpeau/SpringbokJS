@@ -1,1 +1,64 @@
 'Loading...': 'Loading...'
+
+# Basic
+Yes: Yes
+No: No
+'#': '#'
+Date: Date
+Name: Name
+Title: Title
+
+# Pagination
+Start: Start
+Previous: Previous
+Next: Next
+End: End
+
+# User : Log in/out
+Log in: Log in
+Log out: Log out
+Sign in: Sign in
+Sign out: Sign out
+Sign up: Sign up
+Register: Register
+'Password lost ?': 'Password lost ?'
+User: User
+Guest: Guest
+Basic user: Basic user
+
+# Actions & Display
+
+Cancel: Cancel
+Close: Close
+Create: Create
+Modify: Modify
+Update: Update
+Edit: Edit
+Delete: Delete
+Rename: Rename
+View: View
+Disable: Disable
+Enable: Enable
+Error: Error
+'Error:': 'Error:'
+'Are you sure ?': 'Are you sure ?'
+
+
+# Validation
+'validation.required': 'Please fill out this field'
+'validation.maxlength': 'This field should have a maximum length of %s characters'
+'validation.minlength': 'This field should have a minimum length of %s characters'
+'validation.maxsize': 'The value should not exceed %s'
+'validation.minsize': 'The value must not be less than %s'
+'validation.email': "Please enter the email address like username@example.com"
+'validation.pattern': 'This field must validate : %s'
+'validation.color': 'Enter a color like #FFF or #000000'
+'validation.date': 'Enter a date as AAAA-MM-JJ'
+'validation.datetime': 'Enter a datetime as AAAA-MM-JJ HH:MM'
+'validation.time': "Enter a time as HH:MM"
+'validation.month': 'Enter a date as MM-JJ'
+'validation.number': 'Enter a number'
+'validation.range': ''
+'validation.text': ''
+'validation.url': 'Enter an url like http://www.example.com/'
+'validation.checkbox': 'Please check the box'

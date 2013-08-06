@@ -1,5 +1,7 @@
 /*#if NODE*/
 var mongodb=require('mongodb'); /* https://github.com/kissjs/node-mongoskin/blob/master/lib/mongoskin/collection.js */
+/*#else*/
+includeCore('browser/base/S.Watcher');
 /*#/if*/
 
 App.Model=(function(){
@@ -19,13 +21,12 @@ App.Model=(function(){
 				Model.store[fn](data,options,request);
 			});
 		return request;
-	},Model=/*#ifelse NODE*/(S.newClass||S.Listenable.extend)/*#/if*/({
+	},Model=/*#ifelse NODE*/(S.newClass||S.Watcher.extend)/*#/if*/({
 		// STATES: 'new', 'unchanged', 'saved', 'unsaved' (retrieved/inserted into db then modified), 'pending'
 		// EVENTS: 'inserted', 'updated', 'synced'
 		ctor:function(data,state){
-			S.Listenable.call(this);
+			S.Watcher.call(this);
 			this.data=data||{};
-			/*#if BROWSER*/this.nodes=[];/*#/if*/
 			this.state=state||'new';
 		},
 		configurable:{
@@ -87,25 +88,12 @@ App.Model=(function(){
 		
 		
 		
+		/*#if NODE*/
+		// same as S.Watcher
 		toLi:function(){
 			return this.render($.li());
 		},
 		
-		/*#if BROWSER*/
-		render:function(wrapper){
-			this._render(wrapper);
-			wrapper.on('dispose',function(){
-				UArray.remove(this.nodes,wrapper);
-			}.bind(this));
-			this.nodes.push(wrapper);
-			return wrapper;
-		},
-		rerender:function(){
-			this.nodes.forEach(function(node){
-				this._render(node);
-			});
-		},
-		/*#else*/
 		render:function(wrapper){
 			this._render(wrapper);
 			return wrapper;

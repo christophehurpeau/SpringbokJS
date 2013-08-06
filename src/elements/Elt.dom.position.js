@@ -1,3 +1,0 @@
-Elt.position=function(){
-	
-}

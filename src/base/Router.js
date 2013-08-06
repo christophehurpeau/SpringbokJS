@@ -42,18 +42,16 @@ App.Router=function(r,rl){
 		
 		if(entryRoutes.includesFromEntry){
 			if(S.isString(entryRoutes.includesFromEntry)) entryRoutes.includesFromEntry=[entryRoutes.includesFromEntry];
-			for(var iife=0,life=entryRoutes.includesFromEntry.length; iife <life; iife++){
-				var ife=entryRoutes.includesFromEntry[iife];
+			entryRoutes.includesFromEntry.forEach(function(ife){
 				console.log("ife=",ife,S.isString(ife));
 				throw new Error('Todo: map addAll');
 				if(S.isString(ife)) UObj.union(entryRoutes,routes[ife]);
 				else{
-					for(var iirfe=0,lirfe=ife.length;iirfe<lirfe;iirfe++){
-						var includeRouteFromEntry=ife[iirfe];
+					ife.forEach(function(includeRouteFromEntry){
 						entryRoutes[includeRouteFromEntry]=routes[ife][includeRouteFromEntry];
-					}
+					});
 				}
-			}
+			});
 			delete entryRoutes.includesFromEntry;
 		}
 		
@@ -131,7 +129,7 @@ App.Router.prototype={
 				
 				if(r[':']){
 					m.shift(); // remove m[0];
-					var nbNamedParameters=r[':'].length,countMatches=m.length;
+					var countMatches=m.length;
 					if(countMatches !== 0){
 						for(var k in r[':']) params[r[':'][k]]=m.shift();
 					}

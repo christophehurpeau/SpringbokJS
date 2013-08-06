@@ -14,7 +14,7 @@ S.extProto(S.Helpers,{
 	},
 	
 	metaCharset:function(encoding){
-		encoding=encoding||'utf-8';
+		if(!encoding) encoding = 'utf-8';
 		return this._isIElt8
 			? '<meta http-equiv="Content-Type" content="text/html; charset='+encoding+'"/>'
 			: '<meta charset="'+encoding+'">';
@@ -29,7 +29,7 @@ S.extProto(S.Helpers,{
 		return '<link rel="stylesheet" type="text/css" href="'+this.staticUrl(url+'.css')+'"'+(media?' media="'+media+'"':'')+'/>';
 	},
 	jsLink:function(url){
-		return '<script type="text/javascript" src="'+this.staticUrl(url+'.js')+'"></script>';
+		return '<script type="text/javascript" src="'+this.staticUrl(url+(this.req.isIElt9() ? '.oldIe' : '')+'.js')+'"></script>';
 	},
 	favicon:function(imgUrl){
 		if(!imgUrl) imgUrl=='favicon.png';

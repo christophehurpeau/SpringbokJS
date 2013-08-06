@@ -4,6 +4,7 @@ includeCore('browser/base/S.loading');
 if(!window.FormData || !XMLHttpRequest.prototype.sendAsBinary)
 	S_loadSyncScript('compat/xhr2');
 
+/* https://github.com/ForbesLindesay/ajax/blob/master/index.js */
 S.Ajax=(function(){
 	var eventAjaxRequest=new Event('sAjaxRequest');
 	return S.newClass({
@@ -14,14 +15,15 @@ S.Ajax=(function(){
 		},
 		sync:function(){
 			this.sync=true;
-		},
+		},/*
 		responseJSON:function(){
 			this.xhr.responseType='json';
 			return this;
-		},
+		},*/
 		success:function(callback){
 			this.xhr.load=function(){
-				callback( ! this.xhr.responseType || this.xhr.responseType === 'text' ? this.xhr.responseText : this.xhr.response );
+				//callback( ! this.xhr.responseType || this.xhr.responseType === 'text' ? this.xhr.responseText : this.xhr.response );
+				callback( this.xhr.responseText );
 			}.bind(this);
 			return this;
 		},
