@@ -4,6 +4,10 @@
   
         apt-get install imagemagick
 
+  * **nodejs** - in ubuntu based distribution install with
+
+        sudo apt-add-repository ppa:chris-lea/node.js && sudo apt-get update && sudo apt-get install nodejs
+
 ## Installation
 
         sudo npm install -g springbokjs uglify-js
