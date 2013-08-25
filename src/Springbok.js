@@ -8,6 +8,9 @@ require('springboktools/UArray');
 require('springboktools/UString/UString');
 require('springboktools/UFiles');
 require('springboktools/UDebug');
+require('springboktools/USecure');
+require('springboktools/UGenerator');
+
 
 require('./base/Listenable');
 
@@ -41,12 +44,14 @@ global.App={
 		global.M=App.models;
 		
 		App.entries={};
-		App.entriesList=Object.keys(Config.entries);
+		App.entriesList=Object.freeze(Object.keys(Config.entries));
 		App.entriesList.forEach(function(entry){
 			App.entries[entry]=entry==='main' ? {prefix:'',suffix:''} : {prefix:entry+'.',suffix:'.'+entry};
 			App.entries[entry].host=Config.entries[entry];
 			['controllers','PControllers','views'].forEach(function(v){ App[v][entry]={}; });
 		});
+		Object.freeze(App.entries);
+		
 		App.views.layouts={};
 		
 		Config.helpers && Config.helpers.forEach(function(helperName){
@@ -66,4 +71,14 @@ global.App={
 	_init:function(){
 		
 	}
+};
+
+global.USecure.sha1WithSalt=function(string){
+	return this.sha1(string+Config.secure.salt);
+};
+global.USecure.sha512WithSalt=function(string){
+	return this.sha512(string+Config.secure.salt);
+};
+global.USecure.getSalt=function(){
+	return Config.secure.salt;
 };

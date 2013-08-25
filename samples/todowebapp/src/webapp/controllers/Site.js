@@ -15,15 +15,14 @@ S.require('vL/default','m/todos',function(){
 						.on('keydown',function(e){
 							if(e.keyCode===keyCodes.ENTER || e.keyCode===keyCodes.NUMPAD_ENTER){
 								e.stopPropagation(); e.preventDefault();
-								var input=$(this);// transform a dom element into a element wrapper
-								//validation
 								//TODO validation
-								if(input.val()){
+								var val = this.val();
+								if(val){
 									//add the new todo in the database and in the html
-									M.Todo.create(input.val(),function(todo,request){
+									M.Todo.create(val,function(todo,request){
 										ul.append(todo.toLi());
 									});
-									input.val('');
+									this.val('');
 								}
 							}
 						})

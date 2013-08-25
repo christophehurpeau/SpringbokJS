@@ -37,6 +37,16 @@ UObj.extend(S,{
 		alert(m);
 	},
 	/*#/if*/
+	
+	t: function(string, args){
+		string = i18n.appTranslations[string] || string
+		return args ? UString.vformat(string,args) : string;
+	},
+	tC: function(string, args){
+		string = i18n.coreTranslations[string] || string
+		return args ? UString.vformat(string,args) : string;
+	},
+	
 	ready: function(callback){
 		if(!this.readyCallbacks){
 			if(document.readyState === "complete" )

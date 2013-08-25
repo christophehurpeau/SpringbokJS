@@ -5,31 +5,33 @@ includeCore('browser/base/S.Watcher');
 /*#/if*/
 
 App.Model=(function(){
-	/*#if NODE*/var Find=/*#/if*/
-	includeCore('base/Model.Find');
-	
 	/*#if NODE*/var Request=/*#/if*/
 	includeCore('base/Model.Request');
 	
-	var _call=function(fn,options){
-		this.listen();
-		var model=this,Model=this.self,data=this.data,request=new Request(model);
-		UArray.forEachSeries(Model['before'+UString.ucFirst(fn)], //TODO optimiser : à sortir de la function
+	/*#if NODE*/var Find=/*#/if*/
+	includeCore('base/Model.Find');
+	
+	var _call=function(fn,data,options){
+		/*#if BROWSER*/ this.listen(); /*#/if*/
+		var model=this,Model=this.self,request=new Request.Model(model);
+		UArray.forEachSeries(Model['before'+UString.ucFirst(fn)],
 			function(c,onEnd){ c(data,onEnd); },
 			function(err){
 				if(err) return request.fire('failed');
+				//setTimeout(function(){  }); // return request before !
 				Model.store[fn](data,options,request);
 			});
 		return request;
 	},Model=/*#ifelse NODE*/(S.newClass||S.Watcher.extend)/*#/if*/({
 		// STATES: 'new', 'unchanged', 'saved', 'unsaved' (retrieved/inserted into db then modified), 'pending'
-		// EVENTS: 'inserted', 'updated', 'synced'
+		// EVENTS: 'request.started','request.success', 'synced'
 		ctor:function(data,state){
-			S.Watcher.call(this);
+			/*#if BROWSER*/S.Watcher.call(this);/*#/if*/
 			this.data=data||{};
 			this.state=state||'new';
 		},
 		configurable:{
+			/*#if BROWSER*/
 			listen:function(){
 				Object.defineProperty(this,'listen',{ value:function(){} });
 				var hasSyncEvent=this.self.store.hasSyncEvent;
@@ -37,7 +39,7 @@ App.Model=(function(){
 					S.log('request.started');
 					this.state='pending';
 					this.nodes.forEach(function(node){
-						node.first('.state').html('<img src="/web/sync-14.gif"/>')
+						node.first('.state').html('<img src="/web/sync-14.gif"/>');
 					});
 				}.bind(this));
 				this.on('request.success',function(){
@@ -58,9 +60,9 @@ App.Model=(function(){
 					}.bind(this));
 				}
 			},
-			
+			/*#/if*/
 			id:function(){
-				return this.data[this.keyPath];
+				return this.data[this.self.keyPath];
 			},
 			name:function(){
 				return this.data.name;
@@ -71,19 +73,23 @@ App.Model=(function(){
 		},
 		
 		insert:function(options){
-			return _call.call(this,'insert',options);
+			return _call.call(this,'insert',this.data,options);
 		},
-		update:function(options,callback){
-			return _call.call(this,'update',options);
+		update:function(options){
+			return _call.call(this,'update',this.data,options);
 		},
-		remove:function(options,callback){
-			return _call.call(this,'remove',options);
+		remove:function(options){
+			/*#if NODE*/
+				return _call.call(this,'remove',{_id:this._id},options);
+			/*#else*/
+				return _call.call(this,'deleteByKey',this.data[this.self.keyPath],options);
+			/*#/if*/
 		},
 		/*#if NODE*/
-		insertWait:function(callback){ this.insert({w:1},callback); },
-		insertNoWait:function(callback){ this.insert({},callback); },
-		updateWait:function(callback){ throw new Error; this.self.collection.update(this.data._id,{w:1},callback); },
-		updateNoWait:function(callback){ throw new Error; this.self.collection.update(this.data._id,this.data,callback); },
+		insertWait:function(callback){ this.insert({w:1}).success(callback); },
+		insertNoWait:function(callback){ this.insert({}).success(callback); },
+		updateWait:function(callback){ this.update({w:1}).success(callback); },
+		updateNoWait:function(callback){ this.update({}).success(callback); },
 		/*#/if*/
 		
 		
@@ -110,24 +116,24 @@ App.Model=(function(){
 		mset:function(values){ values.forEach(this.set.bind(this)); },
 		forEach:function(fn){ this.data.forEach(fn); return this; },
 		
+		toString:function(){
+			return '[Model: '+this.self.modelName+']'+' data = '+JSON.stringify(this.data)+', state = '+this.state;
+		},
 	},{
+		Request: Request,
 		extend:function(modelName,classProps,protoProps){
 			classProps.modelName=modelName;
 			
 			/* */
 			'beforeInsert,beforeUpdate,beforeFind'.split(',').forEach(function(cName){
 				if(!classProps[cName]) classProps[cName]=[];
-			})
+			});
 			
 			var newModel=S.extClass(this,protoProps,classProps);
-			newModel.init=function(onEnd){ Model.init(newModel,onEnd); };
+			newModel.init=Model.init.bind(null,newModel);
 			newModel.find=new Find(newModel);
-			/*#if NODE*/
-			newModel.store=function(callback){
-				return callback(this.collection);
-			}
-			/*#/if*/
 			newModel.keyPath=newModel.keyPath||'_id';
+			newModel.toString=function(){ return 'Model class '+newModel.modelName; };
 			return newModel;
 		},
 		init:function(model,onEnd){
@@ -153,15 +159,7 @@ App.Model=(function(){
 				model.displayField=model.displayField||(model.Fields.title?'title':'name');
 				//S.log(model.modelName+' displayField='+model.displayField);
 				if(model.db) onEnd();
-				else{
-					model.db=S.Db.get(model.dbName=model.dbName||'default');
-					//S.log(model.modelName+' dbName='+model.dbName);
-					model.db.collection(model.modelName,{w:1},function(err,collection){
-						if(err) return onEnd(err);
-						model.collection=collection;
-						onEnd();
-					});
-				}
+				else S.Db.get(model.dbName || (model.dbName='default')).add(model,onEnd);
 			});
 		}
 	});
@@ -172,7 +170,7 @@ App.Model=(function(){
 		f.extend=function(){
 			var c=S.extClass.apply(Model,arguments);
 			return createF(c);
-		}
+		};
 		return f;
 	};
 	return createF(Model);

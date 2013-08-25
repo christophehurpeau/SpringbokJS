@@ -14,6 +14,12 @@ UObj.extend(Elt,(function(){
 		// @see http://code.google.com/p/chromium/issues/detail?id=162270
 		event.stopPropagation = function(){ this.cancelBubble = true; };
 		
+		// OLD IE
+		if((event.clientX || event.clientY) && !(event.pageX || event.pageY)){
+			event.pageX = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+			event.pageY = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+		}
+		
 		handlers = handlers.get(type);
 		handlers.some(function(callbackObject){
 			if(!callbackObject.selector || Elt.is(target,callbackObject.selector)){
@@ -24,7 +30,7 @@ UObj.extend(Elt,(function(){
 				}
 				return !!event.cancelBubble;
 			}
-		})
+		});
 	};
 	return {
 		on:function(elt,eventNames,selector,callback){

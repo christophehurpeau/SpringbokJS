@@ -63,7 +63,7 @@ SpringbokWatcher.prototype = {
 			log+="\nErrors on files: "+Object.keys(this.fileList.errors).join(', ')+"\n";
 			UObj.forEach(this.fileList.errors,function(path,error){
 				log+="\n"+path+": "+S.isObj(error) ? error.stack : error;
-			})
+			});
 		}
 		console.log(log);
 		if(this.persistent){
@@ -72,7 +72,7 @@ SpringbokWatcher.prototype = {
 			this.watcher.close();
 			process.on('exit',function(previousCode){
 				process.exit( false && /*logger.errorHappened?1:*/previousCode);
-			})
+			});
 		}
 	},
 	reload: function(reInstall){
@@ -83,6 +83,11 @@ SpringbokWatcher.prototype = {
 				this.initWatcher();
 			}.bind(this));
 		}.bind(this));
+	},
+	restartServer: function(){
+		console.log('='.repeat(80));
+		console.log('restartServer');
+		this.server.restart();
 	},
 	close: function(callback){
 		if(this.server && this.server.close) this.server.close(callback);
@@ -118,7 +123,7 @@ SpringbokWatcher.prototype = {
 			process.exit(0)*/
 				this._onChangedFile();
 				this.fileList.emit('unlink', path);
-			}.bind(this))
+			}.bind(this));
 	}
 };
 

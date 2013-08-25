@@ -46,42 +46,6 @@ Elt.styleHooks={
 	}
 };
 
-(function(){
-	var inputTest=document.createElement('input');
-	
-	//https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
-	//TODO : in compat script instead !
-	
-	//pattern, placeholder, required properties 	(Yes) 	4.0 (2) 	(Yes) 	(Yes) 	(Yes)
-	if( inputTest.required === undefined ){
-		Elt.propHooks.required={
-			get:function(e){
-				return e.getAttribute('required');
-			},
-			set:function(e){
-				e.setAttribute('required','required');
-				e.required=true;
-			}
-		};
-	}
-	
-	// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement
-	if( inputTest.offsetLeft ){
-		Elt.propHooks.offsetLeft={
-			get:function(e){
-				
-			}
-		};
-		Elt.propHooks.offsetTop={
-			get:function(e){
-				
-			}
-		}
-	}
-	
-	inputTest=null;
-})();
-
 //var eventChange=new Event('change');
 
 UObj.extend(Elt,{
@@ -104,7 +68,7 @@ UObj.extend(Elt,{
 		else elt.setAttribute(name,value);
 	},
 	getProp:function(elt,name){
-		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('getProp not allowed on non-element nodes'); /*#/if*/
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT && elt.nodeType !== NodeTypes.DOCUMENT) throw new Error('getProp not allowed on non-element nodes'); /*#/if*/
 		if(Elt.propHooks[name] && Elt.propHooks[name].get) return Elt.propHooks[name].get(elt);
 		return elt[name];
 	},
@@ -125,7 +89,7 @@ UObj.extend(Elt,{
 		Elt.setAttr(elt,'id',id);
 	},
 	addClass: document.documentElement.classList && document.documentElement.classList.add ? function(elt,_class){
-		elt.classList.add(_class);
+		elt.classList.add.apply(elt.classList,_class.split(' '));
 	} : function(elt,_class){
 		var _e_class=Elt.getAttr(elt,'class');
 		Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
@@ -218,6 +182,9 @@ UObj.extend(Elt,{
 	getStyle:function(elt,prop){
 		return _getStyle(elt,prop) || 0;
 	},
+	getIntStyle: function(elt,prop){
+		return parseInt(_getStyle(elt,prop) || 0,10);
+	},
 	
 	setStyle:function(elt,prop,value){
 		var prop = _getStyleAlias(prop), hook = Elt.styleHooks[prop];
@@ -229,7 +196,7 @@ UObj.extend(Elt,{
 		var matchesSelector=elt.webkitMatchesSelector || elt.mozMatchesSelector || elt.oMatchesSelector || elt.matchesSelector || elt.matches;
 		if (matchesSelector) return matchesSelector.call(elt, selectors);
 		// fall back to performing a selector: TODO : this doesnt work
-		return $(selector,elt.parentNode).indexOf(elt)
+		return $(selector,elt.parentNode).indexOf(elt);
 	},
 	
 	isEditable:function(elt){

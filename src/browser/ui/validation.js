@@ -209,10 +209,10 @@ S.ready(function(){
 		checkFailed:function($elt,error,checkAllAndFirstError){
 			$elt.removeClass('validation-valid').addClass('validation-invalid');
 			var attrs;
-			if(S.isArray(error)) error=UString.vformat(i18nc['validation.'+error[0]],UArray.slice1(error));
+			if(S.isArray(error)) error= S.tC('validation.'+error[0],UArray.slice1(error));
 			else if(error!=null){
-				/*#if DEV*/ if(!i18nc['validation.'+error]) S.error('Unknown validation translation error: '+error); /*#/if*/
-				error=i18nc['validation.'+error];
+				/*#if DEV*/ if(!i18n.coreTranslations['validation.'+error]) S.error('Unknown validation translation error: '+error); /*#/if*/
+				error=S.tC('validation.'+error);
 			}
 			if(error){
 				!$elt.sValidationMessage && ($elt.sValidationMessage=new validationBox($elt));

@@ -13,7 +13,7 @@ var FileListCore = FileList.extend({
 		return path.startsWith('bin/') || path.startsWith('src/tests/') || path.contains('/.git/') || basename.startsWith('.');
 	},
 	_notcompilable: function(path,basename){
-		return path.startsWith('src/browser/') || path.startsWith('includes/');
+		return path.startsWith('src/browser/') || path.startsWith('includes/') || path.startsWith('src/defaultConfigs/');
 	},
 	
 	compileDependentFiles: function(path,type){

@@ -2,51 +2,82 @@ includeCore('browser/base/S.store');
 
 S.extProto(App.Request,{
 	configurable:{
-		secure:function(){
-			var _connected,_token,
-			  secure=Object.freeze({
-				isConnected:function(){
+		secure: function(){
+			var data,
+			  save = function(){ S.store.set('S.CSecure',data); },
+			  secure = {
+				isConnected: function(){
 					return !!this.connected();
 				},
-				connected:function(){
-					if(_connected===undefined){
-						var o=S.store.get('S.CSecure');
-						if(o){
-							_connected=o.connected;
-							_token=o.token;
-						}else _connected=false;
+				connected: function(){
+					if(data===undefined){
+						data=S.store.get('S.CSecure') || { connected: false };
+						data.connected && this.checkToken();
 					}
-					return _connected;
+					return data.connected;
+				},
+				getToken: function(){
+					return data.token;
 				},
 				
-				checkAccess:function(){
+				checkToken: function(){
+					if(S.WebSocket){
+						// else S.WebSocket is starting, checkToken is called later
+						if(!S.WebSocket.start)
+							S.WebSocket.emit('auth',data.token);
+					}else{
+						App.get('/site/checkToken').send(function(data){
+							if(data!=='1'){
+								alert('checkToken failed');
+								this.reconnect();
+							}
+						}.bind(this));
+					}
+				},
+				
+				checkAccess: function(){
 					if(!this.isConnected()){
-						App.load('/site/login');
+						data.backUrl = App.url;
+						save();
+						if(App.loading) S.History.navigate('/site/login');
+						else App.load('/site/login');
 						return false;
 					}
 					return true;
 				},
-				reconnect:function(){
+				reconnect: function(){
 					this.setConnected(false);
-					this.checkAccess();
-					throw App.Controller.Stop;
+					return this.checkAccess();
 				},
 				
-				setConnected:function(userId,token){
-					S.store.set('S.CSecure',{ connected: (_connected=userId), token: (_token=token) });
+				setConnected: function(userId,token){
+					//data = { connected: userId, token: token };
+					data.connected = userId;
+					data.token = token;
+					save();
+					this.fire(userId ? 'connected' : 'disconnected', userId);
 				},
 				
-				redirectIfConnected:function(){
-					if(this.isConnected())
-						throw new Error;
+				redirectIfConnected: function(){
+					if(this.isConnected()){
+						this.redirectAfterConnection();
+						return true;
+					}
+					return false;
 				},
-				redirectAfterConnection:function(){
-					App.load('/');
-					throw App.Controller.Stop;
+				
+				redirectAfterConnection: function(){
+					var url = data.backUrl;
+					if(url){
+						delete data.backUrl;
+						save();
+					}
+					App.load( url || '/' );
 				}
-			});
-			Object.defineProperty(this,'secure',{ value:secure });
+			};
+			secure = Object.freeze( S.Listenable.extendObject( secure ) );
+			Object.defineProperty(this,'secure',{ value: function(){ return secure; } });
 			return secure;
 		}
 	}
-})
+});

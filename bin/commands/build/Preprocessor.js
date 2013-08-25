@@ -103,4 +103,4 @@ module.exports=function(defines,data,isBrowser,baseDir){
 	}
 	if(stack.length!==0) throw new Error('Still have stack : missing endif');
 	return data;
-}
+};

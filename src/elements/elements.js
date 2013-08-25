@@ -1,4 +1,4 @@
-includeCore('elements/Elt');
+includeJsCore('elements/Elt');
 
 /*#if NODE*/
 global.$={}
@@ -11,7 +11,9 @@ global.$={}
  * https://github.com/honza/140medley
  */
 
-includeCore('enums/NodeTypes');
+includeJsCore('enums/NodeTypes');
+includeJsCore('base/Listenable');
+
 
 if(!global.$){
 	global.$=function(selector,context){
@@ -29,6 +31,8 @@ if(!global.$){
 		}else if(selector.nodeType){
 			//DOM element
 			return S.Elt(selector);
+		}else if(selector[0]){
+			return selector;
 		}
 	};
 	
@@ -73,12 +77,12 @@ if(!global.$){
 	$.byTagName=function(names,context){
 		/* https://developer.mozilla.org/en-US/docs/Web/API/document.getElementsByTagName */
 		return $._toEltArray((context||document).getElementsByTagName(names));
-	}
+	};
 	
 	
 	
 	$.getAll=function(context,tag){
-		return context.getElementsByTagName( tag || "*" )
+		return context.getElementsByTagName( tag || "*" );
 	};
 	
 	$.disposeElements=function(elements){
@@ -88,6 +92,10 @@ if(!global.$){
 	};
 	//https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Events/Creating_and_triggering_events
 	$.disposeElements.event=new Event('dispose');
+	
+	$.isWindow = function(obj){
+		return obj && obj.window == obj;
+	};
 }else{
 	//TODO : jquery compat
 }
@@ -97,8 +105,16 @@ window.$body=$(document.body);
 
 /*#/if*/
 $.create=S.Elt.create;
-'div p ul li span'.split(' ').forEach(function(v){
+$.parse=S.Elt.parse;
+'p span button'.split(' ').forEach(function(v){
 	//Elt[v]=function(){ return Elt.create(v); };
 	$[v]=S.Elt.create.bind(null,v);
 });
+
+includeJsCore('elements/Div');
+includeJsCore('elements/List');
+includeJsCore('elements/Table');
+includeJsCore('elements/Navigation');
+
+
 $.imgLoading=function(){ return $.span().attr('class','img imgLoading'); };

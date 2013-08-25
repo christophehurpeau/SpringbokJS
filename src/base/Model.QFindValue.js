@@ -2,9 +2,9 @@
 includeCore('base/Model.QFindOne');
 
 /*#ifelse BROWSER*/(var QFindValue||module.exports)/*#/if*/=QFindOne.extend({
-	fetch:function(callback){
-		return QFindOne.fetch(function(result){
-			callback(result ? result[this._fields[0]] : undefined);
-		}.bind(this))
+	fetch:function(callback,callbackFailed){
+		return this._fetch(function(result){
+			callback(result ? result[this.options.fields[0]] : undefined);
+		}.bind(this),callbackFailed);
 	}
 });

@@ -8,6 +8,7 @@
 		
 		//in case it's not already initialized
 		model.db=model.parent.db;
+		model.store=model.parent.store;
 		model.collection=model.parent.collection;
 		model.beforeInsert.push(function(data,onEnd){ data._type=model.parent.types[model.modelName]; onEnd(); });
 		model.beforeFind.push(function(query){ query.addCond('type',model.parent.types[model.modelName]); });

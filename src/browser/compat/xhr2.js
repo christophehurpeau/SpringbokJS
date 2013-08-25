@@ -62,17 +62,19 @@ window.FormData || (function(){
 * along with this library; if not, write to the Free Software Foundation, Inc.,
 * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+if(!window.XMLHttpRequest.prototype.overrideMimeType || !window.XMLHttpRequest.prototype.addEventListener
+	|| !window.XMLHttpRequest.prototype.DONE)
 (function () {
+	console&&console.log('polyfill xhr2');
 	var currentXhr2 = window.XMLHttpRequest;
 
 	// 
 	var isGecko  = !!window.controllers;
 	var isIE    = !!window.document.namespaces;
-	var isIE7    = isIE&& window.navigator.userAgent.match(/MSisisIE7.0/);
 
 	// Enables "xhr2()" call next to "new xhr2()"
 	function fXMLHttpRequest() {
-		this._object  = currentXhr2 && !isIE7 ? new currentXhr2 : new window.ActiveXObject("Microsoft.XMLHTTP");
+		this._object  = new currentXhr2;
 		this._listeners = [];
 	}
 
@@ -84,32 +86,28 @@ window.FormData || (function(){
 	xhr2.prototype = fXMLHttpRequest.prototype;
 
 	// BUGFIX: Firefox with Firebug installed would break pages if not executed
-	if (isGecko && currentXhr2.wrapped) {
-		xhr2.wrapped = currentXhr2.wrapped;
-	}
+	if (currentXhr2.wrapped) xhr2.wrapped = currentXhr2.wrapped;
 
 	//Specification defined enums
 	var xhr2States = {
-		UNSENT : 0,
-		OPENED : 1,
-		HEADERS_RECEIVED : 2,
-		LOADING : 3,
-		DONE : 4
+		UNSENT: 0,
+		OPENED: 1,
+		HEADERS_RECEIVED: 2,
+		LOADING: 3,
+		DONE: 4
 	};
 
 	var xhr2RequestResponseType = {
-		NONE : 0,
-		ARRAYBUFFER : 1,
-		BLOB : 2,
-		DOCUMENT : 3,
-		JSON : 4,
-		TEXT : 5
+		NONE: 0,
+		ARRAYBUFFER: 1,
+		BLOB: 2,
+		DOCUMENT: 3,
+		JSON: 4,
+		TEXT: 5
 	};
 	
 	//Define the event target interface required by the specification
-	var xhr2EventTarget = function(){
-		
-	};
+	var xhr2EventTarget = function(){ };
 	xhr2EventTarget.prototype.onloadstart = null;
 	xhr2EventTarget.prototype.onprogress = null;
 	xhr2EventTarget.prototype.onabort = null;
@@ -119,10 +117,7 @@ window.FormData || (function(){
 	xhr2EventTarget.prototype.onloadend = null;
 	
 	//Define request upload object as required by the spec
-	var xhr2RequestUpload = function()
-	{
-	
-	};
+	var xhr2RequestUpload = function(){};
 	xhr2RequestUpload.prototype = xhr2EventTarget.prototype;
 
 	// Interface level constants
@@ -165,8 +160,7 @@ window.FormData || (function(){
 	xhr2.onabort             = null;
 
 	// Public Methods
-	xhr2.prototype.overrideMimeType = function(mimeType)
-	{
+	xhr2.prototype.overrideMimeType = function(mimeType){
 	
 	};
 	
@@ -225,10 +219,7 @@ window.FormData || (function(){
 		fReadyStateChange(this);
 
 		this._object.onreadystatechange = function() {
-			if (isGecko && !bAsync) {
-				return;
-			}
-
+			console.log('onreadystatechange',arguments,oRequest._object.readyState);
 			// Synchronize state
 			oRequest.readyState   = oRequest._object.readyState;
 			fSynchronizeValues(oRequest);
@@ -246,86 +237,7 @@ window.FormData || (function(){
 				// Free up queue
 				delete oRequest._data;
 
-				// Uncomment these lines for bAsync
-				/**
-				 * if (bAsync) {
-				 * 	fQueue_remove(oRequest);
-				 * }
-				 */
-
 				fCleanTransport(oRequest);
-
-				// Uncomment this block if you need a fix for isIEcache
-				/**
-				 * // BUGFIX: isIE- cache issue
-				 * if (!oRequest._object.getResponseHeader("Date")) {
-				 * 	// Save object to cache
-				 * 	oRequest._cached  = oRequest._object;
-				 *
-				 * 	// Instantiate a new transport object
-				 * 	xhr2.call(oRequest);
-				 *
-				 * 	// Re-send request
-				 * 	if (sUser) {
-				 * 		if (sPassword) {
-				 * 			oRequest._object.open(sMethod, sUrl, bAsync, sUser, sPassword);
-				 * 		} else {
-				 * 			oRequest._object.open(sMethod, sUrl, bAsync);
-				 * 		}
-				 *
-				 * 		oRequest._object.setRequestHeader("If-Modified-Since", oRequest._cached.getResponseHeader("Last-Modified") || new window.Date(0));
-				 * 		// Copy headers set
-				 * 		if (oRequest._headers) {
-				 * 			for (var sHeader in oRequest._headers) {
-				 * 				// Some frameworks prototype objects with functions
-				 * 				if (typeof oRequest._headers[sHeader] == "string") {
-				 * 					oRequest._object.setRequestHeader(sHeader, oRequest._headers[sHeader]);
-				 * 				}
-				 * 			}
-				 * 		}
-				 * 		oRequest._object.onreadystatechange = function() {
-				 * 			// Synchronize state
-				 * 			oRequest.readyState   = oRequest._object.readyState;
-				 *
-				 * 			if (oRequest._aborted) {
-				 * 				//
-				 * 				oRequest.readyState = xhr2.UNSENT;
-				 *
-				 * 				// Return
-				 * 				return;
-				 * 			}
-				 *
-				 * 			if (oRequest.readyState == xhr2.DONE) {
-				 * 				// Clean Object
-				 * 				fCleanTransport(oRequest);
-				 *
-				 * 				// get cached request
-				 * 				if (oRequest.status == 304) {
-				 * 					oRequest._object  = oRequest._cached;
-				 * 				}
-				 *
-				 * 				//
-				 * 				delete oRequest._cached;
-				 *
-				 * 				//
-				 * 				fSynchronizeValues(oRequest);
-				 *
-				 * 				//
-				 * 				fReadyStateChange(oRequest);
-				 *
-				 * 				// BUGFIX: isIE- memory leak in interrupted
-				 * 				if (isIE&& bAsync) {
-				 * 					window.detachEvent("onunload", fOnUnload);
-				 * 				}
-				 *
-				 * 			}
-				 * 		};
-				 * 		oRequest._object.send(null);
-				 *
-				 * 		// Return now - wait until re-sent request is finished
-				 * 		return;
-				 * 	};
-				 */
 
 				// BUGFIX: isIE- memory leak in interrupted
 				if (isIE&& bAsync) {
@@ -364,15 +276,7 @@ window.FormData || (function(){
 
 		this._data = vData;
 
-		/**
-		 * // Add to queue
-		 * if (this._async) {
-		 * 	fQueue_add(this);
-		 * } else { */
 		fXMLHttpRequest_send(this);
-		 /**
-		 * }
-		 */
 	};
 
 	xhr2.prototype.abort = function() {
@@ -394,11 +298,6 @@ window.FormData || (function(){
 		this.readyState = xhr2.UNSENT;
 
 		delete this._data;
-
-		/* if (this._async) {
-	 	* 	fQueue_remove(this);
-	 	* }
-	 	*/
 	};
 
 	xhr2.prototype.getAllResponseHeaders = function() {
@@ -483,56 +382,11 @@ window.FormData || (function(){
 		return '[' + "XMLHttpRequest" + ']';
 	};
 
-	/**
-	 * // Queue manager
-	 * var oQueuePending = {"CRITICAL":[],"HIGH":[],"NORMAL":[],"LOW":[],"LOWEST":[]},
-	 * aQueueRunning = [];
-	 * function fQueue_add(oRequest) {
-	 * 	oQueuePending[oRequest.priority in oQueuePending ? oRequest.priority : "NORMAL"].push(oRequest);
-	 * 	//
-	 * 	setTimeout(fQueue_process);
-	 * };
-	 *
-	 * function fQueue_remove(oRequest) {
-	 * 	for (var nIndex = 0, bFound = false; nIndex < aQueueRunning.length; nIndex++)
-	 * 	if (bFound) {
-	 * 		aQueueRunning[nIndex - 1] = aQueueRunning[nIndex];
-	 * 	} else {
-	 * 		if (aQueueRunning[nIndex] == oRequest) {
-	 * 			bFound  = true;
-	 * 		}
-	 * }
-	 *
-	 * 	if (bFound) {
-	 * 		aQueueRunning.length--;
-	 * 	}
-	 *
-	 *
-	 * 	//
-	 * 	setTimeout(fQueue_process);
-	 * };
-	 *
-	 * function fQueue_process() {
-	 * if (aQueueRunning.length < 6) {
-	 * for (var sPriority in oQueuePending) {
-	 * if (oQueuePending[sPriority].length) {
-	 * var oRequest  = oQueuePending[sPriority][0];
-	 * oQueuePending[sPriority]  = oQueuePending[sPriority].slice(1);
-	 * //
-	 * aQueueRunning.push(oRequest);
-	 * // Send request
-	 * fXMLHttpRequest_send(oRequest);
-	 * break;
-	 * }
-	 * }
-	 * }
-	 * };
-	 */
-
 	// Helper function
 	function fXMLHttpRequest_send(oRequest) {
 		oRequest._object.send(oRequest._data);
 
+		console&&console.log('fXMLHttpRequest_send',oRequest.readyState);
 		// BUGFIX: isGecko - missing readystatechange calls in synchronous requests
 		if (isGecko && !oRequest._async) {
 			oRequest.readyState = xhr2.OPENED;

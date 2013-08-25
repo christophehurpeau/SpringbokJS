@@ -20,7 +20,7 @@ S.store=(function(){
 	if(!storage) return false;
 	else{
 		return Object.freeze({
-			get:function(key){ deserialize(storage[key]); },
+			get:function(key){ return deserialize(storage[key]); },
 			set:function(key,val){ storage[key]=serialize(val); },
 			remove:function(key){ storage.removeItem(key); },
 			clear:function(){ storage.clear(); },

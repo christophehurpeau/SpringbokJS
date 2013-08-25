@@ -2,19 +2,24 @@ var FileList = require('./FileList'),  PluginsList = require('./PluginsList');
 var sysPath = require('path'), fs = require("fs");
 
 module.exports = FileList.extend({
-	config: {},
+	writable:{ config: {}, },
 	isCore: false,
 	
 	
 	init: function(){
 		if(fs.existsSync(this.rootPath+'src/config/_.yml')){
 			this.config=UFiles.readYamlSync(this.rootPath+'src/config/_.yml');
+			if(!this.config) throw new Error('src/config/_.yml unparsable !');
 			this.config.plugins=this.config.plugins||{};
 			this.config.pluginsPaths=this.config.pluginsPaths||{};
 			this.config.pluginsPaths.Springbok=CORE_SRC+'plugins/';
 			this.config.plugins.SpringbokBase=['Springbok','base'];
 			
 			this.buildConfig=UFiles.readYamlSync(this.rootPath+'src/config/build.yml');
+			
+			this.buildConfig.config && ['port','websocketPort'].forEach(function(configName){
+				this.buildConfig.config['app.'+configName] && (this.config[configName] = this.buildConfig.config['app.'+configName]);
+			}.bind(this));
 		}
 		process.nextTick(function(){
 			'es5 es6 oldIe EventSource IndexedDBShim requestAnimationFrame store xhr2'.split(' ').forEach(function(fileName){
@@ -29,7 +34,7 @@ module.exports = FileList.extend({
 		}.bind(this));
 	},
 	isConfig: function(path){
-		return path===this.rootPath+'package.json' || path===this.rootPath+'src/config/build.yml';
+		return path===this.rootPath+'package.json' || path===this.rootPath+'src/config/build.yml' || path===this.rootPath+'src/config/_.yml';
 	},
 	
 	_ignored: function(path,basename){

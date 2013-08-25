@@ -2,7 +2,7 @@ includeCore('browser/base/');
 includeCore('elements/');
 (function(){
 	var nbCurrentlyLoaded=0,
-		divLoading=$.div().setClass('globalAjaxLoading').text(i18nc['Loading...']),
+		divLoading=$.div().setClass('globalAjaxLoading').text(S.tC('Loading...')),
 		loaded=function(callback){
 			nbCurrentlyLoaded--;
 			if(nbCurrentlyLoaded===0){

@@ -20,7 +20,7 @@ module.exports={
 		//defines
 		
 		//includes
-		this.includes("@includeCore 'index';\n"+data,file.dirname,function(data,includes){
+		this.includes("@includeCore 'index';\n"+data,file,function(data,includes){
 			var pathDev=file.rootPath+'dev/'+file.compiledPathDirname,pathProd=file.rootPath+'prod/'+file.compiledPathDirname;
 			mkdirp.sync(pathDev);
 			mkdirp.sync(pathProd);
@@ -75,7 +75,7 @@ module.exports={
 		});
 	},
 	
-	includes:function(data,dirname,callback,includes){
+	includes:function(data,file,callback,includes){
 		var t=this;
 		if(!includes) includes={ app: {}, Includes: {}, 'Plugin': {} };
 		data=data.replace(/^@include(Core|Plugin|) \'([\w\s\._\-\/]+)\'\;?$/mg,function(match,from,inclPath){
@@ -99,7 +99,7 @@ module.exports={
 			includes[from][inclPath] = 1;
 			
 			path += inclPath;
-			return t.includes(fs.readFileSync(path,'utf-8'),dirname,false,includes);
+			return t.includes(fs.readFileSync(path,'utf-8'),file,false,includes);
 		});
 		callback && callback(data,includes);
 		return data;

@@ -12,12 +12,13 @@ S.Elt=(function(){
 		this[0]=elt;
 		elt.$elt=this;
 		elt.addEventListener('dispose',function(){
+			this[0].$elt = undefined; // ie does not allow deletion of properties on elements.
 			Object.keys(this).forEach(function(key){
 				delete this[key];
 			}.bind(this));
 		}.bind(this),false);
 		/*#/if*/
-	}
+	};
 	Element.extend=S.extThis;
 	
 	var Elt=function(elt){
@@ -26,7 +27,7 @@ S.Elt=(function(){
 		/*#else*/
 		return elt.$elt || new Element(elt);
 		/*#/if*/
-	}
+	};
 	
 	/*#if NODE*/
 	var _attrs=function(attrs){
@@ -50,8 +51,8 @@ S.Elt=(function(){
 		setAttrs:function(attrs){ this._attributes=attrs; return this; },
 		attr:function(attrName,value){ this._attributes[attrName]=value; return this; },
 		id:function(id){ this._attributes.id=id; return this; },
-		setClass:function($class){ this._attributes['class']=$class; return this; },
-		addClass:function($class){ this._attributes['class']+=' '.$class; return this; },
+		setClass:function(_class){ this._attributes['class']=_class; return this; },
+		addClass:function(_class){ this._attributes['class']+=' '._class; return this; },
 		style:function(style){ this._attributes.style=style; return this; },
 		onClick:function(onClick){ this._attributes.onclick=onClick; return this; },
 		delAttr:function(attrName){ delete this._attributes[attrName]; return this; },
@@ -59,26 +60,23 @@ S.Elt=(function(){
 		hasAttr:function(attrName){ return this._attributes[attrName] !== undefined; },
 		/*#else*/
 		getAttr:function(attrName){ return Elt.getAttr(this[0],attrName); },
+		setClass:function(_class){ return this.attr('class',_class); },
 		val:function(value){
 			if(arguments.length===0)
 				return Elt.getVal(this[0]);
 			Elt.setVal(this[0],value);
 			return this;
 		},
-		
-		/* TRAVERSING */
-		/*use child() instead firstChild:function(){
-			return Elt(this[0].firstChild);
-		},*/
-		
-		find:function(selectors){
-			return $(selectors,this[0]);
+		setOrigin:function(value){
+			this._origin=value;
+			return this;
 		},
-		first:function(selectors){
-			return $.first(selectors,this[0]);
+		end:function(){
+			var origin=this._origin;
+			/*#if DEV*/ if( !origin ) throw new Error('Missing origin'); /*#/if*/
+			delete this._origin;
+			return origin;
 		},
-		
-		
 		/*#/if*/
 		
 	};
@@ -139,6 +137,7 @@ S.Elt=(function(){
 	
 	/*#if BROWSER*/
 	includeCore('elements/Elt.dom');
+	includeCore('elements/Elt.dom.position-dimensions');
 	includeCore('elements/Elt.dom.events');
 	includeCore('elements/Elt.dom.animate');
 	includeCore('elements/Elt.dom.traversing');
@@ -164,7 +163,7 @@ S.Elt=(function(){
 		};
 		Elt.Array.prototype[mName]=function(name,value){
 			/*#if DEV*/if(value===undefined) throw new Error('Cannot get '+mName+' from an list of elements');/*#/if*/
-			this._each(function(e){ Elt['set'+mEltName].call(null,e,name,value) });
+			this._each(function(e){ Elt['set'+mEltName].call(null,e,name,value); });
 			return this;
 		};
 	});
@@ -172,7 +171,7 @@ S.Elt=(function(){
 	/* no args, return this */
 	'remove empty show hide stop'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(){ Elt[mName].call(null,this[0]); return this; };
-		Elt.Array.prototype[mName]=function(){ this._each(function(e){ Elt[mName].call(null,e) }); return this; };
+		Elt.Array.prototype[mName]=function(){ this._each(function(e){ Elt[mName].call(null,e); }); return this; };
 		//Elt.Array.prototype[mName]=new Function('var args=arguments; this.forEach(function(e){ e.'+mName+'.apply(e,args) }); };');
 	});
 	/* no args, return result */
@@ -181,10 +180,10 @@ S.Elt=(function(){
 	});
 	
 	/* one arg, return this */
-	('attrs setAttrs removeAttr id setClass addClass removeClass text html'
+	('attrs setAttrs removeAttr id setClass addClass removeClass text html position'
 		+' fadeTo fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
-		Elt.Array.prototype[mName]=function(arg1){ this._each(function(e){ Elt[mName].call(null,e,arg1) }); return this; };
+		Elt.Array.prototype[mName]=function(arg1){ this._each(function(e){ Elt[mName].call(null,e,arg1); }); return this; };
 	});
 	
 	
@@ -197,7 +196,7 @@ S.Elt=(function(){
 		Elt.Array.prototype[mName]=function(elementOrString){
 			if(this.length){
 				var newElt=toNodeElt(elementOrString);
-				this._each(function(e,i){ Elt[mName].call(null,e,i===0 ? newElt : newElt.clone(true)) });
+				this._each(function(e,i){ Elt[mName].call(null,e,i===0 ? newElt : newElt.clone(true)); });
 			}
 			return this;
 		};
@@ -206,7 +205,7 @@ S.Elt=(function(){
 	/* one arg, return result */
 	'is hasClass formData nodeName'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ return Elt[mName].call(null,this[0],arg1); };
-		Elt.Array.prototype[mName]=function(arg1){ return this._some(function(e){ return Elt[mName].call(null,e,arg1) }); };
+		Elt.Array.prototype[mName]=function(arg1){ return this._some(function(e){ return Elt[mName].call(null,e,arg1); }); };
 	});
 	/* unlimited args */
 	'on off fire anim'.split(' ').forEach(function(mName){
@@ -217,7 +216,7 @@ S.Elt=(function(){
 		};
 		Elt.Array.prototype[mName]=function(){
 			var args=Array.unshift(arguments,null);
-			this._some(function(e){ args[0]=e; return Elt[mName].apply(null,args) }); };
+			this._some(function(e){ args[0]=e; return Elt[mName].apply(null,args); }); };
 			return this;
 	});
 	

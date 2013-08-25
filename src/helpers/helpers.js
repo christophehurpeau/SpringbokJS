@@ -24,7 +24,7 @@ S.extProto(S.Helpers,{
 		}
 		
 		locale=App.Locales[locale];
-		this.locale=function(){return locale;}
+		this.locale=function(){return locale;};
 		return locale;
 	},
 	
@@ -73,20 +73,31 @@ S.extProto(S.Helpers,{
 		return this.render(layout||this.controller.self.layout||(this.req.entry+'/default'),data,'layouts');
 	},
 	
+	
+	/* translations */
+	
+	t:function(string){ return this.locale().appTranslations[string] || string; },
+	tC:function(string){ return string; },
+	tF:function(modelName,string){ return string; },
+	
+	
 	/*#else*/
 	redirect:function(to){
 		App.load(this.url(to));
 		throw App.Controller.Stop;
 	},
 	
-	/*#/if*/
-	
+	locale:function(){
+		return window.i18n;
+	},
 	
 	/* translations */
 	
-	t:function(string){ return string; },
-	tC:function(string){ return string; },
-	tF:function(modelName,string){ return string; }
+	t:S.t,
+	tC:S.tC,
+	tF:S.tF
+	
+	/*#/if*/
 });
 
 includeCore('helpers/Url');
@@ -96,3 +107,15 @@ includeCore('helpers/Html');
 /*#/if*/
 includeCore('helpers/Menu');
 /*global.H=S.extObjs({},require('./Html'));*/
+
+
+'niceDate shortDate compactDate simpleDate completeDate simpleTime niceDateTime compactDateTime simpleDateTime completeDateTime'
+	.split(' ').forEach(function(mName){
+		var datetime = mName.slice(-8) === 'DateTime';
+		var i18nmName = 'format' + (datetime ? 'DateTime' : 'Date')+ UString.ucFirst(mName.slice(0,datetime ? -8 : -4));
+		S.Helpers.prototype[mName] = function(date){
+			date = UDate.parseDate(date);
+			return this.locale()[i18nmName](date);
+		};
+	});
+

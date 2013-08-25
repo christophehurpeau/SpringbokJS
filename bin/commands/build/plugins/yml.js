@@ -10,7 +10,7 @@ module.exports={
 	
 	parse:function(fileContent,callback){
 		try{
-			fileContent=fileContent.replace("\t",' ');
+			fileContent=fileContent.replace(/\t/g,' ');
 			callback(null,YAML.load(fileContent));
 		}catch(err){
 			callback(err);
@@ -27,12 +27,13 @@ module.exports={
 	
 	compile:function(file,data,callback){
 		if(file.lang){
-			UFiles.readYamlAsync(CORE_SRC+'locales/'+file.lang+'.yml',function(err,coreTranslations){
-				if(err) return callback(err);
-				var jsTranslations='var i18nc='+JSON.stringify(coreTranslations)
-							+',i18n='+JSON.stringify(data)+';';
+			UFiles.readYamlAsync(CORE_SRC+'locales/'+file.lang+'.yml',function(coreTranslations){
+				if(!coreTranslations) return callback('Unable to read translations ! '+file.lang);
+				var jsTranslations='window.i18n=' + UFiles.readSync(CORE_SRC+'locales/'+file.lang+'.js').substr(15) 
+							+'window.i18nc=window.i18n.coreTranslations='+JSON.stringify(coreTranslations)+';'
+							+'window.i18n.appTranslations='+JSON.stringify(data)+';';
 				
-				callback(null,jsTranslations,jsTranslations);
+				callback(null,jsTranslations,jsTranslations,{Core:'locales/'+file.lang+'.yml'});
 			});
 			
 			return;
@@ -44,4 +45,4 @@ module.exports={
 		
 		return callback(null,data,data);
 	}
-}
+};

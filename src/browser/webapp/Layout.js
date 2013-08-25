@@ -1,11 +1,12 @@
-App.Layout=S.newClass({
-	ctor:function(name,parent,methods,init){
+App.Layout=S.Widget.extend({
+	ctor:function(name,parent,methods,init,removeLayout){
 		var t=this;
 		t.parent=parent;
 		t.name=name;
 		t.page=App.page;
 		t.init=init;
-		(t.methods=methods.split(',')).forEach(function(v){
+		removeLayout && (t.removeLayout = removeLayout);
+		(t.methods=methods.split(' ')).forEach(function(v){
 			t[v]=function(){
 				t['$'+v].empty().append.apply(t['$'+v],arguments);
 				return t;
@@ -32,15 +33,20 @@ App.Layout=S.newClass({
 		}
 	},
 	_install:function(callback){
+		S.log('install layout '+this.name);
 		this.installed=true;
 		this.init();
+		this.fire(App.Layout.installEvent);
 	},
 	dispose:function(){
+		S.log('dispose layout '+this.name);
 		this.child && this.child.dispose();
 		delete this.child;
 		this.installed=false;
+		this.removeLayout && this.removeLayout();
 		this.methods.forEach(function(v){
-			this['$'+v] && this['$'+v].dispose();
+			//this['$'+v] && this['$'+v].dispose(); instead of dispose we could use remove, but is it really necessary ?
+			this['$'+v] && this['$'+v].remove();
 			delete this['$'+v];
 		}.bind(this));
 	},
@@ -50,6 +56,7 @@ App.Layout=S.newClass({
 		this._init(null,callback);
 	}
 },{
+	installEvent:new Event('install'),
 	add:function(name,parent,methods,init){
 		L.set(name,new App.Layout(name,parent,methods,init));
 	}

@@ -34,14 +34,14 @@ S.ui.InputBox=S.ui.InputFollow.extend({
 		this.$div=this.createDiv().appendTo($('#container'));
 	},
 	createDiv: function(){
-		return $.div().attr('class','widget divInputBox hidden');
+		return $.div().attr('class','widget widgetBox hidden');
 	},
 	showDiv: function(){
 		this.active=true;
 		//var offsetParent=this.input/*.offsetParent()*/.closest('.col,.context,#page,body'),offsetParentPosition=offsetParent.position(),divPosition;
 		var divOffset;
 		return this.$div.style('min-width',this.$input.prop('offsetWidth')+'px').show()
-			//.position({ my: "left top", at: "left bottom", of: this.$input,collision: "none" })
+			//.position({ my: "left top", at: "left bottom", of: this.$input, collision: "none", within: $('#container') })
 			.style({ position: 'absolute', top: '10px', right: '10px' })
 			.style({
 				'max-width':(/*offsetParentPosition.left+*/document.width-this.$div.prop('offsetLeft')-10)+'px',

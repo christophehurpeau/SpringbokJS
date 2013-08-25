@@ -9,6 +9,7 @@ require('springboktools/UExec');
 var sysPath = require('path'), net = require('net');
 var portscanner = require('portscanner');
 var build = require('./build/');
+var notify = require('notify-send');
 
 global.CORE_SRC = sysPath.join(__dirname,'/../../src/');
 global.CORE_MODULES = sysPath.join(__dirname,'/../../node_modules/');
@@ -40,12 +41,9 @@ module.exports={
 			
 			server.listen(7000);
 			
-			var /*ready=function(){
-				console.log('[!] sending reload to '+clients.length+' clients');
-				clients.forEach(function(stream){
-					stream && stream.writable && stream.write('reload');
-				});
-			},*/compiled=function(file){
+			var ready=function(){
+				notify.timeout(200).notify('Springbok Watcher', 'Core ready');
+			},compiled=function(file){
 				clients.length && console.log('sending file "'+file.path+'" compiled to '+clients.length+' clients');
 				clients.forEach(function(stream){
 					stream && stream.writable && stream.write('compiled: '+file.path);
@@ -56,16 +54,18 @@ module.exports={
 					stream && stream.writable && stream.write('changedNotCompilableFile: '+path);
 				});
 			},bindEvents=function(){
-				//fileList.on('ready',ready);
+				fileList.on('ready',ready);
 				fileList.on('compiled',compiled);
 				fileList.on('changedNotCompilableFile',changedNotCompilableFile);
 				fileList.on('reset',reset);
 			},reset=function(){
 				console.log('[!] filelist was reset !');
 				setTimeout(function(){
-					bindEvents();
-					clients.forEach(function(stream){
-						stream && stream.writable && stream.write('restart');
+					fileList.once('ready',function(){
+						bindEvents();
+						clients.forEach(function(stream){
+							stream && stream.writable && stream.write('restart');
+						});
 					});
 				},10);
 			};
@@ -75,6 +75,19 @@ module.exports={
 	app:function(rootPath,persistent){
 		var fileList = new build.FileListApp(rootPath);
 		var sw = build.SpringbokWatcher.init(fileList,persistent,true);
+		
+		var ready=function(){
+			notify.timeout(200).notify('Springbok Watcher', 'App ready');
+		},bindEvents=function(){
+			fileList.on('ready',ready);
+			fileList.on('reset',reset);
+		},reset=function(){
+			console.log('[!] filelist was reset !');
+			setTimeout(function(){
+				bindEvents();
+			},10);
+		};
+		bindEvents();
 		
 		if(persistent){
 			try{
@@ -91,6 +104,7 @@ module.exports={
 										else if(data.startsWith('compiled: ')){
 											var path=data.substr(10);
 											fileList.compileDependentFiles(path,'Core');
+											sw.restartServer(); // restart node app because some core files changed
 										}else if(data.startsWith('changedNotCompilableFile: ')){
 											var path=data.substr(26);
 											if(path.startsWith('src/'))
@@ -100,16 +114,18 @@ module.exports={
 										}else if(data === 'restart'){
 											console.log('RESTART UNSUPPORTED YET: exiting....');
 											sw.close(function(){
-												process.exit(1);
+												setTimeout(function(){
+													process.exit(1);
+												},1000);
 											});
 											
 										}
 									});
 								}
-							})
+							});
 							client.on('end',function(){
 								console.log('SpringbokWatcher Core disconnected');
-							})
+							});
 							client.write('hello');
 						});
 					}
@@ -117,4 +133,4 @@ module.exports={
 			}catch(err){}
 		}
 	}
-}
+};

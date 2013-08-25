@@ -37,4 +37,4 @@ module.exports={
 		this.restarting = false;
 		this.process && this.process.kill();
 	}
-}
+};

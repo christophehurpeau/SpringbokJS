@@ -6,6 +6,7 @@ includeJsCore('elements/');
 includeJsCore('elements/Form');
 includeJsCore('helpers/');
 includeJsCore('browser/ui/validation');
+includeJsCore('browser/spa');
 S.require.prefix=Config.id+'/';
 
 global.FatalError=function(error){
@@ -14,7 +15,7 @@ global.FatalError=function(error){
 	appLoadingMessage && appLoadingMessage.setClass('message error').text(error);
 	throw this;
 };
-global.FatalError.toString=function(){ return 'Fatal Error: '+this.error; }
+global.FatalError.toString=function(){ return 'Fatal Error: '+this.error; };
 
 /* controllers */
 /*#if DEV*/if(global.C){ console.error(C); throw new Error('C is already defined'); } /*#/if*/
@@ -50,17 +51,21 @@ global.App={
 	},
 	
 	run:function(){
-		S.log('Running webapp...');
 		this.lang=$.first('meta[name="language"]').attr('content');
 		this.topLayout.body=$.first('body');
-		this.readyCallbacks.fire();
-		delete this.readyCallbacks;
 		this.request=new App.Request;
 		this.request.lang=this.lang;
 		this.helpers=new S.Helpers(this.router,this.request);
-		App.load(S.History.getFragment(),function(){
-			App.loading=false;
-		});
+		
+		var run = function(){
+			S.log('Running webapp...');
+			this.readyCallbacks.fire();
+			delete this.readyCallbacks;
+			this.load(S.History.getFragment(),function(){
+				App.loading=false;
+			});
+		}.bind(this);
+		S.WebSocket ? S.WebSocket.start(run) : run();
 	},
 	
 	setLang:function(lang){
@@ -71,17 +76,19 @@ global.App={
 	
 	load:function(url,callback){
 		S.log('Load: '+url);
+		App.url = url;
 		try{
 			var route=this.router.find(url);
 			if(!route) throw HttpException.notFound();
-			console.log(route);
+			S.log(route);
 			S.History.navigate(url);
 			S.require('c/'+route.controller,function(){
 				try{
 					var c=C[route.controller];
-					/*#if DEV*/ if(!c) console&&console.log('This controller doesn\'t exists: "'+route.controller+'".'); /*#/if*/
+					/*#if DEV*/ if(!c) S.log('This controller doesn\'t exists: "'+route.controller+'".'); /*#/if*/
 					if(!c) throw HttpException.notFound();
 					c.dispatch(route,this.request,this.helpers);
+					callback && callback();
 				}catch(err){
 					App.handleError(err);
 				}
@@ -95,13 +102,22 @@ global.App={
 		//if(err instanceof App.Controller.Stop) return;
 		if(err===App.Controller.Stop) return;
 		if(err instanceof HttpException){
-			console&&console.log("APP : catch HttpException :",err);
+			S.log("APP : catch HttpException :",err);
 			if(App.loading) new FatalError('404 Not Found');
 		}
-		console&&console.log("APP : catch error :",err,err.stack);
+		S.log("APP : catch error :",err,err.stack);
 		throw err;
-	}
+	},
 };
+
+'get post put delete'.split(' ').forEach(function(mName){
+	App[mName] = function(){
+		var sAjax = S[mName].apply(S,arguments);
+		if(App.request.secure().isConnected())
+			sAjax.header('x-sauth',App.request.secure().getToken());
+		return sAjax;
+	};
+});
 
 
 includeCore('base/HttpException');

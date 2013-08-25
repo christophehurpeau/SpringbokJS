@@ -1,13 +1,14 @@
-window.isIElt9=window.attachEvent && !window.addEventListener;
-var html5elements = "address|article|aside|audio|canvas|command|datalist|details|dialog|figure|figcaption|footer|header|hgroup|keygen|mark|meter|menu|nav|progress|ruby|section|time|video".split("|");
-for (var i = 0; i < html5elements.length; i++) document.createElement(html5elements[i]);
-
 /*
  * pre-loaded for ie < 9
  * post-loaded for browsers where !Object.create : FF < 4, Safari < 5, Opera < 12
  * 
  * If legacy needed : http://code.google.com/p/base2/source/browse/version/1.0.2/src/base2-legacy.js
  */
+window.msie= parseInt((/msie (\d+)/.exec(lowercase(navigator.userAgent)) || [])[1],10);
+window.isIElt9=window.msie && window.msie < 9;
+
+var html5elements = "address|article|aside|audio|canvas|command|datalist|details|dialog|figure|figcaption|footer|header|hgroup|keygen|mark|meter|menu|nav|progress|ruby|section|time|video".split("|");
+for (var i = 0; i < html5elements.length; i++) document.createElement(html5elements[i]);
 
 
 
@@ -131,7 +132,7 @@ if(isOpera || isIE){
 	/* http://polyfilljs.com/js/mylibs/getelementsbyclassname.js*/
   if (!document.getElementsByClassName) {
     document.getElementsByClassName = function (classes) {
-      return document.querySelectorAll('.' + classes.replace(' ',' .'));
+      return document.querySelectorAll('.' + classes.replace(/ /g,' .'));
     };
   }
 })();

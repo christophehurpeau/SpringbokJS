@@ -6,11 +6,42 @@ if(!window.FormData || !XMLHttpRequest.prototype.sendAsBinary)
 
 /* https://github.com/ForbesLindesay/ajax/blob/master/index.js */
 S.Ajax=(function(){
-	var eventAjaxRequest=new Event('sAjaxRequest');
+	var eventAjaxRequest=new Event('s.AjaxRequest');
+	
+	var registerLoadEvent = function(ajaxRequest){
+		ajaxRequest.xhr.addEventListener('load',function(){
+			console.log('xhr finished',this.xhr);
+			//callback( ! this.xhr.responseType || this.xhr.responseType === 'text' ? this.xhr.responseText : this.xhr.response );
+			//this.responseHeaders = this.xhr.getAllResponseHeaders();
+			
+			// normalize IE bug (http://bugs.jquery.com/ticket/1450)
+			var status = this.xhr.status == 1223 ? 204 : this.xhr.status;
+			
+			var responseType = this.xhr.responseType, response;
+			
+			if(!responseType){
+				var contentType = this.xhr.getResponseHeader("Content-Type");
+				responseType = SAjax.responseTypes[contentType];
+			}
+			
+			if(responseType){
+				var responseField = SAjax.responseFields[responseType];
+				response = (responseField && this.xhr[responseField]);
+				if(!response){
+					response = this.xhr.responseText;
+					var converter;
+					if(converter = SAjax.converters[responseType]) response = converter(response);
+				}
+			}else response = this.xhr.responseText;
+			
+			this.successCallbacks.forEach(function(callback){ callback.call(null,response) });
+		}.bind(ajaxRequest));
+	};
+	
 	var SAjax=S.newClass({
 		ctor:function(url,method){
 			if(method) this.method=method;
-			if(url) this.url=url;
+			this.url=url+'?'+Date.now();
 			this.xhr=new XMLHttpRequest(); 
 		},
 		sync:function(){
@@ -21,15 +52,15 @@ S.Ajax=(function(){
 			return this;
 		},*/
 		success:function(callback){
-			this.xhr.load=function(){
-				//callback( ! this.xhr.responseType || this.xhr.responseType === 'text' ? this.xhr.responseText : this.xhr.response );
-				callback( this.xhr.responseText );
-			}.bind(this);
+			if(this.successCallbacks) this.successCallbacks.push(callback);
+			else{
+				this.successCallbacks = [ callback ];
+				registerLoadEvent(this);
+			}
 			return this;
 		},
 		error:function(callback){
-			this.on('error',callback);
-			return this;
+			return this.on('error',callback);
 		},
 		
 		on:function(events,callback){
@@ -40,14 +71,25 @@ S.Ajax=(function(){
 		},
 		
 		header:function(key,value){
-			this.xhr.setRequestHeader(key,value);
+			if(!this.headers) this.headers={};
+			this.headers[key]=value;
+			return this;
+		},
+		
+		withCredentials:function(){
+			this.withCredentials=true;
 			return this;
 		},
 		
 		send:function(success){
 			success && this.success(success);
 			this.xhr.open(this.method,this.url,!this.sync);
+			this.headers = this.headers ? UObj.union(this.headers,SAjax.headers) : SAjax.headers;
+			UObj.forEach(this.headers,function(key,value){
+				value && this.xhr.setRequestHeader(key,value);
+			}.bind(this));
 			$document.fire(eventAjaxRequest);
+			this.xhr.withCredentials=!!this.withCredentials;
 			this.xhr.send(this.data);
 			return this;
 		},
@@ -55,6 +97,27 @@ S.Ajax=(function(){
 		abort:function(){
 			this.xhr.abort();
 			return this;
+		}
+	},{
+		responseTypes: {
+			'text/plain': 'text',
+			'text/html': 'html',
+			'application/json': 'json',
+		},
+		
+		responseFields: {
+			xml: "responseXML",
+			text: "responseText",
+			json: "responseJSON"
+		},
+		
+		converters: {
+			json: JSON.parse
+		},
+		
+		headers: {
+			'Accept': 'application/json, text/plain, */*',
+			'X-Requested-With': 'XMLHttpRequest'
 		}
 	});
 	

@@ -1,8 +1,12 @@
-module.exports=App.Model('Page',{
+App.Model('Page',{
 	parent:'Searchable', behaviours:['Child'],
 	
 	Fields:{
 		content:[String]
+	},
+	
+	beforeInit:function(){
+		App.models.Searchable.types.Project = 2;
 	},
 
 	onModified:function(pageId,deleted){
@@ -34,4 +38,4 @@ module.exports=App.Model('Page',{
 	},
 },{
 	
-})
+});

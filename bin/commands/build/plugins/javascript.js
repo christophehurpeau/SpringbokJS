@@ -96,12 +96,18 @@ module.exports={
 			
 			data=data.replace('__SPRINGBOK_COMPILED_TIME__',Date.now());
 			
-			if(file.dirname.endsWith('/controllers/')){
-				if(!file.isBrowser){
-					if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
-					data=data.replace(/App\.[A-Za-z]*Controller\(\{/g,'module.exports=$&');
+			
+			UObj.forEach({
+				'/controllers/':/App\.[A-Za-z]*Controller\(\{/g,
+				'/models/':/App\.Model\(/g
+			},function(dirnameEndsWith,regexp){
+				if(file.dirname.endsWith(dirnameEndsWith)){
+					if(!file.isBrowser){
+						if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
+						data=data.replace(regexp,'module.exports=$&');
+					}
 				}
-			}
+			});
 			
 			if(file.isBrowser){
 				if(file.isMainJs) data='(function(window,undefined){var baseUrl="/";'+data+'})(window);';
@@ -158,7 +164,7 @@ module.exports={
 												} : onEnd);
 									});
 								});
-							})
+							});
 						});
 					});
 					
@@ -186,10 +192,10 @@ module.exports={
 				if(err.line){
 					var ErrorWithContent=function(err){ this.err=err; };
 					ErrorWithContent.prototype.toString = function(){
-						var currentLine=this.err.line-2;
+						var currentLine=this.err.line-3;
 						return this.err.toString()
 								+ "\n\n File Content :\n"
-								+ code.split("\n").slice(currentLine,this.err.line+3).map(function(l){ return currentLine++ +': '+ l}).join("\n");
+								+ code.split("\n").slice(currentLine,this.err.line+4).map(function(l){ return currentLine++ +': '+ l; }).join("\n");
 					};
 	
 					err=new ErrorWithContent(err);
@@ -213,8 +219,8 @@ module.exports={
 					if (error) onEnd(stderr);
 					else{
 						file.checkCancel(function(){
-							console.log(stdout);
-							console.log(' '+ output + ' built.');
+							//console.log(stdout);
+							//console.log(' '+ output + ' built.');
 							onEnd();
 						});
 					}
@@ -232,8 +238,11 @@ module.exports={
 	},
 	
 	includesNode:function(data,file,callback,includes){
-		data=data.replace(/^[\t ]*include(Core|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
+		data=data.replace(/^[\t ]*include(Core|JsCore|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)\;$/mg,function(match,from,inclPath){
 			inclPath=this._checkTrailingSlash(inclPath);
+			
+			if(from === 'JsCore') from = 'Core';
+			
 			if(from==='Core') inclPath=this.isCore ? inclPath='/'+inclPath : 'springbokjs/'+inclPath;
 			else if(from==='Plugin'){
 				inclPath='TODO';
@@ -248,6 +257,7 @@ module.exports={
 		if(!includes) includes = { app: {}, Core: {}, CoreUtils: {}, Plugin: {} };//TODO use Map<String,Set<String>>
 		data = data.replace(/^[\t ]*include(Core|JsCore|CoreUtils|Plugin|Action|)\(\'([\w\s\._\-\/\&\+]+)\'\)(\;|,)$/mg,function(match,from,inclPath,lastChar){
 			if(inclPath.slice(-1) === '/') inclPath += sysPath.basename(inclPath) + '.js';
+			else if(inclPath.slice(-3) !== '.js') inclPath += '.js';
 			
 			if(from === 'JsCore') from = 'Core';
 			
@@ -270,7 +280,6 @@ module.exports={
 			}
 			
 			path += inclPath;
-			if(inclPath.slice(-3) !== '.js') path += '.js';
 			
 			if(!fs.existsSync(path)) throw new Error("file doesn't exists: "+path+"\nline= "+match);
 			
@@ -281,4 +290,4 @@ module.exports={
 		callback && callback(data,includes);
 		return data;
 	}
-}
+};

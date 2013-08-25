@@ -1,7 +1,7 @@
 App.Controller.Action(function(req,H){
 	this.layout('page',function(l,c){
-		var form=window._FormUser=H.FormForModel('User'),secure=req.secure();
-		secure.redirectIfConnected();
+		var form = H.FormForModel('User'), secure = req.secure();
+		if(secure.redirectIfConnected()) return;
 		l.title('Login')
 			.content(
 				form.action('/site/login').setClass('w400 centered big')
@@ -14,7 +14,7 @@ App.Controller.Action(function(req,H){
 						var pError=$form.find('p.error');
 						pError && pError.empty();
 						S.post('/api/site/login').form($form).send(function(data){
-							if(data==='0'){
+							if(data === '0'){
 								pError=pError||$.p().setClass('message error').appendTo($form[0].firstChild);
 								pError.text('Authentification failed !');
 								onEnd();
@@ -23,8 +23,7 @@ App.Controller.Action(function(req,H){
 								secure.redirectAfterConnection();
 							}
 						});
-						onEnd();
 					})
-			)
-	})
-})
+			);
+	});
+})/*#if false*/;/*#/if*/

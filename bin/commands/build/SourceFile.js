@@ -62,7 +62,7 @@ module.exports = S.newClass({
 		this.compiledPathDirname=sysPath.dirname(this.compiledPath);
 		
 		
-		this.cache=Object.seal({ dependencies:[], compilationTime:null, error:null });
+		this.cache=Object.seal({ dependencies:[], compilationTime:null, compilationSource:undefined, error:null });
 		this.cancel=function(callback){
 			this.cancel.isCanceled=true;
 			this.cancel.callback=callback;
@@ -127,7 +127,8 @@ module.exports = S.newClass({
 	},
 	
 	// Reads file and compiles it with compiler. Data is cached
-	compile: function(callback){
+	compile: function(callback,compilationSource){
+		if( compilationSource && this.cache.compilationSource && this.cache.compilationSource === compilationSource ) return;
 		var callbackError=function(type,strOrErr){
 			/*if(strOrErr instanceof Array){
 				var i,finalStr='Errors :';
@@ -165,6 +166,7 @@ module.exports = S.newClass({
 									if(err) return callbackError('Optimizing',err);
 									t.cache.error=null;
 									t.cache.compilationTime=Date.now();
+									t.cache.compilationSource=compilationSource;
 									if(err===false){
 										t.cache.dependencies=null;
 										return callback();

@@ -16,7 +16,7 @@ require('./db/');
 require.extensions['.ejs']=require.extensions['.js'];
 
 require('./base/HttpRequest'); require('./base/HttpResponse');
-require('./base/HttpException')
+require('./base/HttpException');
 require('./base/Router');
 
 global.WEB_URL='/web/';
@@ -24,25 +24,36 @@ global.WEB_FOLDER='./';
 
 App.BasicController=App.Controller=require('./base/Controller');
 require('./base/Model');
-App.Model=S.Model;
 //App.View=require('./base/View');
 App.loadComponent(require('./components/CValidator'));
 
 require('./base/i18n');
 
 App.start=function(port){
+	port || (port = Config.port);
 	if(port) App._start(port);
 	else{
 		var portscanner=require('portscanner');
 		portscanner.findAPortNotInUse(3000,4000,'localhost',function(err,port){
 			if(err) return console.error('Error, ',err);
 			port && App._start(port);
-		})
+		});
 	}
 };
+
+
 App._start=function(port){
 	S.log('Starting app on port '+port);
 	var t=this,dir=t.appDir;
+	
+	if(!fs.existsSync(dir + 'config/ssl-key.pem'))
+		App.ssl = {};
+	else
+		App.ssl = {
+			key: fs.readFileSync(dir + 'config/ssl-key.pem'),
+			cert: fs.readFileSync(dir + 'config/ssl-cert.pem')
+		};
+	
 	t.Controller=require(dir+'AppController')/*(App.Controller)*/;
 	
 	App.entriesList.forEach(function(entry){
@@ -55,7 +66,7 @@ App._start=function(port){
 	
 	var paths={_:dir};
 	
-	Config.plugins||(Config.plugins={})
+	Config.plugins||(Config.plugins={});
 	Config.pluginsPaths||(Config.pluginsPaths={});
 	Config.pluginsPaths.Springbok=__dirname+'/plugins/';
 	Config.plugins.SpringbokBase=['Springbok','base'];
@@ -76,8 +87,7 @@ App._start=function(port){
 	
 	var forEachDir=function(folderName,ext,onEnd,callback){
 		var test=new RegExp('\.'+(ext||'js')+'$');
-		async.forEachSeries(Object.keys(paths),function(pluginName,onEnd){
-			var dir_=paths[pluginName];
+		UObj.forEachSeries(paths,function(pluginName,dir_,onEnd){
 			UObj.forEach(App.entries,function(entryName,entry){
 				var dir=dir_+(folderName==='models'?'':entryName+'/')+folderName;
 				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
@@ -99,7 +109,7 @@ App._start=function(port){
 				//if(S.isFunc(c)) c=c(t);
 				if(t.controllers[entryName][name]===undefined) t.controllers[entryName][name]=c;
 				else t.PControllers[entryName][name]=c;
-			})
+			});
 		},
 		function(onEnd){
 			S.log('Loading views...');
@@ -108,7 +118,7 @@ App._start=function(port){
 				S.log('Loading view: '+name);
 				if(t.views[entryName][name]===undefined){
 					var fn=require(path);
-					t.views[entryName][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
+					t.views[entryName][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); };
 				}
 			});
 		},
@@ -119,7 +129,7 @@ App._start=function(port){
 				S.log('Loading layout: '+name);
 				if(t.views['layouts'][name]===undefined){
 					var fn=require(path);
-					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); }
+					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); };
 				}
 			});
 		},
@@ -143,6 +153,7 @@ App._start=function(port){
 			UObj.forEachSeries(t.models,function(modelName,model,onEnd){
 				S.log('Initialize model: '+modelName);
 				//model.init(onEnd);
+				model.beforeInit && model.beforeInit();
 				model.init(function(){
 					S.log('Initialize model: '+modelName+' ended');
 					onEnd.apply(null,arguments);
@@ -198,6 +209,7 @@ App._start=function(port){
 				})
 				.use(connect.query())
 				.use(connect.urlencoded())
+				.use(connect.multipart())
 				.use(function(req,res){
 					try{
 						var pathname=req._parsedUrl.pathname, host=req.headers.host.split(':')[0];
@@ -244,7 +256,17 @@ App._start=function(port){
 				});
 				
 				app.listen(port,/*'localhost',*/function(){
-					console.log("Listening on port "+port);
+					console.log((new Date()).toTimeString().split(' ')[0] + " Listening on port "+port);
+					/*#if DEV*/
+					var notify = require('notify-send');
+					//notify-send "Volume" -i /usr/share/notify-osd/icons/gnome/scalable/status/notification-audio-volume-high.svg -h int:value:100 -h string:synchronous:volume
+					notify.timeout(1000).notify(Config.projectName, 'Listening on port '+port);
+					// run : firefox -P -no-remote "springbokjs" http://christophe.hurpeau.com:3131/ &
+					/*#/if*/
+					
+					fs.exists(App.appDir+'app.js',function(exists){
+						exists && require(App.appDir+'app.js');
+					});
 				});
 			
 			onEnd();

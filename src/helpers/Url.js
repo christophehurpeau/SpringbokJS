@@ -53,7 +53,7 @@ S.extProto(S.Helpers,{
 				if(url.charAt(0)==='/') return options.full + this.router.getStringLink(this.req.lang,/*#if NODE*/entry,/*#/if*/url.substr(1));
 			}
 		}else{
-			return (full || '') + this.router.getArrayLink(this.req.lang,/*#if NODE*/entry,/*#/if*/url);
+			return (options.full || '') + this.router.getArrayLink(this.req.lang,/*#if NODE*/entry,/*#/if*/url);
 		}
 	},
 	urlEscape:function(url,/*#if NODE*/entry,/*#/if*/options){

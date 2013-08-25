@@ -34,7 +34,6 @@ App.Router=function(r,rl){
 	});
 	
 	// Routes
-	S.log('Routes=',r);
 	if(!r.main) r={main:r};
 	
 	UObj.forEach(r,function(entry,entryRoutes){
@@ -72,7 +71,7 @@ App.Router=function(r,rl){
 			else Config.allLangs.forEach(function(lang){
 				route[lang]=url.replace(/\/([a-z\-]+)/g,function(str,p1){
 					if(!t.routesLangs.get('->' + lang).get(p1)) throw new Error('Missing traduction "'+p1+'" for lang "'+lang+'"');
-					return t.routesLangs.get('->' + lang).get(p1).toLowerCase();
+					return '/'+t.routesLangs.get('->' + lang).get(p1).toLowerCase();
 				});
 			});
 			
@@ -83,7 +82,7 @@ App.Router=function(r,rl){
 				else if(specialEnd2=routeLang.endsWith('/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.slice(-2);
 				else routeLangPreg=routeLang;
 				
-				routeLangPreg=routeLangPreg.replace('/','\/').replace('-','\-').replace('*','(.*)').replace('(','(?:');
+				routeLangPreg=routeLangPreg.replace(/\//g,'\\/').replace(/\-/g,'\-').replace(/\*/g,'(.*)').replace(/\(/g,'(?:');
 				if(specialEnd) routeLangPreg+='(?:\/(.*))?';
 				else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.slice(-2);
 				
@@ -104,14 +103,13 @@ App.Router=function(r,rl){
 					return '([^\/]+)';
 				}) + (ext ? (ext==='html' ? '(?:\.html)?':'\.'+ext) : '')+"$"),
 					routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s').trimRight()];
-				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=UString.trimRight(finalRoute[lang][1],'/')
+				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=UString.trimRight(finalRoute[lang][1],'/');
 				if(paramsNames) finalRoute[':']=paramsNames;
 			});
 			finalRoute.paramsCount=finalRoute[Config.allLangs[0]][1].split('%s').length-1;
 			t.routes.get(entry).set(url,finalRoute);
 		});
 	});
-	S.log('Transformed routes=',this.routes);
 };
 App.Router.routeStripper=/^\/+|\/+$/g;
 App.Router.prototype={
@@ -121,8 +119,8 @@ App.Router.prototype={
 		S.log('router: find: "'+all+'"');
 		//S.log(routes);
 		UObj.forEach(routes,function(i,r){
-			S.log('route: ',r);
-			S.log('try: ', r[lang][0], r[lang][0].exec(all));
+			//S.log('route: ',r);
+			//S.log('try: ', r[lang][0], r[lang][0].exec(all));
 			if(m=r[lang][0].exec(all)){
 				//console.log('match : ',m,r);
 				var c_a=r[0].split('.'),params={};
@@ -156,13 +154,39 @@ App.Router.prototype={
 				return false;
 			}
 		});
-		S.log('route=',route);
+		//S.log('route=',route);
 		return route;
 	},
 	getLink:function(lang,/*#if NODE*/entry,/*#/if*/url){
 		return S.isString(url) ? this.getStringLink(lang,/*#if NODE*/entry,/*#/if*/url) : this.getArrayLink(lang,/*#if NODE*/entry,/*#/if*/url);
 	},
-	getArrayLink:function(lang,/*#if NODE*/entry,/*#/if*/params){},
+	/* Exemples :
+	* (['/:id-:slug',post.id,post.slug])
+	* (['/:id-:slug',post.id,post.slug,{'target':'_blank','?':'page=2'}])
+	*/
+	getArrayLink:function(lang,/*#if NODE*/entry,/*#/if*/params){
+		var plus = '', route = params.shift();
+		if(route !== true){
+			route = this.routes.get(/*#ifelse NODE*/entry||'main'/*#/if*/).get(route);
+			/*#if DEV */
+			if(!route){
+				//if(Springbok::$inError) return 'javascript:alert(\'No route found\')';
+				throw new Error("Router getLink: This route does not exists: "+route);
+			}
+			/*#/if*/
+		}
+		var options = S.isObj(UArray.last(params)) ? params.pop() : {};
+		if(params.ext) plus += '.'+params.ext;
+		else if(route[2] && route[2].ext) plus += '.'+route[2].ext;
+		if(params['?'] != null) plus += '?'+params['?'];
+		if(params['#'] != null) plus += '.'+params['#'];
+		
+		lang = params.lang || lang;
+		
+		if(!params.length) return (route[lang] || route._)[1]+ plus;
+		var url = (route === true ? this.getStringLink(lang,/*#if NODE*/entry,/*#/if*/ params) : UString.format((route[lang]||route._)[1], params.map(this.translate.bind(this,lang))));
+		return (url==='/'?'/':UString.trimRight(url,'\/')) + plus;
+	},
 	getStringLink:function(lang,/*#if NODE*/entry,/*#/if*/params){
 		S.log([lang,/*#if NODE*/entry,/*#/if*/params,UString.explode(UString.trim(params,'/'),'/',3)]);
 		var route = UString.explode(UString.trim(params,'/'),'/',3),
@@ -176,13 +200,13 @@ App.Router.prototype={
 		return froute + (route.ext && !froute.endsWith('.' + route.ext) ? '.' + route.ext : '');
 	},
 	translate:function(lang,string){
-		return this.routesLangs.get('->' + lang).get(string) || string;
+		return this.routesLangs.get('->' + lang).get(string.toLowerCase()) || string;
 	},
 	untranslate:function(lang,string){
 		/*#if DEV*/
 		if(!this.routesLangs.has(lang + '->')) throw new Error('Missing lang "'+lang+'"');
-		if(!this.routesLangs.get(lang + '->').has(string)) throw new Error('Missing translation for string "'+string+'"');
+		if(!this.routesLangs.get(lang + '->').has(string.toLowerCase())) throw new Error('Missing translation for string "'+string+'"');
 		/*#/if*/
-		return this.routesLangs.get(lang + '->').get(string) || string;
+		return this.routesLangs.get(lang + '->').get(string.toLowerCase()) || string;
 	}
 };

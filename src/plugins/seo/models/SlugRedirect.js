@@ -1,4 +1,4 @@
-module.exports=App.Model('PageSlugRedirect',{
+App.Model('PageSlugRedirect',{
 	Fields:{
 		model:[String],
 		from:[String],

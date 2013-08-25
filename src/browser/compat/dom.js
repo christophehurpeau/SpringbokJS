@@ -26,7 +26,7 @@
 	var isIElt8 = div.className === "t";
 	
 	
-
+	// http://www.quirksmode.org/dom/w3c_cssom.html
 	/* ====> PROPERTIES : S.Elt.propHooks */
 	
 	/* https://developer.mozilla.org/en-US/docs/Web/API/Node.textContent
@@ -43,6 +43,37 @@
 		get: function(elt){ throw new Error; },
 		set: function(elt, value){ throw new Error; }
 	};
+	
+	//https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
+	//TODO : in compat script instead !
+	
+	//pattern, placeholder, required properties 	(Yes) 	4.0 (2) 	(Yes) 	(Yes) 	(Yes)
+	if( input.required === undefined ){
+		Elt.propHooks.required={
+			get:function(e){
+				return e.getAttribute('required');
+			},
+			set:function(e){
+				e.setAttribute('required','required');
+				e.required=true;
+			}
+		};
+	}
+	
+	// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement
+	if( inputTest.offsetLeft ){
+		Elt.propHooks.offsetLeft={
+			get:function(e){
+				
+			}
+		};
+		Elt.propHooks.offsetTop={
+			get:function(e){
+				
+			}
+		};
+	}
+	
 	
 	
 	if(!document.documentElement.nextElementSibling || !document.documentElement.previousElementSibling){
@@ -90,7 +121,7 @@
 				get: function(elt){
 					return elt.getAttribute( name, 4 );
 				}
-			}
+			};
 		});
 	}
 	
@@ -98,7 +129,7 @@
 		S.Elt.propHooks.enctype={
 			get: function(elt){ S.Elt.getProp(elt, 'encoding'); },
 			set: function(elt, value){ S.Elt.setProp(elt, 'encoding', value); },
-		}
+		};
 	}
 	
 	// Make sure that a selected-by-default option has a working selected property.
@@ -131,7 +162,7 @@
 		set: function(elt, value) {
 			return ( elt.style.cssText = value + "" );
 		}
-	}
+	};
 	
 	
 	/* ====> STYLES : S.Elt.styleHooks */
@@ -168,5 +199,5 @@
 		// Prevent IE 6 from affecting layout for positioned elements
 		// Prevent IE from shrinking the body in IE 7 mode
 		if(isIElt8) body.style.zoom = 1;
-	})
+	});
 })();

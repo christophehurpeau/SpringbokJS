@@ -24,11 +24,11 @@ S.Db=(function(){
 			model.db=this;
 			model.store=new (model.Store||this.options.Store||S.Db.LocalStore)(model);
 			M[model.modelName]=model;
-			S.log('Addubg new model: ',model);
+			S.log('Adding new model: ',model);
 			return model;
 		}
-	}),
-		indexComplies=function(actual, expected){
+	});
+	var indexComplies=function(actual, expected){
 			// IE10 returns undefined for no multiEntry
 			if (actual.multiEntry === undefined && expected.multiEntry === false) return true;
 			else if(actual.multiEntry != expected.multiEntry) return false;
@@ -157,7 +157,7 @@ S.Db=(function(){
 	};
 	return S.defineProperties(SDb,{
 		get:function(dbName,callback){
-			S.log('S.db.get: '+dbName);
+			S.log('S.db.get: '+dbName+' '+dbs.has(dbName));
 			return dbs.get(dbName).init(callback);
 		},
 		forEach:function(){

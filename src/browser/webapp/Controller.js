@@ -9,7 +9,7 @@ App.Controller = (function(){
 			route.sParams.unshift(route.nParams);
 			var m=this[UString.ucFirst(route.action)];
 			/*#if DEV*/ if(!m) console.log('This action doesn\'t exists: "'+route.action+'".'
-							+' Known methods: '+Object.keys(this).filter(function(m){ return m[0]===m[0].toUpperCase() })); /*#/if*/
+							+' Known methods: '+Object.keys(this).filter(function(m){ return m[0]===m[0].toUpperCase(); })); /*#/if*/
 			if(!m) throw HttpException.notFound();
 			m.call(this,req,App.helpers);
 		},
@@ -45,7 +45,7 @@ App.Controller = (function(){
 		f.extend=function(props){
 			var c=Controller.extend.apply(Controller,arguments);
 			return createF(UObj.union(props,Controller));
-		}
+		};
 		return f;
 	};
 	return createF(Controller);

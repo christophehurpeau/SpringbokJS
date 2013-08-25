@@ -1,7 +1,7 @@
-module.exports=App.Model('Searchable',{
+App.Model('Searchable',{
 	behaviours:['Normalize','Slug'],
 	
-	types:{Page:2},
+	types:{ },
 	
 	Fields:{
 		name:[String],

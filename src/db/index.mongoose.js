@@ -21,7 +21,7 @@ S.Db=(function(){
 		get:function(key){
 			/*#if DEV*/ if(!connections[key]) throw new Error('No connections for db "'+key+'"'); /*#/if*/
 			return connections[key];
-		}
+		},
 	};
 	return Db;
 })();
