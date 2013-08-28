@@ -79,7 +79,7 @@ UObj.extend(Elt,(function(){
 					events['delete'](eventName);
 					elt.removeEventListener(eventName,elt._eventsCallback,eventName == 'blur' || eventName == 'focus');
 				}
-			})
+			});
 		},
 		fire:function(elt,event){
 			/*#if DEV*/ if(S.isString(event)) throw new Error; /*#/if*/

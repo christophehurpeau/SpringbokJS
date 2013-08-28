@@ -6,7 +6,7 @@ S.Widget=(function(){
 		for(var i=0; i<this._registeredEvents.length;){
 			if(this._registeredEvents[i][0] === listenable)
 				this._registeredEvents.splice(i,1);
-			else i++
+			else i++;
 		}
 	};
 	return S.Listenable.extend({

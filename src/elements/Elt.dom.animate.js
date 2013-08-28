@@ -105,7 +105,7 @@
 		};
 		e.addEventListener(eventName,_callback,false);
 		setTimeout(_callback,duration+90);
-	}
+	};
 	
 	// End common functions
 	// TODO : compat if not animations (transitions then pure javascript)
@@ -225,7 +225,7 @@
 	Elt.transition.create=function(properties){
 		return function(elt,duration,callback){
 			return Elt.transition(elt,properties,duration,callback);
-		}
+		};
 	};
 	
 	Elt.stop=function(e){
@@ -249,9 +249,9 @@
 					};
 					callbackInternal();
 				}
-			}
-		}
-	})
+			};
+		};
+	});
 	
 /*
 Elt.fadeIn=Elt.anim.create({ opacity:1 });

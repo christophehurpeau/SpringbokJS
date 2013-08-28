@@ -106,7 +106,9 @@ UObj.extend(Elt,{
 			return true;
 	}),
 	removeClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
+		var oldLength = elt.classList.length;
 		elt.classList.remove(_class);
+		return oldLength !== elt.classList.length;
 	} : function(elt,_class){
 		if(Elt.hasClass(elt,_class)){
 			elt.className = elt.className.replace(new RegExp("(^|\\s)" + _class + "(\\s|$)"), " ").replace(/\s$/, "");
@@ -115,12 +117,13 @@ UObj.extend(Elt,{
 		return false;
 	}),
 	
+	// return true if added, false if removed
 	toggleClass: (document.documentElement.classList && document.documentElement.classList.toggle ? function(elt,_class){
 		elt.classList.toggle(_class);
 	} : (document.documentElement.classList &&  document.documentElement.classList.contains ? function(elt,_class){
-			elt.classList.contains(_class) ? Elt.removeClass(elt,_class) : Elt.addClass(elt,_class);
+			return !(elt.classList.contains(_class) ? Elt.removeClass(elt,_class) : Elt.addClass(elt,_class));
 		} : function(elt,_class){
-			Elt.removeClass(elt,_class) || Elt.addClass(elt,_class);
+			return !(Elt.removeClass(elt,_class) || Elt.addClass(elt,_class));
 		})
 	),
 	
@@ -235,6 +238,18 @@ UObj.extend(Elt,{
 		if(e.style.display==='none') e.style.display = '';
 		Elt.removeClass(e,'hidden');
 	},
+	toggle:function(e,anim){
+		if(anim){
+			if(Elt.hasClass('hidden')){
+				Elt.fadeIn(e);
+				Elt.removeClass(e,'hidden');
+			}else{
+				Elt.fadeOut(e,function(){ Elt.addClass(e,'hidden'); });
+			}
+		}else
+			return Elt.toggleClass('hidden');
+	},
+	
 	
 	/* MANIPULATION */
 	
