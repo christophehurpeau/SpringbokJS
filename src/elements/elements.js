@@ -1,7 +1,7 @@
 includeJsCore('elements/Elt');
 
 /*#if NODE*/
-global.$={}
+global.$={};
 /*#else*/
 
 /*
@@ -106,7 +106,8 @@ window.$body=$(document.body);
 /*#/if*/
 $.create=S.Elt.create;
 $.parse=S.Elt.parse;
-'p span button'.split(' ').forEach(function(v){
+$.text=S.Elt.textNode;
+'p span button a br'.split(' ').forEach(function(v){
 	//Elt[v]=function(){ return Elt.create(v); };
 	$[v]=S.Elt.create.bind(null,v);
 });

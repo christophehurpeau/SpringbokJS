@@ -248,6 +248,13 @@ S.Elt=(function(){
 		return Elt(document.createElement(tag));
 		/*#/if*/
 	};
+	Elt.textNode=function(text){
+		/*#if NODE*/
+		return text;
+		/*#else*/
+		return document.createTextNode(text); 
+		/*#/if*/
+	};
 	
 	return Elt;
 })();

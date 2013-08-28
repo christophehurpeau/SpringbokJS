@@ -17,10 +17,8 @@ UObj.extend(Elt,(function(){
 		},
 		
 		closest: function(elt, selector){
-			console.log('closest: ',elt,selector);
 			while(elt.parentNode && elt.parentNode !== document){
 				elt = elt.parentNode;
-				console.log('closest; parent= ',elt,Elt.is(elt,selector));
 				if(elt.nodeType === NodeTypes.ELEMENT && Elt.is(elt,selector)) return elt;
 			}
 		}
