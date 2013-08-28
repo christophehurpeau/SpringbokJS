@@ -1,7 +1,7 @@
 {
 	"name":"springbokjs",
 	"description":"Springbok JS Framework",
-	"version":"0.0.15",
+	"version":"0.0.16",
 	"homepage":"springbokjs.org",
 	"repository":{
 		"type": "git",
