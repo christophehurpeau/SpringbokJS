@@ -1,12 +1,14 @@
-var html5elements = "address|article|aside|audio|canvas|command|datalist|details|dialog|figure|figcaption|footer|header|hgroup|keygen|mark|meter|menu|nav|progress|ruby|section|time|video".split("|");
-for (var i = 0; i < html5elements.length; i++) document.createElement(html5elements[i]);
-
 /*
  * pre-loaded for ie < 9
  * post-loaded for browsers where !Object.create : FF < 4, Safari < 5, Opera < 12
  * 
  * If legacy needed : http://code.google.com/p/base2/source/browse/version/1.0.2/src/base2-legacy.js
  */
+window.msie= parseInt((/msie (\d+)/.exec(lowercase(navigator.userAgent)) || [])[1],10);
+window.isIElt9=window.msie && window.msie < 9;
+
+var html5elements = "address|article|aside|audio|canvas|command|datalist|details|dialog|figure|figcaption|footer|header|hgroup|keygen|mark|meter|menu|nav|progress|ruby|section|time|video".split("|");
+for (var i = 0; i < html5elements.length; i++) document.createElement(html5elements[i]);
 
 
 
@@ -130,7 +132,7 @@ if(isOpera || isIE){
 	/* http://polyfilljs.com/js/mylibs/getelementsbyclassname.js*/
   if (!document.getElementsByClassName) {
     document.getElementsByClassName = function (classes) {
-      return document.querySelectorAll('.' + classes.replace(' ',' .'));
+      return document.querySelectorAll('.' + classes.replace(/ /g,' .'));
     };
   }
 })();
@@ -179,6 +181,7 @@ if(!String.prototype.repeat) String.prototype.repeat=function(count){
         methodCount = methods.length,
         assignStringGeneric = function (methodName) {
             var method = String.prototype[methodName];
+
             String[methodName] = function (arg1) {
                 return method.apply(arg1, Array.prototype.slice.call(arguments, 1));
             };
@@ -220,16 +223,16 @@ if(!Array.forEach)
 
 
 /* chrome pre-implementation is lacking of the iterator method. Must be activated in prefs (like node --harmony) so most users won't have any implementation '*/
-if(global.Map && !global.Map.prototype.iterator) global.Map=null;
+if(global.Map && (!global.Map.prototype.iterator || !global.Map.prototype.clear)) global.Map=null;
 
 
 global.Map = global.Map || (function(){
 	
 	
 	var Map=function(iterator){
-		this.items={}; this.size=0;
+		this.items = {}; this.size = 0;
 		if(iterator) iterator.forEach(function(kv){
-			this.items[kv[0]]=kv[1];
+			this.items[kv[0]] = kv[1];
 		}.bind(this));
 	};
 	Object.defineProperties(Map.prototype,{
@@ -250,6 +253,10 @@ global.Map = global.Map || (function(){
 				delete this.items[k];
 			}
 		} },
+		clear:{ value:function(){
+			this.size = 0;
+			this.items = {};
+		} },
 		iterator:{ value:function(){
 			return UObj.iterator(this.items);
 		} },
@@ -259,7 +266,7 @@ global.Map = global.Map || (function(){
 		toString:{ value: function() {
 			return '[Object Map]';
 		} }
-	})
+	});
 	return Map;
 })();
 /* firefox implementation is lacking of the forEach method*/
@@ -280,7 +287,72 @@ if(!Map.prototype.forEach)
 		var it=S.iterator(this);
 		while(it.hasNext())
 			callbackfn.apply(this,it.next());
-	}
+	};
+
+/* chrome pre-implementation is lacking of the iterator method. Must be activated in prefs (like node --harmony) so most users won't have any implementation '*/
+if(global.Set && (!global.Set.prototype.iterator || !global.Set.prototype.clear)) global.Set=null;
+
+global.Set = global.Set || (function(){
+	
+	
+	var Set=function(iterator){
+		this.items = []; this.size = 0;
+		if(iterator) iterator.forEach(function(v){
+			this.items.push(v);
+		}.bind(this));
+	};
+	Object.defineProperties(Set.prototype,{
+		add:{ value:function(v){
+			if(!this.has(v)){
+				this.size++;
+				this.items.push(v);
+			}
+		} },
+		has:{ value:function(v){
+			return UArray.has(this.items,v);
+		} },
+		'delete':{ value:function(v){
+			var i=this.items.indexOf(v);
+			if(i!==-1){
+				this.size--;
+				this.items = this.items.slice(i,1);
+			}
+		} },
+		clear:{ value:function(){
+			this.size = 0;
+			this.items = [];
+		} },
+		iterator:{ value:function(){
+			var it = UArray.iterator(this.items);
+			return Object.freeze({
+				hasNext:it.hasNext.bind(it),
+				next:function(){
+					return this.items[it.next()];
+				}.bind(this)
+			});
+		} },
+		forEach:{ value:function(callback){
+			this.items.forEach.call(this.items,callback,this);
+		} },
+		toString:{ value: function() {
+			return '[Object Set]';
+		} }
+	});
+	return Set;
+})();
+/* firefox implementation is lacking of the forEach method*/
+if(!Set.prototype.forEach)
+	/**
+	 * Given a callback function and optional context, invoke the callback on all
+	 * entries in this Map.
+	 *
+	 * @param callbackFn {Function}
+	 */
+	Map.prototype.forEach=function(callbackfn){
+		var it=S.iterator(this);
+		while(it.hasNext())
+			callbackfn.apply(this,it.next());
+	};
 
 /* loaded by :
  * https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent
@@ -364,6 +436,7 @@ shim('CustomEvent',{
 		return e;
 	}
 });
+
 
 
 })(window);

@@ -13,19 +13,19 @@ module.exports={
 		}else this.start();
 	},
 	
-	"start": function() {
+	"start": function(){
 		sys.debug('Server: Starting');
 		var t=this;
 		this.stop();
 		
 		t.process = child_process.spawn('node',['--harmony','start.js']);
-		t.process.stdout.addListener('data', function (data) {
+		t.process.stdout.addListener('data', function(data){
 			process.stdout.write(data);
 		});
-		t.process.stderr.addListener('data', function (data) {
+		t.process.stderr.addListener('data', function(data){
 			sys.print(data);
 		});
-		t.process.addListener('exit', function (code) {
+		t.process.addListener('exit', function(code){
 			sys.debug('Server: exited (status='+code+')');
 			t.process = null;
 			if (t.restarting)

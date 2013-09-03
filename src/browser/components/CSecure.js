@@ -1,5 +1,6 @@
 includeCore('browser/base/S.store');
 
+App.secure = function(){ return App.request.secure(); };
 S.extProto(App.Request,{
 	configurable:{
 		secure: function(){
@@ -77,6 +78,7 @@ S.extProto(App.Request,{
 			};
 			secure = Object.freeze( S.Listenable.extendObject( secure ) );
 			Object.defineProperty(this,'secure',{ value: function(){ return secure; } });
+			Object.defineProperty(App,'secure',{ value: function(){ return secure; } });
 			return secure;
 		}
 	}

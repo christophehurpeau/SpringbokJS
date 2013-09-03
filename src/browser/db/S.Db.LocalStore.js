@@ -114,7 +114,10 @@ S.Db.LocalDbStore=S.newClass({
 		forEachResults: function(callback,onEnd){
 			var nbResults = 0,_callback = function _callback(){
 				this.result(function(){
-					if(!this.key) return onEnd && onEnd(nbResults);
+					if(!this.key){
+						this.close();
+						return onEnd && onEnd(nbResults);
+					}
 					callback.apply(null,arguments);
 					nbResults++;
 					this.next(_callback);
@@ -194,6 +197,7 @@ S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend(
 		forEachResults: function(callback,onEnd){
 			var nbResults = 0;
 			this._results.forEach(onEnd ? function(result){ nbResults++; callback.call(null,result); } : callback); //TODO to Model
+			this.close();
 			onEnd && onEnd(nbResults);
 		},
 		forEach: function(callback,onEnd){

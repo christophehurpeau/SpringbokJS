@@ -233,7 +233,6 @@
 				return position;
 			},
 			top: function( position, $within, ofDimensions, collision ) {
-				console.log('within : ',$within);
 				var withinOffset = $within.prop('offsetTop'),
 					outerHeight = $within.prop('offsetHeight'),
 					collisionPosTop = position - collision.marginTop,
@@ -241,38 +240,31 @@
 					overBottom = collisionPosTop + collision.height - outerHeight - withinOffset,
 					newOverBottom;
 	
-				// element is taller than within
 				if ( collision.height > outerHeight ) {
-					S.log('element is taller than within',collision.height +' > '+ outerHeight);
-					// element is initially over the top of within
+					//S.log('element is taller than within',collision.height +' > '+ outerHeight);
 					if ( overTop > 0 && overBottom <= 0 ) {
-						S.log('element is initially over the top of within');
+						//S.log('element is initially over the top of within');
 						newOverBottom = position + overTop + collision.height - outerHeight - withinOffset;
 						position += overTop - newOverBottom;
-					// element is initially over bottom of within
 					} else if ( overBottom > 0 && overTop <= 0 ) {
-						S.log('element is initially over bottom of within',overBottom +'> 0 && '+overTop+' <= 0');
+						//S.log('element is initially over bottom of within',overBottom +'> 0 && '+overTop+' <= 0');
 						position = withinOffset;
-					// element is initially over both top and bottom of within
 					} else {
-						S.log('element is initially over both top and bottom of within');
+						//S.log('element is initially over both top and bottom of within');
 						if ( overTop > overBottom ) {
 							position = withinOffset + outerHeight - collision.height;
 						} else {
 							position = withinOffset;
 						}
 					}
-				// too far up -> align with top
 				} else if ( overTop > 0 ) {
-					S.log('too far up -> align with top',overTop,withinOffset,collisionPosTop);
+					//S.log('too far up -> align with top',overTop,withinOffset,collisionPosTop);
 					position += overTop;
-				// too far down -> align with bottom edge
 				} else if ( overBottom > 0 ) {
-					S.log('too far down -> align with bottom edge',overBottom,collisionPosTop , collision , outerHeight , withinOffset);
+					//S.log('too far down -> align with bottom edge',overBottom,collisionPosTop , collision , outerHeight , withinOffset);
 					position -= overBottom;
-				// adjust based on position and margin
 				} else {
-					S.log('adjust based on position and margin');
+					//S.log('adjust based on position and margin');
 					position = Math.max( position - collisionPosTop, position );
 				}
 				return position;

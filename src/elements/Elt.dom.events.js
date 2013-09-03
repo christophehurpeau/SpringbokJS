@@ -52,6 +52,7 @@ UObj.extend(Elt,(function(){
 		},
 		
 		off:function(elt,eventNames,selector,callback){
+			if(!elt) return;
 			var $elt = S.Elt(elt), events=$elt._events;
 			
 			if(!events) return;

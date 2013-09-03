@@ -78,7 +78,7 @@ App.Router=function(r,rl){
 			UObj.forEach(route,function(lang,routeLang){
 				var paramsNames=[],specialEnd,specialEnd2,routeLangPreg;
 				
-				if(specialEnd=routeLang.endsWith('/*')) routeLangPreg=routeLang.substr(0,-2);
+				if(specialEnd=routeLang.endsWith('/*')) routeLangPreg=routeLang.slice(0,-2);
 				else if(specialEnd2=routeLang.endsWith('/*)?')) routeLangPreg=routeLang.slice(0,-4)+routeLang.slice(-2);
 				else routeLangPreg=routeLang;
 				
@@ -86,6 +86,7 @@ App.Router=function(r,rl){
 				if(specialEnd) routeLangPreg+='(?:\/(.*))?';
 				else if(specialEnd2) routeLangPreg=routeLangPreg.slice(0,-2)+'(?:\/(.*))?'+routeLangPreg.slice(-2);
 				
+				console.log('routeLangPreg=',routeLangPreg);
 				finalRoute[lang]=[new RegExp("^"+routeLangPreg.replace(/(\(\?)?\:([a-zA-Z_]+)/g,function(str,p1,p2){
 					if(p1) return str;
 					paramsNames.push(p2);
@@ -99,10 +100,11 @@ App.Router=function(r,rl){
 						}
 						return paramDefVal==='id' ? '([0-9]+)' : '('+paramDefVal+')';
 					}
-					if(UArray.has(['id'],p2)) return '([0-9]+)';
+					if(UArray.has('id uuid'.split(' '),p2)) return '([0-9a-zA-Z]+)';
 					return '([^\/]+)';
 				}) + (ext ? (ext==='html' ? '(?:\.html)?':'\.'+ext) : '')+"$"),
 					routeLang.replace(/(\:[a-zA-Z_]+)/g,'%s').replace(/[\?\(\)]/g,'').replace('/*','%s').trimRight()];
+				console.log('finalRoute[lang]=',finalRoute[lang]);
 				if(finalRoute[lang][1]!=='/') finalRoute[lang][1]=UString.trimRight(finalRoute[lang][1],'/');
 				if(paramsNames) finalRoute[':']=paramsNames;
 			});
@@ -119,8 +121,7 @@ App.Router.prototype={
 		S.log('router: find: "'+all+'"');
 		//S.log(routes);
 		UObj.forEach(routes,function(i,r){
-			//S.log('route: ',r);
-			//S.log('try: ', r[lang][0], r[lang][0].exec(all));
+			S.log('try: ', r, r[lang][0], r[lang][0].exec(all));
 			if(m=r[lang][0].exec(all)){
 				//console.log('match : ',m,r);
 				var c_a=r[0].split('.'),params={};
@@ -176,36 +177,37 @@ App.Router.prototype={
 			/*#/if*/
 		}
 		var options = S.isObj(UArray.last(params)) ? params.pop() : {};
-		if(params.ext) plus += '.'+params.ext;
+		if(options.ext) plus += '.'+options.ext;
 		else if(route[2] && route[2].ext) plus += '.'+route[2].ext;
-		if(params['?'] != null) plus += '?'+params['?'];
-		if(params['#'] != null) plus += '.'+params['#'];
+		if(options['?'] != null) plus += '?'+options['?'];
+		if(options['#'] != null) plus += '#'+options['#'];
 		
 		lang = params.lang || lang;
 		
 		if(!params.length) return (route[lang] || route._)[1]+ plus;
-		var url = (route === true ? this.getStringLink(lang,/*#if NODE*/entry,/*#/if*/ params) : UString.format((route[lang]||route._)[1], params.map(this.translate.bind(this,lang))));
+		var url = (route === true ? this.getStringLink(lang,/*#if NODE*/entry,/*#/if*/ params) : UString.vformat((route[lang]||route._)[1], params.map(this.translate.bind(this,lang))));
 		return (url==='/'?'/':UString.trimRight(url,'\/')) + plus;
 	},
 	getStringLink:function(lang,/*#if NODE*/entry,/*#/if*/params){
-		S.log([lang,/*#if NODE*/entry,/*#/if*/params,UString.explode(UString.trim(params,'/'),'/',3)]);
+		//S.log([lang,/*#if NODE*/entry,/*#/if*/params,UString.explode(UString.trim(params,'/'),'/',3)]);
 		var route = UString.explode(UString.trim(params,'/'),'/',3),
 			controller = route[0],
 			action = route[1] || DEFAULT.action,
 			params = route[2] || '';
-		S.log([route,controller,action,params]);
+		//S.log([route,controller,action,params]);
 		route = this.routes.get(/*#ifelse NODE*/entry||'main'/*#/if*/).get('/:controller(/:action/*)?');
-		S.log(route);
+		//S.log(route);
 		var froute = action === DEFAULT.action ? '/' + this.translate(lang,controller) : UString.format((route[lang]||route._)[1], this.translate(lang,controller), this.translate(lang,action), params ? '/' + params : '');
 		return froute + (route.ext && !froute.endsWith('.' + route.ext) ? '.' + route.ext : '');
 	},
 	translate:function(lang,string){
+		if(!string) return string;
 		return this.routesLangs.get('->' + lang).get(string.toLowerCase()) || string;
 	},
 	untranslate:function(lang,string){
 		/*#if DEV*/
 		if(!this.routesLangs.has(lang + '->')) throw new Error('Missing lang "'+lang+'"');
-		if(!this.routesLangs.get(lang + '->').has(string.toLowerCase())) throw new Error('Missing translation for string "'+string+'"');
+		if(!this.routesLangs.get(lang + '->').has(string.toLowerCase())) console.log('Missing translation for string "'+string+'"');
 		/*#/if*/
 		return this.routesLangs.get(lang + '->').get(string.toLowerCase()) || string;
 	}

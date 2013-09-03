@@ -2,14 +2,15 @@
 
 var fs=require('fs'), Preprocessor=require('../../../bin/commands/build/Preprocessor');
 
-# https://developer.mozilla.org/en-US/docs/Web/JavaScript/New_in_JavaScript
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/New_in_JavaScript
 
-# https://github.com/monolithed/ECMAScript-6
-# Used by all browsers except Firefox >= 25 (String.contains : Firefox 18, Map.prototype.forEach : Firefox 25)
+// https://github.com/monolithed/ECMAScript-6
+// Used by all browsers except Firefox >= 25 (String.contains : Firefox 18, Map.prototype.forEach : Firefox 25)
 var data='(function(global){'
 	+fs.readFileSync('../../../node_modules/springboktools/es6/String.js')+"\n"
 	+fs.readFileSync('../../../node_modules/springboktools/es6/Array.js')+"\n"
 	+fs.readFileSync('../../../node_modules/springboktools/es6/Map.js')+"\n"
+	+fs.readFileSync('../../../node_modules/springboktools/es6/Set.js')+"\n"
 	+fs.readFileSync('./es6_internal.js')+"\n"
 	+'})(window);';
 

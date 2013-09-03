@@ -79,9 +79,8 @@ global.App={
 		App.url = url;
 		try{
 			var route=this.router.find(url);
-			if(!route) throw HttpException.notFound();
-			S.log(route);
 			S.History.navigate(url);
+			if(!route) throw HttpException.notFound();
 			S.require('c/'+route.controller,function(){
 				try{
 					var c=C[route.controller];
@@ -104,6 +103,7 @@ global.App={
 		if(err instanceof HttpException){
 			S.log("APP : catch HttpException :",err);
 			if(App.loading) new FatalError('404 Not Found');
+			return;
 		}
 		S.log("APP : catch error :",err,err.stack);
 		throw err;
@@ -113,8 +113,8 @@ global.App={
 'get post put delete'.split(' ').forEach(function(mName){
 	App[mName] = function(){
 		var sAjax = S[mName].apply(S,arguments);
-		if(App.request.secure().isConnected())
-			sAjax.header('x-sauth',App.request.secure().getToken());
+		if(App.secure().isConnected())
+			sAjax.header('x-sauth',App.secure().getToken());
 		return sAjax;
 	};
 });

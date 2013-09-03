@@ -181,7 +181,8 @@
 				Elt.setStyle(e,property,value);
 			});
 			
-			Elt.setStyle(e,transitionstring,'all '+duration+'ms');
+			console.log(Object.keys(to).join(','));
+			Elt.setStyle(e,transitionstring,Object.keys(to).join(',')+' '+duration+'ms');//TODO add transitions propreties if transition already exists
 			//console.log('transition',e,UObj.map(modifiedProps,function(prop){ return prop[0]}));
 			
 			UObj.forEach(to,function(property,value){

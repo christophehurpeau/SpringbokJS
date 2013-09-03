@@ -95,7 +95,7 @@ UObj.extend(Elt,{
 		Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
 	},
 	hasClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
-		elt.classList.contains(_class);
+		return elt.classList.contains(_class);
 	} : function(elt,_class){
 		/*#if DEV*/
 		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
@@ -239,15 +239,18 @@ UObj.extend(Elt,{
 		Elt.removeClass(e,'hidden');
 	},
 	toggle:function(e,anim){
+		console.log('toggle',e,anim,Elt.hasClass(e,'hidden'));
 		if(anim){
-			if(Elt.hasClass('hidden')){
-				Elt.fadeIn(e);
+			if(Elt.hasClass(e,'hidden')){
+				Elt.setStyle(e,'opactity',0);
 				Elt.removeClass(e,'hidden');
+				Elt.fadeIn(e,anim);
 			}else{
-				Elt.fadeOut(e,function(){ Elt.addClass(e,'hidden'); });
+				Elt.fadeOut(e,anim,function(){ Elt.addClass(e,'hidden'); });
+				return true;
 			}
 		}else
-			return Elt.toggleClass('hidden');
+			return Elt.toggleClass(e,'hidden');
 	},
 	
 	
@@ -255,8 +258,11 @@ UObj.extend(Elt,{
 	
 	/** Completely removes element from the document */
 	remove:function(e){
-		if(e.parentNode != null)
+		if(e.parentNode != null){
+			$.disposeElements($.getAll(e,false));
+			$.disposeElement(e);
 			e.parentNode.removeChild(e);
+		}
 	},
 	
 	/* content */
@@ -268,7 +274,7 @@ UObj.extend(Elt,{
 	prependText:function(e,content){ Elt.prepend(e,Elt.doc(e).createTextNode(content)); },
 	empty:function(e){
 		if(e.nodeType == NodeTypes.ELEMENT)
-			$.disposeElements($.getAll(e,false))
+			$.disposeElements($.getAll(e,false));
 		while( e.firstChild )
 			e.removeChild( e.firstChild );
 	},

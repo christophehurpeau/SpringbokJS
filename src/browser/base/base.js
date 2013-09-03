@@ -39,11 +39,11 @@ UObj.extend(S,{
 	/*#/if*/
 	
 	t: function(string, args){
-		string = i18n.appTranslations[string] || string
+		string = i18n.appTranslations[string] || string;
 		return args ? UString.vformat(string,args) : string;
 	},
 	tC: function(string, args){
-		string = i18n.coreTranslations[string] || string
+		string = i18n.coreTranslations[string] || string;
 		return args ? UString.vformat(string,args) : string;
 	},
 	

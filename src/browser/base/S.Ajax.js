@@ -152,6 +152,7 @@ S.loadScript = function(src,options,callback,to){
 	s.src = src;
 	options && UObj.forEach(options,function(k,v){ s[k]=v; });
 	s.onload = s.onreadystatechange = function(){
+		console.log(src,this.readyState);
 		if(r || (this.readyState && this.readyState != 'complete' && this.readyState != 'loaded')) return;
 		r = true;
 		s.onload = s.onreadystatechange = null;

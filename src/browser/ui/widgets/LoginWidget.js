@@ -3,7 +3,7 @@ S.ui.LoginWidget = S.Elt.Widget.extend({
 		S.Elt.Widget.call(this);
 		
 		this.append(
-			this.$form = H.FormForModel('User').action('/site/login').setClass('w400 centered big')
+			this.$form = App.helpers.FormForModel('User').action('/site/login')
 				.fieldsetStart()
 					.input('_id').label('Username').placeholder('Enter your username').end()
 					.input('pwd').end()
@@ -18,6 +18,7 @@ S.ui.LoginWidget = S.Elt.Widget.extend({
 							pError.text('Authentification failed !');
 							onEnd();
 						}else{
+							var secure = App.secure();
 							secure.setConnected(data.userId,data.token);
 							secure.redirectAfterConnection();
 						}

@@ -2,6 +2,7 @@
 require('springboktools');
 
 require('springboktools/es6/Map');
+require('springboktools/es6/Set');
 
 require('springboktools/UObj');
 require('springboktools/UArray');

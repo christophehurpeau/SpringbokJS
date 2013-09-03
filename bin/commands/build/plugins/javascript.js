@@ -135,7 +135,7 @@ module.exports={
 		file.paths(function(err,paths){
 			if(err) return onEnd(err);
 			file.checkCancel(function(){
-				UArray.forEachAsync([
+				UArray.forEachSeries([//Async is too much
 							{path:paths.get('dev'),result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
 							{path:paths.get('prod'),result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
 							function(obj,onEnd){

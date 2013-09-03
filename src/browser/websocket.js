@@ -4,13 +4,11 @@ S.WebSocket = (function(){
 			console.log('S.WebSocket start');
 			S.loadScript('http/*#if PROD*/s/*#/if*/://' + window.location.hostname + ':/*#if app.websocketPort*//*#val app.websocketPort*//*#else*/3300/*#/if*//socket.io/socket.io.js',function(){
 				var socket = io.connect('http/*#if PROD*/s/*#/if*/://' + window.location.hostname + ':/*#if app.websocketPort*//*#val app.websocketPort*//*#else*/3300/*#/if*//');
-				var secure = window.App && App.request.secure && App.request.secure(), connectedFn, connectedFirstTime = true;;
-				console.log(secure);
+				var secure = window.App && App.secure && App.secure(), connectedFn, connectedFirstTime = true;;
 				socket.on('connect',function(){
 					if(connectedFirstTime){
 						if(secure){
-							alert('ok');
-							var secure = App.request.secure(), connectedFn;
+							var connectedFn;
 							secure.on('connected',connectedFn = function(){
 								socket.emit('auth',secure.getToken());
 							}).on('disconnected',function(){

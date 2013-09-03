@@ -85,13 +85,16 @@ if(!global.$){
 		return context.getElementsByTagName( tag || "*" );
 	};
 	
+	//https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Events/Creating_and_triggering_events
+	var disposeElementEvent = new Event('dispose');
 	$.disposeElements=function(elements){
 		Array.forEach(elements,function(elt){
-			elt.dispatchEvent($.disposeElements.event);
+			elt.dispatchEvent(disposeElementEvent);
 		});
 	};
-	//https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Events/Creating_and_triggering_events
-	$.disposeElements.event=new Event('dispose');
+	$.disposeElement=function(elt){
+		elt.dispatchEvent(disposeElementEvent);
+	};
 	
 	$.isWindow = function(obj){
 		return obj && obj.window == obj;

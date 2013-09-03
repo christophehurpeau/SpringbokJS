@@ -12,10 +12,12 @@ S.Elt=(function(){
 		this[0]=elt;
 		elt.$elt=this;
 		elt.addEventListener('dispose',function(){
-			this[0].$elt = undefined; // ie does not allow deletion of properties on elements.
-			Object.keys(this).forEach(function(key){
-				delete this[key];
-			}.bind(this));
+			setTimeout(function(){ //allow other dispose event listeners
+				this[0].$elt = undefined; // ie does not allow deletion of properties on elements.
+				Object.keys(this).forEach(function(key){
+					delete this[key];
+				}.bind(this));
+			}.bind(this),1);
 		}.bind(this),false);
 		/*#/if*/
 	};
@@ -28,6 +30,7 @@ S.Elt=(function(){
 		return elt.$elt || new Element(elt);
 		/*#/if*/
 	};
+	Elt.Element = Element;
 	
 	/*#if NODE*/
 	var _attrs=function(attrs){
@@ -99,6 +102,7 @@ S.Elt=(function(){
 	/*#else*/
 	Elt.Basic=Elt.WithContent=Element.extend({
 		ctor:function(){
+			/*#if DEV*/if(!this instanceof Element) throw new Error;/*#/if*/
 			Element.call(this,document.createElement(this.tagName));
 		}
 	});
@@ -180,8 +184,8 @@ S.Elt=(function(){
 	});
 	
 	/* one arg, return this */
-	('attrs setAttrs removeAttr id setClass addClass removeClass text html position'
-		+' fadeTo fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
+	('attrs setAttrs removeAttr id setClass addClass removeClass text html appendText prependText position'
+		+' toggle fadeTo fadeIn fadeOut slideDown slideUp').split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(arg1){ Elt[mName].call(null,this[0],arg1); return this; };
 		Elt.Array.prototype[mName]=function(arg1){ this._each(function(e){ Elt[mName].call(null,e,arg1); }); return this; };
 	});
@@ -191,7 +195,7 @@ S.Elt=(function(){
 		return elementOrString.nodeType ? elementOrString : (S.isString(elementOrString) ? Elt.parse(elementOrString) : elementOrString[0]);
 	};
 
-	'append prepend appendText prependText appendTo prependTo insertBefore insertAfter'.split(' ').forEach(function(mName){
+	'append prepend appendTo prependTo insertBefore insertAfter'.split(' ').forEach(function(mName){
 		Element.prototype[mName]=function(elementOrString){ Elt[mName].call(null,this[0],toNodeElt(elementOrString)); return this; };
 		Elt.Array.prototype[mName]=function(elementOrString){
 			if(this.length){

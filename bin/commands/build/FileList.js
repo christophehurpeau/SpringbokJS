@@ -26,6 +26,7 @@ var FileList = S.extClass(EventEmitter, {
 			this.cleanDirectories();
 			this.firstTime = true;
 			this.compilationId = false;
+			this.state = 'ready';
 			
 			this.on('change', this._change);
 			this.on('unlink', this._unlink);
@@ -87,7 +88,10 @@ var FileList = S.extClass(EventEmitter, {
 		if(this._resetReady());
 		if(this.compiling.length === 0)
 			this._timer = setTimeout(function(){
-				if(this.compiling.length===0) this.emit('ready');
+				if(this.compiling.length===0){
+					this.emit('ready');
+					this.state = 'ready';
+				}
 			}.bind(this),RESET_TIME);
 	},
 	_resetReady: function(){
@@ -119,6 +123,9 @@ var FileList = S.extClass(EventEmitter, {
 	_compile: function(file,compilationSource){
 		var iFile=UArray.findKeyBy(this.compiling,'path',file.path),
 		 callback=function(){
+		 	if(this.state !== 'compiling')
+		 		this.emit(this.state = 'compiling');
+		 	
 		 	this.compiling.push(file);
 			console.log("Compiling file: "+file.path+" ["+this.compiling.length+"]");
 			this._compileFile(file,function(error){

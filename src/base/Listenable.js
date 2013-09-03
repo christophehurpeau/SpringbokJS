@@ -17,12 +17,9 @@ S.Listenable=S.newClass({
 	on: function(event,listener){
 		var events = this._events || (this._events = new Map);
 		var callbacks;
-		if(!this._events.has(event)) this._events.set(event,callbacks = []);
-		else{
-			callbacks = this._events.get(event);
-			if(UArray.has(callbacks,listener)) return this;
-		}
-		callbacks.push(listener);
+		if(!this._events.has(event)) this._events.set(event,callbacks = new Set);
+		else callbacks = this._events.get(event);
+		callbacks.add(listener);
 		return this;
 	},
 	once: function(event,listener){
@@ -34,10 +31,10 @@ S.Listenable=S.newClass({
 		return this;
 	},
 	off: function(event,listener){
-		var callbacks = this.listeners(event),i;
-		if(callbacks && (i = callbacks.indexOf(listener))){
-			callbacks.splice(i,1);
-			if(callbacks.length === 0) delete this._events[evt];
+		var callbacks = this.listeners(event);
+		if(callbacks){
+			callbacks.remove(listener);
+			if(callbaks.size === 0) this._events['delete'](event);
 		}
 		return this;
 	},
@@ -48,11 +45,14 @@ S.Listenable=S.newClass({
 				events[i].apply(this,args);
 		}*/
 		var callbacks = this.listeners(event);
-		if(callbacks && callbacks.length!==0){
-			var i = callbacks.length,response,args=UArray.slice1(arguments);
-			while(i--){
-				response = callbacks[i].apply(this,args);
-				if(response===false) break;
+		if(callbacks){
+			var response, args=UArray.slice1(arguments);
+			var it = S.iterator(callbacks);
+			while(it.hasNext() && response !== false){
+				var next = it.next();
+				console.log(next);
+				response = next.apply(this,args);
+				//response = it.next().apply(this,args);
 			}
 		}
 		return this;

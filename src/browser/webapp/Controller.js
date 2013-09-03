@@ -5,7 +5,7 @@ App.Controller = (function(){
 		},
 		
 		dispatch:function(route,req){
-			if(this.beforeDispatch) this.beforeDispatch();
+			if(this.beforeDispatch) this.beforeDispatch(req);
 			route.sParams.unshift(route.nParams);
 			var m=this[UString.ucFirst(route.action)];
 			/*#if DEV*/ if(!m) console.log('This action doesn\'t exists: "'+route.action+'".'

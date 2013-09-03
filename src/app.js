@@ -224,9 +224,9 @@ App._start=function(port){
 								}else req.entry='main';
 							}else req.entry='main';
 						}else{
-							console.log('host= '+host);
+							console.log('host= '+host,Config.hostsEntry);
 						/*#/if*/
-						req.entry=Config.reversedEntries[host];
+						req.entry=Config.hostsEntry[host];
 						/*#if DEV*/
 						}
 						
