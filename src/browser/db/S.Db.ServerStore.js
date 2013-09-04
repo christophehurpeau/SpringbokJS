@@ -59,14 +59,11 @@ S.Db.ServerStore=S.newClass({
 			return r;
 		},
 		forEachResults: function(callback,onEnd){
-			var nbResults = 0, cursor = this;
+			var nbResults = 0, store = this;
 			(function _callback(){
-				cursor.next(function(key){
-					if(!key){
-						cursor.close();
-						return onEnd && onEnd(nbResults);
-					}
-					cursor.result(function(){
+				store.next(function(key){
+					if(!key) return onEnd && onEnd(nbResults);
+					store.result(function(){
 						callback.apply(null,arguments);
 						nbResults++;
 						_callback();
