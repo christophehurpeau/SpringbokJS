@@ -29,6 +29,10 @@ S.Db.ServerStore=S.newClass({
 	
 	toModel: function(result){
 		return result && new this.model(result,'unchanged');
+	},
+	
+	isAvailable: function(){
+		
 	}
 },{
 	Cursor:S.newClass({

@@ -44,6 +44,7 @@ if(!String.prototype.repeat) String.prototype.repeat=function(count){
             var method = String.prototype[methodName];
 
             String[methodName] = function (arg1) {
+            	
                 return method.apply(arg1, Array.prototype.slice.call(arguments, 1));
             };
         };
@@ -121,9 +122,10 @@ global.Map = global.Map || (function(){
 		iterator:{ value:function(){
 			return UObj.iterator(this.items);
 		} },
+		/*
 		forEach:{ value:function(callback){
 			UObj.forEach(this.items,callback,this);
-		} },
+		} },*/
 		toString:{ value: function() {
 			return '[Object Map]';
 		} }
@@ -139,6 +141,7 @@ if(!Map.prototype.forEach)
 	 * @param callbackFn {Function}
 	 */
 	Map.prototype.forEach=function(callbackfn){
+		console.log('Map.prototype.forEach');
 		/*var iter = this.iterator();
 		while(true){
 			var current;
@@ -146,8 +149,10 @@ if(!Map.prototype.forEach)
 			callbackfn.call(this,current[0],current[1]);
 		}*/
 		var it=S.iterator(this);
-		while(it.hasNext())
-			callbackfn.apply(this,it.next());
+		while(it.hasNext()){
+			var next = it.next();
+			callbackfn.call(this,next[1],next[0]);
+		}
 	};
 
 /* chrome pre-implementation is lacking of the iterator method. Must be activated in prefs (like node --harmony) so most users won't have any implementation '*/

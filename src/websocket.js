@@ -59,7 +59,7 @@ io.sockets.on('connection', function(socket){
 	var nextIdCursor = 1;
 	socket.on('db cursor',function(dbName,modelName,range,direction,response){
 		console.log('IO.socket ','db cursor',dbName,modelName,range,direction);
-		var idCursor = nextIdCursor++, cursor = M[modelName].find.all().cursor(function(cursor){
+		var idCursor = nextIdCursor++, cursor = M[modelName].restCursor(connected,function(cursor){
 			if(!cursor) return response();
 			socket.on('db cursor '+idCursor,function(instruction,response){
 				console.log('db cursor '+idCursor+' '+instruction);
@@ -77,7 +77,7 @@ io.sockets.on('connection', function(socket){
 	socket.on('db insert',function(dbName,modelName,data,response){
 		console.log('IO.socket ','db cursor',dbName,modelName,data);
 		var model = new M[modelName](data);
-		model.insert().success(function(){
+		model.restInsert(connected).success(function(){
 			response(this.model.data);
 		});
 	});

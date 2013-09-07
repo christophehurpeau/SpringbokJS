@@ -120,28 +120,33 @@ App.Router.prototype={
 		all=t.all='/'+all.replace(App.Router.routeStripper,'');
 		S.log('router: find: "'+all+'"');
 		//S.log(routes);
-		UObj.forEach(routes,function(i,r){
-			S.log('try: ', r, r[lang][0], r[lang][0].exec(all));
+		var it = S.iterator(routes);
+		
+		while(it.hasNext()){
+			var next = it.next(), i = next[0], r = next[1];
+		
+			S.log('try: ', r[lang][0], r[lang][0].exec(all));
 			if(m=r[lang][0].exec(all)){
 				//console.log('match : ',m,r);
-				var c_a=r[0].split('.'),params={};
+				var c_a=r[0].split('.'),params=new Map;
 				
 				if(r[':']){
 					m.shift(); // remove m[0];
 					var countMatches=m.length;
 					if(countMatches !== 0){
-						for(var k in r[':']) params[r[':'][k]]=m.shift();
+						r[':'].forEach(function(v){
+							params.set(v, m.shift());
+						});
 					}
-					var cAndA=['controller','action'];
-					for (var k in cAndA){
-						var v=cAndA[k];
+					'controller action'.split(' ').forEach(function(v,k){
 						if(c_a[k]==='!'){
-							if(params[v]){
-								c_a[k]=UString.ucFirst(t.untranslate(lang,params[v]));
-								delete params[v];
-							}else c_a[k]=DEFAULT[v];
+							if(!params.has(v)) c_a[k] = DEFAULT[v];
+							else{
+								c_a[k] = UString.ucFirst(t.untranslate(lang,params.get(v)));
+								params['delete'](v);
+							} 
 						}
-					}
+					});
 				}
 				
 				route=new App.Route({
@@ -152,9 +157,9 @@ App.Router.prototype={
 					sParams:m,//simple
 					ext:false
 				});
-				return false;
+				break;
 			}
-		});
+		}
 		//S.log('route=',route);
 		return route;
 	},

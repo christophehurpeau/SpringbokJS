@@ -1,6 +1,6 @@
 #!/usr/bin/node
 
-var fs=require('fs'), Preprocessor=require('../../../bin/commands/build/Preprocessor');
+var fs=require('fs'), Preprocessor=require('springbokjs-preprocessor');
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/New_in_JavaScript
 

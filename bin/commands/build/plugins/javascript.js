@@ -1,8 +1,8 @@
 var jshint=require('jshint').JSHINT;
-var fs=require('fs'), sysPath=require('path') ,Preprocessor=require('../Preprocessor'), UglifyJS=require('uglify-js');
+var fs=require('fs'), sysPath=require('path') ,Preprocessor=require('springbokjs-preprocessor'), UglifyJS=require('uglify-js');
 var diveSync=require('diveSync');
 
-const COMPILER_JAR='/var/www/springbok/core/libs/src/ClosureCompiler/_gclosure.jar';
+const COMPILER_JAR='/var/www/springbok/core/src/libs/ClosureCompiler/compiler.jar';
 module.exports={
 	type:'javascript',
 	extension:'js',
@@ -119,8 +119,8 @@ module.exports={
 			
 			var defs=(file.fileList.buildConfig && file.fileList.buildConfig.config) || {};
 			defs.WebApp=!!file.isWebAppEntry;
-			defs.DEV=true; defs.PROD=false; var devResult=Preprocessor(defs,data,file.isBrowser);
-			defs.DEV=false; defs.PROD=true; var prodResult=Preprocessor(defs,data,file.isBrowser);
+			defs.DEV=true; defs.PROD=false; var devResult=Preprocessor(defs,data,file.isBrowser,file.fullDirnamePath());
+			defs.DEV=false; defs.PROD=true; var prodResult=Preprocessor(defs,data,file.isBrowser,file.fullDirnamePath());
 			
 			if(data.match(/\/\*\s+\/?(NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD)\s+\*\//))
 				return callback('error match NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD');
@@ -285,6 +285,8 @@ module.exports={
 			
 			var content = fs.readFileSync(path,'utf-8');
 			if(lastChar === ',' && content.trim().slice(-1) !== ',') content += ',';
+			content = "/*#setfilename "+path+" */\n"
+					+"/*#setdirname "+sysPath.dirname(path)+" */\n" + content;
 			return this.includesBrowser(content,file,false,includes);
 		}.bind(this));
 		callback && callback(data,includes);

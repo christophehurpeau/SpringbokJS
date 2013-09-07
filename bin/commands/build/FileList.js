@@ -105,11 +105,6 @@ var FileList = S.extClass(EventEmitter, {
 		//type === 'Includes' && console.log(type, path, this.files.length);
 		var files = this.files
 			.filter(function(file){
-				(path === 'webapp/web/webapp.styl' || path === 'elements/Elt.dom.js')
-					 && console.log( file.path, !!(file.cache.dependencies && file.cache.dependencies[type]),
-						file.cache.dependencies && file.cache.dependencies[type] && file.cache.dependencies[type].length, 
-						file.cache.dependencies && file.cache.dependencies[type] && path in file.cache.dependencies[type],
-						file.cache.dependencies);
 				return file.cache.dependencies && file.cache.dependencies[type]; // file.cache.dependencies[type] is an object, not an array, but should be a Set.
 			});
 		//UArray.has(['Includes','Core'],type) && console.log('COMPILE DEPENDENT FILES: ',type, path, files.length, files.map(function(f){ return f.path; }));
@@ -146,7 +141,7 @@ var FileList = S.extClass(EventEmitter, {
 					console.log("Compiled file: "+file.path+' to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
 					this.compileDependentFiles(file.path,'app',compilationSource);
 					this.emit('compiled',file);
-					(file.path === 'webapp/web/webapp.styl' || file.path === 'webapp/webapp.js') && console.log(file.cache);
+					//(file.path === 'webapp/web/webapp.styl' || file.path === 'webapp/webapp.js') && console.log(file.cache);
 					this._checkReady();
 				}.bind(this));
 			}.bind(this));

@@ -5,7 +5,7 @@ var plugins = { all:[], compilers:[], linters:[], optimizers:[]}, callbacks = []
 function isPluginFor(path){
 	return function(plugin){
 		return (plugin.pattern||(plugin.extension&&new RegExp("\\."+plugin.extension+"$"))||/$.^/).test(path);
-	}
+	};
 }
 
 module.exports = {
@@ -29,7 +29,7 @@ module.exports = {
 		//callbacks.push(onCompile);
 		var callCompileCallbacks = function(generatedFiles){
 			callbacks.forEach(function(callback){ callback(generatedFiles); });
-		}
+		};
 	},
 	
 	find: function(path){
@@ -40,4 +40,4 @@ module.exports = {
 			optimizers: plugins.optimizers.filter(ispluginforpath)
 		};
 	}
-}
+};

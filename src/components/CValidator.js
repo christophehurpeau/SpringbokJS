@@ -68,7 +68,7 @@ module.exports={
 	requestMethods:{
 		sParam:function(name,num){
 			var r=this.route;
-			return r.nParams[name] || ( num && r.sParams[num-1] ) || this.query[name]; 
+			return r.nParams.get(name) || ( num && r.sParams[num-1] ) || this.query[name]; 
 		},
 		getOrPostParam:function(name){
 			return this.body[name]!==undefined ? this.body[name] : this.query[name];
@@ -80,4 +80,4 @@ module.exports={
 			return new ParamValidatorValid(this);
 		}
 	}
-}
+};
