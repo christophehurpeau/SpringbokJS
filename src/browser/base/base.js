@@ -25,7 +25,7 @@ includeCoreUtils('index');
 includeCoreUtils('UObj');
 includeCoreUtils('UArray');
 includeCoreUtils('UString/');
-includeCore('base/Listenable');
+includeCoreUtils('Listenable');
 includeCoreUtils('Callbacks/CallbacksOnce');
 
 UObj.extend(S,{

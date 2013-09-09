@@ -12,7 +12,7 @@ global.$={};
  */
 
 includeJsCore('enums/NodeTypes');
-includeJsCore('base/Listenable');
+includeCoreUtils('Listenable');
 
 
 if(!global.$){

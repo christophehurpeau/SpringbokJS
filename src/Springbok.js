@@ -13,7 +13,7 @@ require('springboktools/USecure');
 require('springboktools/UGenerator');
 
 
-require('./base/Listenable');
+require('springboktools/Listenable');
 
 S.log=console.log;//todo use CLogger
 

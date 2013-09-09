@@ -1,4 +1,4 @@
-includeJsCore('base/Listenable');
+includeCoreUtils('Listenable');
 
 S.Widget=(function(){
 	var registeredEventDispose = function(listenable){
