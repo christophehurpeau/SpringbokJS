@@ -1,4 +1,4 @@
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	staticUrl:function(url){
 		if(!url) url=WEB_URL;
 		if(url.indexOf('://')!==-1) return S.escapeUrl(url);

@@ -58,7 +58,7 @@ includeCore('elements/Form');
 		}
 	};
 	
-	S.extProto(S.Helpers,{
+	S.extPrototype(S.Helpers,{
 		Table:function(modelName,cols){
 			return new Table(this,modelName,cols);
 		}

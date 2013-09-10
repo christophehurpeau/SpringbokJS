@@ -1,5 +1,5 @@
 includeCore('elements/');
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	doctype:function(){
 		return (this._isIElt8=this.req.isIElt8())
 			? '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'

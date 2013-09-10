@@ -1,5 +1,5 @@
 includeCore('elements/');
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	menuTop:function(options,links){
 		return this.createMenu(options,links,'top');
 	},

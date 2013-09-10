@@ -37,7 +37,7 @@ S.Db=(function(){
 
 	
 	if(window.indexedDB){
-		S.extProto(Db,{
+		S.extPrototype(Db,{
 			init:function(){
 				if(this.db) throw new Error;
 				S.require.increment();
@@ -142,7 +142,7 @@ S.Db=(function(){
 			}
 		});
 	}else{
-		S.extProto(Db,{
+		S.extPrototype(Db,{
 			init:function(){
 				
 			}

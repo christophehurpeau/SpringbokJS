@@ -5,7 +5,7 @@ var http=require('http');
 	if(http.ServerResponse.prototype[methodName]) throw new Error('http.ServerResponse.prototype.'+methodName+' already exists !');
 });
 /*#/if*/
-S.extProto(http.ServerResponse,{
+S.extPrototype(http.ServerResponse,{
 	notFound:function(){ this.exception(HttpException.notFound()); },
 	exception:function(err){
 		if(err instanceof HttpException){

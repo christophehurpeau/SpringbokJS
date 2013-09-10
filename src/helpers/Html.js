@@ -1,5 +1,5 @@
 includeCore('elements/');
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	
 	link:function(title,url,options){
 		options=options||{};

@@ -5,7 +5,7 @@ S.Helpers=function(app,controller){ this.controller=controller; this.req=control
 S.Helpers=function(router,req){ this.router=router; this.req=req };
 /*#/if*/
 
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	/*#if NODE */
 	
 	/* https://github.com/jed/locale/blob/master/src/index.coffee */

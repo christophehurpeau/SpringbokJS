@@ -1,7 +1,7 @@
 includeCore('browser/base/S.store');
 
 App.secure = function(){ return App.request.secure(); };
-S.extProto(App.Request,{
+S.extPrototype(App.Request,{
 	configurable:{
 		secure: function(){
 			var data,

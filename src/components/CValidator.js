@@ -2,7 +2,7 @@ var Validator = require('validator').Validator;
 
 /* https://gist.github.com/752126 */
 
-S.extProto(Validator,{
+S.extPrototype(Validator,{
 	validParams:function(){this.error=function(){ throw HttpException.notFound();};},
 	error:function(msg){this._errors.push(msg);},
 	getErrors:function(){return this._errors;},

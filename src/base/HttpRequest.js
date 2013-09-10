@@ -1,5 +1,5 @@
 var http=require('http');
-S.extProto(http.IncomingMessage,{
+S.extPrototype(http.IncomingMessage,{
 	lang:'en',//TODO lang
 	
 	ieVersion:function(){

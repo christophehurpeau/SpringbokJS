@@ -106,7 +106,7 @@ S.Form=S.Elt.WithContent.extend({
 	/*#/if*/
 });
 
-S.extProto(S.Helpers,{
+S.extPrototype(S.Helpers,{
 	FormPost:function(){ return new S.Form(this,'post'); },
 	FormGet:function(){ return new S.Form(this,'get'); },
 	FormForModel:function(modelName,name,value){ return (new S.Form(this,'post')).setModelName(modelName,name,value); }

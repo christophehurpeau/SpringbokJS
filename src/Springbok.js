@@ -66,7 +66,7 @@ global.App={
 		return require('./'+path);
 	},
 	loadComponent:function(component){
-		S.extProto(http.IncomingMessage,component.requestMethods);
+		S.extPrototype(http.IncomingMessage,component.requestMethods);
 	},
 	
 	_init:function(){
