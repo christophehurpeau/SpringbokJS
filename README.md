@@ -1,8 +1,12 @@
 ## Dependencies
 
-  * **imagemagick** - in debian based distribution install with
+  * **imagemagick** and **pngcrush** - in debian based distribution install with
   
-        apt-get install imagemagick
+        apt-get install imagemagick pngcrush
+  
+  or
+  
+        sudo apt-add-repository ppa:christophe-hurpeau/springbok && sudo apt-get update && sudo apt-get install springbok-js
 
   * **nodejs** - in ubuntu based distribution install with
 

@@ -1,7 +1,7 @@
 {
 	"name":"springbokjs",
 	"description":"Springbok JS Framework",
-	"version":"0.0.20",
+	"version":"0.0.21",
 	"homepage":"springbokjs.org",
 	"repository":{
 		"type": "git",
@@ -16,7 +16,7 @@
 	"dependencies":{
 		"springbokjs-utils":">=0.2.2",
 		"springbokjs-preprocessor":">=0.0.1",
-		"springbokjs-stylus-sprites":">=0.0.4",
+		"springbokjs-stylus-sprites":">=0.0.5",
 		"springbokjs-logger":">=0.0.1",
 		
 		"chokidar":">=0.4.0",
