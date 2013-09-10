@@ -15,7 +15,9 @@ require('springbokjs-utils/UGenerator');
 
 require('springbokjs-utils/Listenable');
 
-S.log=console.log;//todo use CLogger
+require('springbokjs-logger/console');
+
+S.log=console.log;//todo use logger
 
 
 
@@ -31,8 +33,17 @@ process.on('uncaughtException',function(err){
 
 
 var http = require('http');
+var logger = new S.LoggerConsole;
+logger._prefix = '[app] ';
 
 global.App={
+	logger: logger,
+	info: logger.info.bind(logger),
+	warn: logger.warn.bind(logger),
+	error: logger.error.bind(logger),
+	fatal: logger.fatal.bind(logger),
+	debug: logger.debug.bind(logger),
+	
 	behaviours:[],
 	init:function(dir){
 		dir += '/';
@@ -56,7 +67,7 @@ global.App={
 		App.views.layouts={};
 		
 		Config.helpers && Config.helpers.forEach(function(helperName){
-				require('./helpers/'+helperName); })
+				require('./helpers/'+helperName); });
 	},
 	config:function(path){
 		return UFiles.readYamlSync(this.appDir+'config/'+path+'.yml');

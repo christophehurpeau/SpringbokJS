@@ -1,18 +1,20 @@
 db.add('Todo',{
-	//parent:'Searchable', behaviours:['Child'],
-	
-	Fields:{
-		_id:[String],
-		name:[String,{required:true}],
-		done:[Boolean]
+	static:{
+		//parent:'Searchable', behaviours:['Child'],
+		
+		Fields:{
+			_id:[String],
+			name:[String,{required:true}],
+			done:[Boolean]
+		},
+		
+		create:function(name,callback){
+			var todo=new this;
+			todo.set('name',name);
+			callback(todo,todo.insert());
+		}
 	},
 	
-	create:function(name,callback){
-		var todo=new this;
-		todo.set('name',name);
-		callback(todo,todo.insert());
-	}
-},{
 	done:function(){
 		this.set('done',true);
 		this.updateWait(function(){

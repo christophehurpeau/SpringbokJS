@@ -2,7 +2,7 @@ includeCore('enums/keyCodes');
 S.require('vL/default','m/todos',function(){
 	var UlContainer=S.Form.extend({
 		tagName:'ul', _tagContainer:'li',
-	})
+	});
 	
 	App.Controller('Site',{
 		Index:App.Controller.Action(function(req,H){

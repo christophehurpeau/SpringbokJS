@@ -53,7 +53,7 @@ App.Model=(function(){
 				
 				if(hasSyncEvent){
 					this.on('synced',function(){
-					S.log('synced');
+						S.log('synced');
 						this.nodes.forEach(function(node){
 							node.first('.state').empty();//TODO : gérer les cas où state !== sync-server.
 						});
@@ -121,15 +121,15 @@ App.Model=(function(){
 		},
 	},{
 		Request: Request,
-		extend:function(modelName,classProps,protoProps){
-			classProps.modelName=modelName;
+		extend:function(modelName,properties){
+			properties.static.modelName=modelName;
 			
 			/* */
 			'beforeInsert,beforeUpdate,beforeFind'.split(',').forEach(function(cName){
-				if(!classProps[cName]) classProps[cName]=[];
+				if(!properties.static[cName]) properties.static[cName]=[];
 			});
 			
-			var newModel=S.extClass(this,protoProps,classProps);
+			var newModel=S.extClass(this,properties);
 			newModel.init=Model.init.bind(null,newModel);
 			newModel.find=new Find(newModel);
 			newModel.keyPath=newModel.keyPath||'_id';
@@ -165,7 +165,7 @@ App.Model=(function(){
 	});
 	
 	var createF=function createF(Model){
-		var f=function(modelName,classProps,protoProps){ return Model.extend(modelName,classProps,protoProps); };
+		var f=function(modelName,properties/*#if DEV*/,arg3/*#/if*/){/*#if DEV*/if(arg3) throw new Error;/*#/if*/ return Model.extend(modelName,properties); };
 		f.Model=Model;
 		f.extend=function(){
 			var c=S.extClass.apply(Model,arguments);

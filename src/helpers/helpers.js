@@ -12,7 +12,8 @@ S.extPrototype(S.Helpers,{
 	locale:function(){
 		//TODO !!!!
 		return {
-			appTranslations: UFiles.readYamlSync(App.appDir+'locales/en.yml')
+			appTranslations: UFiles.existsSync(App.appDir+'locales/en.yml') && UFiles.readYamlSync(App.appDir+'locales/en.yml'),
+			coreTranslations: UFiles.readYamlSync(__dirname+'/../locales/en.yml')
 		};
 		var locale,accept=this.req.headers['accept-language'];
 		if(accept && (accept=accept.split(','))){

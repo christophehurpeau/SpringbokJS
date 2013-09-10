@@ -76,9 +76,9 @@ var Action=function(args,route,action){
 
 module.exports = (function(){
 	var createF=function createF(Controller){
-		var f=function(classProps,protoProps){
-			if(!protoProps){ protoProps=classProps; classProps=undefined; }
-			return Controller.extend(protoProps,classProps);
+		var f=function(properties/*#if DEV*/,arg3/*#/if*/){
+			/*#if DEV*/if(arg3) throw new Error;/*#/if*/ 
+			return Controller.extend(properties);
 		};
 		f.Controller=Controller;
 		f.Action=Action;

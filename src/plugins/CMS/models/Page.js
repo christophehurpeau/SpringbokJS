@@ -1,25 +1,26 @@
 App.Model('Page',{
-	parent:'Searchable', behaviours:['Child'],
+	static:{
+		parent:'Searchable', behaviours:['Child'],
+		
+		Fields:{
+			content:[String]
+		},
+		
+		beforeInit:function(){
+			App.models.Searchable.types.Project = 2;
+		},
 	
-	Fields:{
-		content:[String]
+		onModified:function(pageId,deleted){
+			//deleted ? VPage::destroy($pageId) : VPage::generate($pageId);
+			//ACSitemapPages::generate();
+		},
+		internalLink:function(id,onEnd){
+			M.Page.FindValue('slug',{id:id},function(slug){
+				var page=new M.Page({id:id,slug:slug});
+				onEnd(page.link());
+			});
+		}
 	},
-	
-	beforeInit:function(){
-		App.models.Searchable.types.Project = 2;
-	},
-
-	onModified:function(pageId,deleted){
-		//deleted ? VPage::destroy($pageId) : VPage::generate($pageId);
-		//ACSitemapPages::generate();
-	},
-	internalLink:function(id,onEnd){
-		M.Page.FindValue('slug',{id:id},function(slug){
-			var page=new M.Page({id:id,slug:slug});
-			onEnd(page.link());
-		});
-	}
-},{
 	beforeUpdate:function(onEnd){
 		if(this.data.slug){
 			this.self.FindValue('slug',{id:this.data._id},function(oldSlug){
@@ -36,6 +37,4 @@ App.Model('Page',{
 		}
 		onEnd();
 	},
-},{
-	
 });

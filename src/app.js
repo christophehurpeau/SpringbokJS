@@ -103,7 +103,7 @@ App._start=function(port){
 	
 	async.series([
 		function(onEnd){
-			console.log('Loading controllers...');
+			App.debug('Loading controllers...');
 			forEachDir('controllers',null,onEnd,function(dir,path,entryName){
 				var name = path.slice(dir.length+1,-3), c = require(path);
 				//if(S.isFunc(c)) c=c(t);
@@ -112,10 +112,10 @@ App._start=function(port){
 			});
 		},
 		function(onEnd){
-			S.log('Loading views...');
+			App.debug('Loading views...');
 			forEachDir('views','ejs',onEnd,function(dir,path,entryName){
 				var name=path.slice(dir.length+1,-4);
-				S.log('Loading view: '+name);
+				App.debug('Loading view: '+name);
 				if(t.views[entryName][name]===undefined){
 					var fn=require(path);
 					t.views[entryName][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); };
@@ -123,10 +123,10 @@ App._start=function(port){
 			});
 		},
 		function(onEnd){
-			S.log('Loading layouts...');
+			App.debug('Loading layouts...');
 			forEachDir('viewsLayouts','ejs',onEnd,function(dir,path,entryName){
 				var name= entryName+'/'+path.slice(dir.length+1,-4);
-				S.log('Loading layout: '+name);
+				App.debug('Loading layout: '+name);
 				if(t.views['layouts'][name]===undefined){
 					var fn=require(path);
 					t.views['layouts'][name]=function(H,locals){ return fn(H,locals,ejs.filters,ejsUtils.escape); };
@@ -134,39 +134,39 @@ App._start=function(port){
 			});
 		},
 		function(onEnd){
-			S.log('Creating db connections...');
+			App.debug('Creating db connections...');
 			S.Db.init(onEnd);
 		},
 		function(onEnd){
-			S.log('Loading models...');
+			App.debug('Loading models...');
 			forEachDir('models',null,onEnd,function(dir,path){
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
-				S.log('Loading model: '+name);
+				App.debug('Loading model: '+name);
 				//if(S.isFunc(c)) c=c(t);
 				if(t.models[name]===undefined) t.models[name]=c;
 				else t.PModels[name]=c;
 			});
 		},
 		function(onEnd){
-			S.log('Initializing models...');
+			App.debug('Initializing models...');
 			//series because Parent/Child
 			UObj.forEachSeries(t.models,function(modelName,model,onEnd){
-				S.log('Initialize model: '+modelName);
+				App.debug('Initialize model: '+modelName);
 				//model.init(onEnd);
 				model.beforeInit && model.beforeInit();
 				model.init(function(){
-					S.log('Initialize model: '+modelName+' ended');
+					App.debug('Initialize model: '+modelName+' ended');
 					onEnd.apply(null,arguments);
 				});
 			},function(){
-				S.log('Models initialized');
+				App.debug('Models initialized');
 				onEnd();
 			});
 		},
 		
 		function(onEnd){
-			console.log(t.views);
-			console.log(t.controllers);
+			App.debug(t.views);
+			App.debug(t.controllers);
 			controllers=views=models=undefined;
 			
 			
@@ -224,7 +224,7 @@ App._start=function(port){
 								}else req.entry='main';
 							}else req.entry='main';
 						}else{
-							console.log('host= '+host,Config.hostsEntry);
+							App.debug('host= '+host,Config.hostsEntry);
 						/*#/if*/
 						req.entry=Config.hostsEntry[host];
 						/*#if DEV*/
@@ -256,7 +256,7 @@ App._start=function(port){
 				});
 				
 				app.listen(port,/*'localhost',*/function(){
-					console.log((new Date()).toTimeString().split(' ')[0] + " Listening on port "+port);
+					App.info("Listening on port "+port);
 					/*#if DEV*/
 					var notify = require('notify-send');
 					//notify-send "Volume" -i /usr/share/notify-osd/icons/gnome/scalable/status/notification-audio-volume-high.svg -h int:value:100 -h string:synchronous:volume

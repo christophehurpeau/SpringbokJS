@@ -36,7 +36,7 @@ App.Controller = (function(){
 		var f=function(controllerName,props){
 			/*#if DEV*/if(!S.isString(controllerName)) throw new Error('New Controller: first arg is the name, second is the object containing the methods');/*#/if*/
 			var o=C[controllerName]=Object.create(Controller);
-			UObj.extend(o,props);
+			S.defineProperties(o,props);
 			o.name=controllerName;
 			
 		};
