@@ -1,4 +1,4 @@
-require('springboktools/UString/normalize');
+require('springbokjs-utils/UString/normalize');
 /*#ifelse NODE*/(module.exports||S.behaviours.Slug)/*#/if*/=function(model,onEnd){
 	model.Fields.slug=[String];
 	model.beforeInsert.push(function(data,onEnd){

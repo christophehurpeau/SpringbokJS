@@ -1,4 +1,4 @@
-require('springboktools/UString/normalize');
+require('springbokjs-utils/UString/normalize');
 /*#ifelse NODE*/(module.exports||S.behaviours.Normalize)/*#/if*/=function(model,onEnd){
 	model.Fields.normalized=[String];
 	model.beforeInsert.push(function(data,onEnd){

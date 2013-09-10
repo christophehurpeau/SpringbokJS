@@ -1,19 +1,19 @@
 
-require('springboktools');
+require('springbokjs-utils');
 
-require('springboktools/es6/Map');
-require('springboktools/es6/Set');
+require('springbokjs-utils/es6/Map');
+require('springbokjs-utils/es6/Set');
 
-require('springboktools/UObj');
-require('springboktools/UArray');
-require('springboktools/UString/UString');
-require('springboktools/UFiles');
-require('springboktools/UDebug');
-require('springboktools/USecure');
-require('springboktools/UGenerator');
+require('springbokjs-utils/UObj');
+require('springbokjs-utils/UArray');
+require('springbokjs-utils/UString/UString');
+require('springbokjs-utils/UFiles');
+require('springbokjs-utils/UDebug');
+require('springbokjs-utils/USecure');
+require('springbokjs-utils/UGenerator');
 
 
-require('springboktools/Listenable');
+require('springbokjs-utils/Listenable');
 
 S.log=console.log;//todo use CLogger
 

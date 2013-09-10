@@ -263,7 +263,7 @@ module.exports={
 			
 			var path;
 			if(from === 'Core') path = CORE_SRC;
-			else if(from === 'CoreUtils') path = CORE_MODULES + 'springboktools/';
+			else if(from === 'CoreUtils') path = CORE_MODULES + 'springbokjs-utils/';
 			else if(from === 'Plugin') path = 'TODO';
 			else if(from === 'Action') path = CORE_SRC + 'browser/actions/';
 			else{

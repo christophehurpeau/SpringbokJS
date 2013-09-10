@@ -1,11 +1,11 @@
-require('springboktools');
-require('springboktools/es6/Map');
-require('springboktools/es6/Set');
-require('springboktools/UObj');
-require('springboktools/UArray');
-require('springboktools/UString/UString');
-require('springboktools/UFiles');
-require('springboktools/UExec');
+require('springbokjs-utils');
+require('springbokjs-utils/es6/Map');
+require('springbokjs-utils/es6/Set');
+require('springbokjs-utils/UObj');
+require('springbokjs-utils/UArray');
+require('springbokjs-utils/UString/UString');
+require('springbokjs-utils/UFiles');
+require('springbokjs-utils/UExec');
 
 var sysPath = require('path'), net = require('net');
 var portscanner = require('portscanner');
