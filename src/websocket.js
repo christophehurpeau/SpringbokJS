@@ -50,21 +50,21 @@ io.sockets.on('connection', function(socket){
 		}
 		var headers = UObj.clone(socket.handshake.headers);
 		headers['x-sauth'] = authToken;
-		authorization(headers,function(err,connected){
-			connected = connected;
+		authorization(headers,function(err,_connected){
+			connected = _connected;
 			!connected && socket.emit('authfailed');
 		});
 	});
 	
 	var nextIdCursor = 1;
 	socket.on('db cursor',function(dbName,modelName,range,direction,response){
-		console.log('IO.socket ','db cursor',dbName,modelName,range,direction);
+		App.debug('IO.socket db cursor '+dbName+' '+modelName+' '+range+' '+direction+' ; connected='+connected);
 		var idCursor = nextIdCursor++, cursor = M[modelName].restCursor(connected,function(cursor){
 			if(!cursor) return response();
 			socket.on('db cursor '+idCursor,function(instruction,response){
-				console.log('db cursor '+idCursor+' '+instruction);
+				App.debug('db cursor '+idCursor+' '+instruction);
 				if(instruction==='next') cursor.next(function(key){ !key ? response() : cursor.result(function(object){ response(object); }); });
-				else if(instruction==='close'){ cursor.close(); response(); }
+				else if(instruction==='close'){ App.debug('IO.socket db cursor '+idCursor+' closed'); cursor.close(); response(); }
 			});
 			socket.on('db cursor '+idCursor+' advance',function(count){
 				cursor.advance(count);
@@ -75,7 +75,7 @@ io.sockets.on('connection', function(socket){
 	});
 	
 	socket.on('db insert',function(dbName,modelName,data,response){
-		console.log('IO.socket ','db cursor',dbName,modelName,data);
+		App.debug('IO.socket db cursor '+dbName+' ',modelName+' '+data);
 		var model = new M[modelName](data);
 		model.restInsert(connected).success(function(){
 			response(this.model.data);

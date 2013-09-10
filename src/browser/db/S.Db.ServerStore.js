@@ -63,11 +63,11 @@ S.Db.ServerStore=S.newClass({
 			return r;
 		},
 		forEachResults: function(callback,onEnd){
-			var nbResults = 0, store = this;
+			var nbResults = 0, cursor = this;
 			(function _callback(){
-				store.next(function(key){
-					if(!key) return onEnd && onEnd(nbResults);
-					store.result(function(){
+				cursor.next(function(key){
+					if(!key) return cursor.close(), onEnd && onEnd(nbResults);
+					cursor.result(function(){
 						callback.apply(null,arguments);
 						nbResults++;
 						_callback();
@@ -81,7 +81,7 @@ S.Db.ServerStore=S.newClass({
 			}.bind(this),onEnd);
 		},
 		close: function(callback){
-			S.WebSocket.emit('db cursor '+this._idCursor,'next',function(){
+			S.WebSocket.emit('db cursor '+this._idCursor,'close',function(){
 				callback && callback();
 			});
 			this._idCursor = this._store = undefined;
