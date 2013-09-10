@@ -1,6 +1,6 @@
 var fs=require('fs'),sysPath=require('path'), mkdirp=require('mkdirp'),
 	stylus=require('stylus'),stylusF=stylus.functions,
-	StylusSprites=require('springbok-stylus-sprites');
+	StylusSprites=require('springbokjs-stylus-sprites');
 
 function findBestFgColor(backgroundColor,blackColor,whiteColor){
 	return stylusF.hsl(backgroundColor).l > 60 ? (blackColor||stylus.nodes.RGBA(51,51,51,1/*'#333'*/))
