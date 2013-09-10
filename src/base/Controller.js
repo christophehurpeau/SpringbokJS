@@ -85,7 +85,7 @@ module.exports = (function(){
 		f.extend=function(){
 			var c=Controller.extend.apply(Controller,arguments);
 			return createF(c);
-		}
+		};
 		return f;
 	};
 	return createF(Controller);

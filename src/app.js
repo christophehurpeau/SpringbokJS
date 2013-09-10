@@ -240,7 +240,7 @@ App._start=function(port){
 						var controller=t.controllers[req.entry][route.controller];
 						if(!controller)
 							/*#if DEV*/
-							res.exception(HttpException.newInternalServerError('Controller Not Found: '+route.controller));
+							res.exception(HttpException.newInternalServerError('Controller Not Found: '+route.controller+"\n Known controllers: "+Object.keys(t.controllers[req.entry]).join(', ')));
 							/*#else*/
 							res.notFound();
 							/*#/if*/

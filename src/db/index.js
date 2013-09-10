@@ -29,6 +29,7 @@ S.Db=(function(){
 	
 	return S.defineProperties({},{
 		init:function(onEnd){
+			if(!Config.db) return onEnd();
 			UObj.forEachAsync(Config.db,function(dbName,dbConfig,onEnd){
 				var db=new Db(dbConfig.dbName,dbConfig);
 				dbs.set(dbName,db);

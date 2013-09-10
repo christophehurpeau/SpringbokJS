@@ -2,7 +2,7 @@
 var http=require('http');
 S.Helpers=function(app,controller){ this.controller=controller; this.req=controller.req;this.res=controller.res;this.router=app.router; };
 /*#else*/
-S.Helpers=function(router,req){ this.router=router; this.req=req };
+S.Helpers=function(router,req){ this.router=router; this.req=req; };
 /*#/if*/
 
 S.extPrototype(S.Helpers,{
@@ -10,6 +10,10 @@ S.extPrototype(S.Helpers,{
 	
 	/* https://github.com/jed/locale/blob/master/src/index.coffee */
 	locale:function(){
+		//TODO !!!!
+		return {
+			appTranslations: UFiles.readYamlSync(App.appDir+'locales/en.yml')
+		};
 		var locale,accept=this.req.headers['accept-language'];
 		if(accept && (accept=accept.split(','))){
 			for(var i,l=accept.length,a;i<l;i++){
@@ -76,8 +80,14 @@ S.extPrototype(S.Helpers,{
 	
 	/* translations */
 	
-	t:function(string){ return this.locale().appTranslations[string] || string; },
-	tC:function(string){ return string; },
+	t:function(string, args){
+		string = this.locale().appTranslations[string] || string;
+		return args ? UString.vformat(string,args) : string;
+	},
+	tC:function(string, args){
+		string = this.locale().coreTranslations[string] || string;
+		return args ? UString.vformat(string,args) : string;
+	},
 	tF:function(modelName,string){ return string; },
 	
 	

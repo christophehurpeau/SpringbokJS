@@ -1,3 +1,0 @@
-main:
-	"/": ["Site:Index"],
-	"/:controller(/:action/*)?": ["!:!"]

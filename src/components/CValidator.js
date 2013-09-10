@@ -6,7 +6,8 @@ S.extPrototype(Validator,{
 	validParams:function(){this.error=function(){ throw HttpException.notFound();};},
 	error:function(msg){this._errors.push(msg);},
 	getErrors:function(){return this._errors;},
-	hasErrors:function(){return !!this._errors;}
+	hasErrors:function(){return !!this._errors;},
+	isValid:function(){return !this._errors;}
 });
 
 var ParamValueValidator=S.newClass({
@@ -46,7 +47,10 @@ var ParamValueModelValidator=ParamValueValidator.extend({
 
 var ParamValidator=S.newClass({
 	ctor:function(req){ this.req=req; },
-	_error:function(name,key,value){this._errors[name]={error:key,value:value};},
+	_error:function(name,key,value){if(!this._errors) this._errors={}; this._errors[name]={error:key,value:value};},
+	getErrors:function(){return this._errors;},
+	hasErrors:function(){return !!this._errors;},
+	isValid:function(){return !this._errors;},
 	
 	str:function(name,num){ return new ParamValueStrValidator(this,name,this.req.sParam(name,num)); },
 	int:function(name,num){ return new ParamValueIntValidator(this,name,this.req.sParam(name,num)); },
