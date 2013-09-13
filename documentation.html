@@ -1,0 +1,16 @@
+---
+layout: default
+title: SpringbokJS - Documentation
+documentation: true
+---
+
+
+<h3>SpringbokJS Documentation</h3>
+{% for cat in site.categories %}
+	<h4>{{ cat[1][0].category }}</h4>
+	<ul>
+		{% for post in cat[1] %}
+			<li><a href="{{ post.url }}">{{ post.title }}</a></li>
+		{% endfor %}
+	</ul>
+{% endfor %}

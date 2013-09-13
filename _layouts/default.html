@@ -20,21 +20,35 @@
 		<h1 class="header">SpringbokJS</h1>
 		<p class="header">Springbok Framework for NodeJS</p>
 
-		<ul>
-		  <li><a class="buttons github" href="https://github.com/christophehurpeau/SpringbokJS">View On GitHub</a></li>
-		  <li class="download"><a class="buttons" href="https://github.com/christophehurpeau/SpringbokJS/tarball/master">Download TAR</a></li>
-		  <li class="download"><a class="buttons" href="https://github.com/christophehurpeau/SpringbokJS/zipball/master">Download ZIP</a></li>
-		</ul>
+		{% unless page.documentation %}
+			<ul class="buttons">
+			  <li><a class="buttons github" href="https://github.com/christophehurpeau/SpringbokJS">View On GitHub</a></li>
+			  <li class="download"><a class="buttons" href="https://github.com/christophehurpeau/SpringbokJS/tarball/master">Download TAR</a></li>
+			  <li class="download"><a class="buttons" href="https://github.com/christophehurpeau/SpringbokJS/zipball/master">Download ZIP</a></li>
+			</ul>
 
-		<p class="header">This project is maintained by <a class="header name" href="https://github.com/christophehurpeau">Christophe Hurpeau</a></p>
+			<p class="header">
+				<a class="header name" href="/documentation.html">Documentation</a>
+			</p>
 
+			<p class="header">This project is maintained by <a class="header name" href="https://github.com/christophehurpeau">Christophe Hurpeau</a></p>
+		{% else %}
+			<p class="header">
+				<a class="header name" href="/index.html">Home</a> - 
+				<a class="header name" href="/documentation.html">Documentation</a>
+			</p>
 
+			<ul class="docLinks">
+				{% for cat in site.categories %}
+				<li>{{ cat[1][0].category }}</li>
+				{% endfor %}
+			</ul>
+		{% endunless %}
 	</header>
 
 <div class="wrapper">
 	<section>
-					{{ content }}
-
+		{{ content }}
 	</section>
 </div>
 
