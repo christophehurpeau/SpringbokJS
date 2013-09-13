@@ -1,4 +1,4 @@
-var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp'), async=require('async');
+var fs=require('fs'), sysPath=require('path'), mkdirp=require('mkdirp');
 
 var regexpSubfolders=/^([a-zA-Z]+)\/(?:([a-zA-Z]+)\/)?(?:([a-zA-Z]+)\/)?/,webAppFolders={controllers:'c',models:'m',views:'v',viewsLayouts:'vL'};
 
@@ -42,7 +42,7 @@ module.exports = S.newClass({
 										this.compiledPath=this.compiler=false;
 										break;
 									}
-									this.isWebAppModel=true;
+									this.isWebAppDB=true;
 								case 'controllers':
 								case 'views':
 								case 'viewsLayouts':
@@ -74,6 +74,15 @@ module.exports = S.newClass({
 		return this.rootPath+(middleFolder||'src')+'/'+this.dirname;
 	},
 	
+	log: function(message){
+		this.fileList.logger.prefix().color('purple',this.path).add(' '+message).nl();
+	},
+	
+	forEachOutputs: function(callback,onEnd){
+		//TODO : SourceFileProcessing => forEachAsync
+		UObj.forEachSeries(this.fileList.outputsType,callback,onEnd);
+	},
+	
 	parse: function(fileContent,callback){
 		this.checkCancel(function(){
 			(this.compiler.parse || function(fileContent,callback){ callback(null,fileContent); })(fileContent,callback);
@@ -89,23 +98,26 @@ module.exports = S.newClass({
 					if(err) return callback(err);
 					if(i===l) return callback(null);
 					linters[i++].lint(file,data,callbackLinters);
-				}
+				};
 				callbackLinters(null,file,data);
 			}
 		});
 	},
-	optimize: function(file,devResult,prodResult,callback){
-		this.checkCancel(function(){
+	optimize: function(file,results,callback){
+		var t = this;
+		t.checkCancel(function(){
 			var optimizers=this.optimizers,l=optimizers.length;
-			if(l===0) callback(null,devResult,prodResult);
+			if(l===0) callback(null,results);
 			else{
-				var i=0,callbackOptimizer=function callbackOptimizer(err,devResult,prodResult){
+				var i=0,callbackOptimizer=function callbackOptimizer(err,results){
 					if(err) return callback(err);
-					if(i===l) return callback(null,devResult,prodResult);
-					if(err===false) return callback(false);
-					optimizers[i++].optimize(file,devResult,prodResult,callbackOptimizer);
-				}
-				callbackOptimizer(null,devResult,prodResult);
+					t.checkCancel(function(){
+						if(i===l) return callback(null,results);
+						if(err===false) return callback(false);
+						optimizers[i++].optimize(file,results,callbackOptimizer);
+					});
+				};
+				callbackOptimizer(null,results);
 			}
 		});
 	},
@@ -118,7 +130,7 @@ module.exports = S.newClass({
 	
 	checkCancel: function(callback){
 		if(this.cancel.isCanceled){
-			console.log('Compilation canceled for '+this.path);
+			this.log('Compilation canceled');
 			this.cancel.isCanceled=false;
 			callback=this.cancel.callback;
 			this.cancel.callback=undefined;
@@ -159,10 +171,10 @@ module.exports = S.newClass({
 					t.parse(fileContent,function(err,data){
 						if(err) return callbackError('Parsing',err);
 						try{
-							t._compile(data,function(err,devResult,prodResult,dependencies){
+							t._compile(data,function(err,results,dependencies){
 								if(err) return callbackError('Compiling',err);
 								if(err===false) return callback();
-								t.optimize(t,devResult,prodResult,function(err,devResultOptimized,prodResultOptimized){
+								t.optimize(t,results,function(err,optimizedResults){
 									if(err) return callbackError('Optimizing',err);
 									t.cache.error=null;
 									t.cache.compilationTime=Date.now();
@@ -172,14 +184,14 @@ module.exports = S.newClass({
 										return callback();
 									}
 									t.cache.dependencies=!dependencies || dependencies.app ? dependencies : {app:dependencies};
-									t.write(devResultOptimized,prodResultOptimized,callback);
+									t.write(optimizedResults,callback);
 								});
-							})
+							});
 						}catch(err){
 							return callbackError('Compiling',err);
 						}
 					});
-				})
+				});
 			});
 		}else{
 			t.copy(callback);
@@ -187,15 +199,15 @@ module.exports = S.newClass({
 	},
 	
 	paths: function(callback,results,write,destinationPath){
-		var paths=new Map;
-		async.forEach(['dev','prod'],function(dir,callback){
-			if(results && results[dir]==null) return callback();
-			var path=this.rootPath+dir+'/';
+		var paths=new Map, resultsIsString = S.isString(results);
+		UArray.forEachAsync(this.fileList.outputs,function(dir,callback){
+			if(results && !resultsIsString && results[dir]==null) return callback();
+			var path = this.rootPath+dir+'/';
 			this._write(path+this.compiledPathDirname,function(err){
 				if(err) return callback(err);
 				paths.set(dir,path=(path+(destinationPath||this.compiledPath)));
 				if(results && write){
-					fs.writeFile(path,results[dir],function(err){
+					fs.writeFile(path,resultsIsString ? results : results[dir],function(err){
 						if(err) return callback(err);
 						callback();
 					});
@@ -204,12 +216,12 @@ module.exports = S.newClass({
 		}.bind(this),function(err){ callback(err,paths); });
 	},
 	
-	write: function(devResultOptimized,prodResultOptimized,callback,destinationPath){
-		return this.paths(callback,{'dev':devResultOptimized,'prod':prodResultOptimized},true,destinationPath);
+	write: function(results,callback,destinationPath){
+		return this.paths(callback,results,true,destinationPath);
 	},
 	
 	remove: function(){
-		async.forEach(['dev','prod'],function(dir,callback){
+		UArray.forEachAsync(this.fileList.outputs,function(dir,callback){
 			var path = this.rootPath+dir+'/'+this.compiledPath;
 			fs.exists(path,function(exists){
 				exists && fs.unlink( path );
@@ -219,7 +231,7 @@ module.exports = S.newClass({
 	
 	copy: function(callback){
 		var srcPath=this.srcPath;
-		async.forEach(['dev','prod'],function(dir,callback){
+		UArray.forEachAsync(this.fileList.outputs,function(dir,callback){
 			this._write(this.rootPath+dir+'/'+this.compiledPathDirname,function(err){
 				if(err) return callback(err);
 				var input=fs.createReadStream(srcPath),

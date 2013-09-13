@@ -34,7 +34,7 @@ process.on('uncaughtException',function(err){
 
 var http = require('http');
 var logger = new S.LoggerConsole;
-logger._prefix = '[app] ';
+logger.setPrefix('[app] ');
 
 global.App={
 	logger: logger,
@@ -51,6 +51,7 @@ global.App={
 		App.appDir = dir+='dev/';
 		global.Config=this.config('_' + App.env);
 		App.router=new App.Router();
+		logger.setPrefix(Config.appName+' ','yellow');
 		
 		['controllers','PControllers','views','models','PModels'].forEach(function(v){ App[v]={}; });
 		global.M=App.models;

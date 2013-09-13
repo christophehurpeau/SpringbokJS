@@ -61,7 +61,7 @@ module.exports={
 				var configPath=file.fileList.rootPath+'src/'+file.webApp+'/config/',
 					config=UFiles.readYamlSync(configPath+'/config.yml');
 				
-				if(!config.name) config.name=file.fileList.config.projectName;
+				if(!config.name) config.name=file.fileList.config.appName;
 				if(!config.availableLangs) return callback('config.availableLangs must be set in your config file for webapp "'+file.webApp+'"');
 				config.allLangs=config.allLangs||config.availableLangs;
 				
@@ -73,7 +73,7 @@ module.exports={
 						+','+JSON.stringify(UFiles.readYamlSync(configPath+'routesLangs.yml'))+');')
 					+"\n"+data+"\n"
 					+'App.run();';
-			}else if(file.isWebAppModel){
+			}else if(file.isWebAppDB){
 				var folder=file.srcPath.slice(0,-3)+'/',folderName=file.basename.slice(0,-3);
 				diveSync(folder,function(err,path){
 					if(err) console.error(err.stack);
@@ -96,18 +96,25 @@ module.exports={
 			
 			data=data.replace('__SPRINGBOK_COMPILED_TIME__',Date.now());
 			
-			
-			UObj.forEach({
-				'/controllers/':/App\.[A-Za-z]*Controller\(\{/g,
-				'/models/':/App\.Model\(/g
-			},function(dirnameEndsWith,regexp){
-				if(file.dirname.endsWith(dirnameEndsWith)){
-					if(!file.isBrowser){
-						if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
-						data=data.replace(regexp,'module.exports=$&');
+			if(file.isWebApp){
+				if(file.isWebAppDB) data = data.replace(/App\.Model\(/g,'db.add(');
+			}else{
+				UObj.forEach({
+					'/controllers/':/App\.[A-Za-z]*Controller\(/g,
+					'/models/':/App\.Model\(/g
+				},function(dirnameEndsWith,regexp){
+					if(file.dirname.endsWith(dirnameEndsWith) || file.dirname === dirnameEndsWith.substr(1)){
+						if(!file.isBrowser){
+							if(data.startsWith('module.exports')) throw Error('module.exports is automaticly added by Springbok.');
+							data=data.replace(regexp,'module.exports=$&');
+						}
 					}
-				}
-			});
+					
+					if(file.isWebApp){
+						
+					}
+				});
+			}
 			
 			if(file.isBrowser){
 				if(file.isMainJs) data='(function(window,undefined){var baseUrl="/";'+data+'})(window);';
@@ -119,31 +126,39 @@ module.exports={
 			
 			var defs=(file.fileList.buildConfig && file.fileList.buildConfig.config) || {};
 			defs.WebApp=!!file.isWebAppEntry;
-			defs.DEV=true; defs.PROD=false; var devResult=Preprocessor(defs,data,file.isBrowser,file.fullDirnamePath());
-			defs.DEV=false; defs.PROD=true; var prodResult=Preprocessor(defs,data,file.isBrowser,file.fullDirnamePath());
 			
 			if(data.match(/\/\*\s+\/?(NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD)\s+\*\//))
 				return callback('error match NODE|BROWSER|RM|HIDE|REMOVE|NONE|NODE\|\|BROWSER|DEV\|\|PROD');
 			
-			callback(null,devResult,prodResult,includes);
+			var results = {};
+			file.forEachOutputs(function(output,type,onEnd){
+				defs.DEV = type==='dev';
+				defs.PROD = type==='prod';
+				results[output] = results[type] = Preprocessor(defs,data,file.isBrowser,file.fullDirnamePath());
+				onEnd();
+			},function(err){
+				callback(err,results,includes);
+			});
+			
 		});
 	},
 	
-	optimize:function(file,devResult,prodResult,onEnd){
-		if(!file.isBrowser) return onEnd(null,devResult,prodResult);
+	optimize:function(file,results,onEnd){
+		if(!file.isBrowser) return onEnd(null,results);
 		
 		file.paths(function(err,paths){
 			if(err) return onEnd(err);
 			file.checkCancel(function(){
-				UArray.forEachSeries([//Async is too much
-							{path:paths.get('dev'),result:devResult,defs:{DEV:true,PROD:false,NODE:false,BROWSER:true}},
-							{path:paths.get('prod'),result:prodResult,defs:{DEV:false,PROD:true,NODE:false,BROWSER:true}}],
-							function(obj,onEnd){
-					var path=obj.path, result=obj.result;
-					console.log('optimize: '+path);
+				var optimizedResults = {};
+				file.forEachOutputs(function(output,type,onEnd){
+					var defs = {DEV:type==='dev', PROD:type==='prod', NODE:false, BROWSER:true};
+					var path = paths.get(output);
+					var result = results[output];
+					
+					file.log('optimize');
 					var slicedPath=path.slice(0,-3),srcPath=slicedPath+'.src.js',oldIePath=slicedPath+'.oldIe.js';
 					
-					module.exports.callUglifyJs(file,module.exports.compileOldIE?'':result,obj.defs,true,function(err,ieResult){
+					module.exports.callUglifyJs(file,!module.exports.compileOldIE?'':result,defs,true,function(err,ieResult){
 						if(err) return onEnd(err);
 						fs.writeFile(srcPath,ieResult,function(err){
 							if(err) return onEnd(err);
@@ -152,13 +167,13 @@ module.exports={
 								if(err) return onEnd(err);
 								
 								/* now for modern browsers */
-								module.exports.callUglifyJs(file,result,obj.defs,false,function(err,modernResult){
+								module.exports.callUglifyJs(file,result,defs,false,function(err,modernResult){
 									if(err) return onEnd(err);
 									fs.writeFile(srcPath,modernResult,function(err){
 										if(err) return onEnd(err);
 										
-										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,obj.defs.DEV ? slicedPath+'.map' : false,
-											obj.defs.DEV ? function(err){
+										module.exports.callGoogleClosureCompiler(file,srcPath,path,false,defs.DEV ? slicedPath+'.map' : false,
+											defs.DEV ? function(err){
 													if(err) return onEnd(err);
 													fs.appendFile(path,"\n//@ sourceMappingURL=/"+file.compiledPath.slice(0,-3)+'.map?'+Date.now(),onEnd);
 												} : onEnd);
@@ -192,10 +207,10 @@ module.exports={
 				if(err.line){
 					var ErrorWithContent=function(err){ this.err=err; };
 					ErrorWithContent.prototype.toString = function(){
-						var currentLine=this.err.line-3;
+						var currentLine=this.err.line-5;
 						return this.err.toString()
 								+ "\n\n File Content :\n"
-								+ code.split("\n").slice(currentLine,this.err.line+4).map(function(l){ return currentLine++ +': '+ l; }).join("\n");
+								+ code.split("\n").slice(currentLine,this.err.line+6).map(function(l){ return currentLine++ +': '+ l; }).join("\n");
 					};
 	
 					err=new ErrorWithContent(err);
@@ -209,7 +224,7 @@ module.exports={
 		file.checkCancel(function(){
 			var dir=process.cwd();
 			process.chdir(sysPath.dirname(srcPath));
-			console.log('GoogleClosure: compiling '+srcPath+' to '+output);
+			file.log('GoogleClosure: compiling '+srcPath+' to '+output);
 			UExec.exec('java -jar '+ UExec.escape(COMPILER_JAR) +' --compilation_level SIMPLE_OPTIMIZATIONS --language_in=ECMASCRIPT5_STRICT'
 							+' --js '+ UExec.escape(sysPath.basename(srcPath))+' --js_output_file '+ UExec.escape(sysPath.basename(output))
 							+(sourceMap ? ' --create_source_map '+UExec.escape(sysPath.basename(sourceMap))+' --source_map_format=V3' : '')
@@ -268,7 +283,7 @@ module.exports={
 			else if(from === 'Action') path = CORE_SRC + 'browser/actions/';
 			else{
 				path = file.rootPath + 'src/';
-				inclPath = file.dirname + inclPath;
+				inclPath = inclPath.substr(0,1) === '/' ? inclPath.substr(1) : (file.dirname + inclPath);
 			}
 			
 			if(from === 'Action'){

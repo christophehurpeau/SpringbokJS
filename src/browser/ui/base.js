@@ -39,4 +39,8 @@ var keyCodes={
 	DOWN: 40
 };
 
+S.Elt.Fragment = S.Elt.Div.extend({
+});
+
 includeJsCore('browser/ui/Widget');
+

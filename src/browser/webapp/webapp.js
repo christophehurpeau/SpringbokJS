@@ -31,7 +31,7 @@ Object.defineProperty(global,'M',{ value:{} });
 
 
 /* App */
-global.App={
+global.App = {
 	loading:true,
 	
 	readyCallbacks:new CallbacksOnce(),
@@ -51,6 +51,12 @@ global.App={
 	},
 	
 	run:function(){
+		this.isOnline = navigator.onLine !== undefined && navigator.onLine;
+		if(window.addEventListener){
+			window.addEventListener('online',App.online.bind(App),false);
+			window.addEventListener('offline',App.offline.bind(App),false);
+		}
+		
 		this.lang=$.first('meta[name="language"]').attr('content');
 		this.topLayout.body=$.first('body');
 		this.request=new App.Request;
@@ -108,7 +114,21 @@ global.App={
 		S.log("APP : catch error :",err,err.stack);
 		throw err;
 	},
+	
+	online:function(){
+		if(!this.isOnline){
+			this.isOnline = true;
+			this.fire('online');
+		}
+	},
+	offline:function(){
+		if(this.isOnline){
+			this.isOnline = false;
+			this.fire('offline');
+		}
+	}
 };
+S.Listenable.extendObject(App);
 
 'get post put delete'.split(' ').forEach(function(mName){
 	App[mName] = function(){

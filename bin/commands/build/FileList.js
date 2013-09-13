@@ -3,7 +3,7 @@ var util = require("util"), sysPath = require('path'), fs = require("fs");
 var EventEmitter = require("events").EventEmitter;
 var SourceFile = require('./SourceFile.js');
 
-var RESET_TIME = 700; //ms
+var RESET_TIME = 400; //ms
 var FileList = S.extClass(EventEmitter, {
 	isCore: false,
 	
@@ -11,6 +11,25 @@ var FileList = S.extClass(EventEmitter, {
 		EventEmitter.call(this);
 		this.rootPath = rootPath;
 		this.reset();
+		
+		if(UFiles.existsSync(rootPath+'env'))
+			this.env = UFiles.readSync(rootPath+'env').toString();
+		else if(this instanceof require('./FileListCore')){
+			//core
+			var dirname = sysPath.dirname(rootPath);
+			if(sysPath.basename(dirname) === 'node_modules')
+				this.env = UFiles.readSync(sysPath.dirname(dirname)+'/env'); //take the env in the app
+			else
+				this.env = 'dev';
+		}
+		if(!this.env) throw new Error('Unable to find ./env');
+		this.env = this.env.trim();
+		
+		this.isDev = 'dev home prod'.split(' ').indexOf(this.env) !== -1;
+		this.isProd = !this.isDev;
+		this.outputs = [ this.isDev ? 'dev' : 'prod' ];
+		this.outputsType = {}; 
+		this.outputsType[ this.outputs[0] ] = this.isDev ? 'dev' : 'prod';
 	},
 	
 	init: function(){},
@@ -32,6 +51,9 @@ var FileList = S.extClass(EventEmitter, {
 			this.on('unlink', this._unlink);
 			this.once('ready',function(){
 				this.firstTime = false;
+				RESET_TIME = 1500;
+			}.bind(this));
+			this.on('ready',function(){
 				this.compilationId = false;
 			}.bind(this));
 			
@@ -86,16 +108,24 @@ var FileList = S.extClass(EventEmitter, {
 	//Called every time any file was changed. Emits `ready` event
 	_checkReady: function(){
 		if(this._resetReady());
-		if(this.compiling.length === 0)
-			this._timer = setTimeout(function(){
-				if(this.compiling.length===0){
-					this.emit('ready');
-					this.state = 'ready';
-				}
-			}.bind(this),RESET_TIME);
+		S.nextTick(function(){
+			if(this._resetReady());
+			if(this.compiling.length === 0)
+				this._timer = setTimeout(function(){
+					S.nextTick(function(){
+						if(this.compiling.length===0){
+							if(this.state !== 'ready') this.emit('ready');
+							this.state = 'ready';
+						}
+					}.bind(this));
+				}.bind(this),RESET_TIME);
+		}.bind(this));
 	},
 	_resetReady: function(){
-		if(this._timer) clearTimeout(this._timer);
+		if(this._timer){
+			clearTimeout(this._timer);
+			this._timer = undefined;
+		}
 	},
 	compileDependentFiles: function(path,type,compilationSource){
 		if(this.firstTime) return false;
@@ -122,12 +152,12 @@ var FileList = S.extClass(EventEmitter, {
 		 		this.emit(this.state = 'compiling');
 		 	
 		 	this.compiling.push(file);
-			console.log("Compiling file: "+file.path+" ["+this.compiling.length+"]");
+			file.log("Compiling [compilingLength: "+this.compiling.length+"]");
 			this._compileFile(file,function(error){
 				file.checkCancel(function(){
 					this.compiling.splice(this.compiling.indexOf(file),1);
 					if(error){
-						console.log('ERROR: '+file.path+': '+error);
+						file.log('ERROR: '+error);
 						this.errors[file.path]=error;
 						this.errorsCount++;
 						this._checkReady();
@@ -138,7 +168,7 @@ var FileList = S.extClass(EventEmitter, {
 						delete this.errors[file.path];
 					}
 					
-					console.log("Compiled file: "+file.path+' to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
+					file.log('Compiled to '+file.compiledPath+" [remaining: "+this.compiling.length+']');
 					this.compileDependentFiles(file.path,'app',compilationSource);
 					this.emit('compiled',file);
 					//(file.path === 'webapp/web/webapp.styl' || file.path === 'webapp/webapp.js') && console.log(file.cache);
@@ -149,7 +179,7 @@ var FileList = S.extClass(EventEmitter, {
 		
 		if(iFile===false) callback();
 		else{
-			console.log('[!] file '+file.path+' is already in compiling...');
+			file.log('[!] file is already in compiling...');
 			file.cancel(callback);
 		}
 	},
@@ -182,7 +212,8 @@ var FileList = S.extClass(EventEmitter, {
 				this.emit('changedNotCompilableFile',path);
 				this.compileDependentFiles(path);
 			}else{
-				this._compile(this._findByPath(path) || this._add(path,compilerLintersOptimizers));
+				var file = this._findByPath(path) || this._add(path,compilerLintersOptimizers);
+				S.nextTick(this._compile.bind(this,file));
 			}
 		}
 	},

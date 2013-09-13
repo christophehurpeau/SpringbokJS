@@ -1,14 +1,6 @@
 var io = require('socket.io').listen(Config.websocketPort || 3300/*#if PROD*/, { key:App.ssl.key, cert:App.ssl.cert/*, ca:App.ssl.intermediate*/ }/*#/if*/);
 var CSecureRest = require('./components/CSecureRest');
-
-var authorization = function(headers, callback){
-	CSecureRest.checkAuth(headers)
-		.fetch(function(connected){
-			callback(null, connected);
-		},function(){
-			callback('DB error');
-		});
-};
+var authorization = CSecureRest.checkAuth;
 
 io.configure(function(){
 	/* #if PROD */
@@ -24,7 +16,11 @@ io.configure(function(){
 	  , 'jsonp-polling'
 	]);
 	/* #/if */
-
+	
+	io.set('close timeout',120);
+	io.set('heartbeat timeout',120);
+	io.set('heartbeat interval',300);
+	
 	io.set('authorization',function(handshakeData, callback){
 		callback(null,true);
 		/*
@@ -38,8 +34,8 @@ io.configure(function(){
 
 var onConnection;
 
+//http://www.joezimjs.com/javascript/plugging-into-socket-io-advanced/
 io.sockets.on('connection', function(socket){
-	console.log(socket.handshake);
 	var connected = false;//socket.handshake._s_connected;
 	
 	socket.on('auth',function(authToken){
@@ -80,6 +76,10 @@ io.sockets.on('connection', function(socket){
 		model.restInsert(connected).success(function(){
 			response(this.model.data);
 		});
+	});
+	
+	socket.on('ping',function(){
+		App.debug('IO.socket ping');
 	});
 	
 	onConnection && onConnection(socket, function(){ return connected; });

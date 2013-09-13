@@ -17,7 +17,7 @@ includeCoreUtils('Listenable');
 
 if(!global.$){
 	global.$=function(selector,context){
-		// HANDLE: $(""), $(null), $(undefined), $(false)
+		// HANDLE: $(), $(""), $(null), $(undefined), $(false)
 		if( !selector ){
 			return '?';
 		}

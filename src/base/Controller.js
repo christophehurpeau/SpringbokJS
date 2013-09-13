@@ -34,9 +34,9 @@ var Controller = S.newClass({
 			loading=this.H.tC(notSupported ? 'Your browser is not supported.' : 'Loading...');
 		if(notSupported) loading='<a style="font-weight:bold" href="http://whatbrowser.org/">'+loading+'</a>';
 		
-		this.res.end('<!DOCTYPE html><html><head>'
+		this.res.end('<!DOCTYPE html><html manifest="/web/'+entry+'.appcache"><head>'
 			+this.H.metaCharset()+this.H.metaLanguage()
-			+'<title>'+Config.projectName+' - '+loading+'</title>'
+			+'<title>'+Config.appName+' - '+loading+'</title>'
 			+this.H.cssLink('/'+entry)
 			+(notSupported?'':
 				this.H.jsI18n('/'+entry)
@@ -56,7 +56,7 @@ var Controller = S.newClass({
 				)
 			)
 			+'</head><body>'
-			+'<div id="container"><div class="startloading"><b>'+Config.projectName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
+			+'<div id="container"><div class="startloading"><b>'+Config.appName+'</b><div id="jsAppLoadingMessage">'+loading+'</div></div></div>'
 			+'</body>'
 		//HDev::springbokBar();
 			+'</html>');

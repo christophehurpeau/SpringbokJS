@@ -83,26 +83,29 @@ S.Widget.Element = S.Widget.extend({
 });
 
 
-S.Elt.Widget = S.Elt.Div.extend({
+S.Elt.Widget = S.Elt.Fragment.extend({
 	ctor:function(){
-		S.Elt.Div.call(this);
+		S.Elt.Fragment.call(this);
 		this.setClass('widget');
 	},
 });
 S.Elt.WidgetBox = S.Elt.Widget.extend({
 	ctor:function(){
-		S.Elt.Div.call(this);
+		S.Elt.Fragment.call(this);
 		this.setClass('widget widgetBox');
 		this.registerEvents();
 	},
 	
 	registerEvents:function(){
-		$window.on('click',function(){
+		
+	},
+	hideOnDocumentClick:function(){
+		$document.on('click',function(){
 			this.hide();
 		}.bind(this));
 	}
 });
-S.Elt.WidgetWrapper = S.Elt.Div.extend({
+S.Elt.WidgetWrapper = S.Elt.Fragment.extend({
 	widget:function(){
 		return $.widget().appendTo(this).setOrigin(this);
 	},
@@ -116,4 +119,7 @@ $.widgetWrapper = function(){ return new S.Elt.WidgetWrapper; };
 
 S.Elt.Element.prototype.widget = function($elt){
 	return new S.Widget.Element($elt).dependsOn(this);
+};
+S.Elt.Element.prototype.widgetBox = function($elt){
+	return new S.Widget.Element($elt || $.widgetBox()).dependsOn(this);
 };

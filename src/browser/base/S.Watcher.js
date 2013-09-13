@@ -24,4 +24,4 @@ S.Watcher=S.Listenable.extend({
 			this._render(node);
 		});
 	},
-})
+});

@@ -3,8 +3,8 @@ App.Controller.Action(function(req,H){
 		var secure = req.secure();
 		if(secure.redirectIfConnected()) return;
 		
-		var loginWidget = new S.ui.LoginWidget();
-		loginWidget.$form.setClass('w400 centered big');
-		l.title('Login').content(loginWidget);
+		var loginFragment = new S.ui.LoginFragment();
+		loginFragment.$form.setClass('w400 centered big');
+		l.title('Login').content(loginFragment);
 	});
 })/*#if false*/;/*#/if*/

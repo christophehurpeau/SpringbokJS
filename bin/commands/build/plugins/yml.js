@@ -33,7 +33,7 @@ module.exports={
 							+'window.i18nc=window.i18n.coreTranslations='+JSON.stringify(coreTranslations)+';'
 							+'window.i18n.appTranslations='+JSON.stringify(data)+';';
 				
-				callback(null,jsTranslations,jsTranslations,{Core:'locales/'+file.lang+'.yml'});
+				callback(null,jsTranslations,{Core:'locales/'+file.lang+'.yml'});
 			});
 			
 			return;
@@ -43,6 +43,6 @@ module.exports={
 		if(file.path.startsWith('config/')) return yml.config(file,data,callback);
 		
 		
-		return callback(null,data,data);
+		return callback(null,YAML.stringify(data));
 	}
 };

@@ -21,55 +21,60 @@ module.exports={
 		
 		//includes
 		this.includes("@includeCore 'index';\n"+data,file,function(data,includes){
-			var pathDev=file.rootPath+'dev/'+file.compiledPathDirname,pathProd=file.rootPath+'prod/'+file.compiledPathDirname;
-			mkdirp.sync(pathDev);
-			mkdirp.sync(pathProd);
-			
-			/*
-			var sprite = new StylusSprite({
-				image_root:file.dirname,
-				output_file:file.basename+".png",
-				pngcrush:"pngcrush"
-			}),
-*/
-			var sprites=new StylusSprites({
-				prefix:file.basename==='main'?'':file.basename,
-				path:file.fullDirnamePath(),
-				outputPath:[pathDev+'/',pathProd+'/']
-			}),spritesfn=sprites.stylus();
-			
-			var compiler=stylus(data)
-				.set('filename',file.path)
-				.set('compress',false)
-				.set('firebug',false)
-				//.include(file.fileList.rootPath)
-				//.include(file.dirname)
-				//.use(nib())s
-				.define('sprite',function(name,image,options){
-					if(image.string.substr(0,8)==='COREIMG/') image.string=CORE_INCLUDES+'img/'+image.string.substr(8);
-					return spritesfn.call(this,name,image,options);
-			});
-		
-			//render
-			
-			
-			compiler.render(function(err,result){
+			var outputPath=[];
+			file.forEachOutputs(function(output,type,onEnd){
+				var path = file.rootPath + output + '/' +file.compiledPathDirname +'/';
+				outputPath.push(path);
+				mkdirp(path,onEnd);
+			},function(err){
 				if(err) return callback(err);
-				//var parent=file.dirname,regexp=t._dependencyRegExp;
-				/*var dependencies=data.split("\n")
-					.map(function(line){return line.match(regexp)})
-					.filter(function(match){return match&&match.length>0})
-					.map(function(match){return match[1]})
-					.filter(function(path){return !!path&&path!=='nib'})
-					.map(function(path){
-						if(sysPath.extname(path)!=='.'+t.extension) path+='.'+t.extension;
-						if(path.charAt(0)==='/') return sysPath.join(t.fileList.rootPath,path.substr(1));
-						return sysPath.join(parent,path);
-					});*/
+					
+				/*
+				var sprite = new StylusSprite({
+					image_root:file.dirname,
+					output_file:file.basename+".png",
+					pngcrush:"pngcrush"
+				}),
+	*/
+				var sprites=new StylusSprites({
+					prefix:file.basename==='main'?'':file.basename,
+					path:file.fullDirnamePath(),
+					outputPath:outputPath
+				}),spritesfn=sprites.stylus();
 				
-				sprites.build(result,function(err,result){
+				var compiler=stylus(data)
+					.set('filename',file.path)
+					.set('compress',false)
+					.set('firebug',false)
+					//.include(file.fileList.rootPath)
+					//.include(file.dirname)
+					//.use(nib())s
+					.define('sprite',function(name,image,options){
+						if(image.string.substr(0,8)==='COREIMG/') image.string=CORE_INCLUDES+'img/'+image.string.substr(8);
+						return spritesfn.call(this,name,image,options);
+				});
+			
+				//render
+				
+				
+				compiler.render(function(err,result){
 					if(err) return callback(err);
-					callback(null,result,result,includes);
+					//var parent=file.dirname,regexp=t._dependencyRegExp;
+					/*var dependencies=data.split("\n")
+						.map(function(line){return line.match(regexp)})
+						.filter(function(match){return match&&match.length>0})
+						.map(function(match){return match[1]})
+						.filter(function(path){return !!path&&path!=='nib'})
+						.map(function(path){
+							if(sysPath.extname(path)!=='.'+t.extension) path+='.'+t.extension;
+							if(path.charAt(0)==='/') return sysPath.join(t.fileList.rootPath,path.substr(1));
+							return sysPath.join(parent,path);
+						});*/
+					
+					sprites.build(result,function(err,result){
+						if(err) return callback(err);
+						callback(null,result,includes);
+					});
 				});
 			});
 		});

@@ -5,12 +5,17 @@ module.exports={
 	priority:-1,
 	
 	compile:function(file,data,callback){
-		try{
-			var contentDev=jade.compile(data,{compileDebug:true,pretty:false,client:true,filename:file.path}),
-				contentProd=jade.compile(data,{compileDebug:false,pretty:false,client:true});
-			callback(null,contentDev,contentProd);
-		}catch(error){
-			callback(error);
-		}
+		var results = {};
+		file.forEachOutputs(function(output,type,onEnd){
+			try{
+				results[output] = results[type] || 
+					(results[type] = jade.compile(data,{compileDebug:type==='dev',pretty:false,server:true}));
+				onEnd();
+			}catch(error){
+				onEnd(error);
+			}
+		},function(err){
+			callback(err,results);
+		});
 	},
-}
+};

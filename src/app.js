@@ -260,7 +260,7 @@ App._start=function(port){
 					/*#if DEV*/
 					var notify = require('notify-send');
 					//notify-send "Volume" -i /usr/share/notify-osd/icons/gnome/scalable/status/notification-audio-volume-high.svg -h int:value:100 -h string:synchronous:volume
-					notify.timeout(1000).notify(Config.projectName, 'Listening on port '+port);
+					notify.timeout(1000).notify(Config.appName, 'Listening on port '+port);
 					// run : firefox -P -no-remote "springbokjs" http://christophe.hurpeau.com:3131/ &
 					/*#/if*/
 					

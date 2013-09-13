@@ -1,10 +1,10 @@
-var sysPath=require('path'),fs=require('fs'),async=require('async'),diveSync=require('diveSync'),YAML=require('js-yaml');
+var sysPath=require('path'),fs=require('fs'),diveSync=require('diveSync'),YAML=require('js-yaml');
 YAML.stringify=YAML.dump;
 module.exports=function(file,data,callback){
 	var configname=file.path.slice(7,-4);
 	if(configname==='build'||configname==='tests'||configname==='_') return callback(null,null,null); //nothing
 	else if(false&&file.fileList.isPlugin()){
-		console.log("TODO");
+		file.log("TODO");
 	}else if(configname.charAt(0)==='_'){
 		var t=this, config=(data);
 		config = UObj.union(config,file.fileList.config);
@@ -23,8 +23,8 @@ module.exports=function(file,data,callback){
 		config.reversedEntries= {};
 		UObj.forEach(config.entries,function(k,v){ config.reversedEntries[v] = k; });
 		
-		var result=t.appConfig=YAML.stringify(config);
-		return callback(null,result,result,{app:{'config/_.json':1}});
+		var result=YAML.stringify(config);
+		return callback(null,result,{app:{'config/_.json':1}});
 	}else{
 		var result=(data)||{}, config=file.fileList.config,plugins=config.plugins, dependencies = { app:{}, Core:{} };
 		
@@ -42,7 +42,7 @@ module.exports=function(file,data,callback){
 			var onEnd=function(result,dependencies){
 				result=YAML.stringify(result);
 				//console.log(configname,result);
-				callback(null,result,result,dependencies);
+				callback(null,result,dependencies);
 			};
 			var defaultCoreConfigPath = CORE_SRC + 'defaultConfigs/'+configname+'.yml';
 			

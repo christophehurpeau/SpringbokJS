@@ -1,12 +1,16 @@
 var fs = require('fs'), diveSync = require('diveSync'), async = require('async'),
 		chokidar = require('chokidar'), PluginsList = require('./PluginsList');
 
+var Logger = require('springbokjs-logger/console');
 
 var SpringbokWatcher=  function(fileList,persistent,startServer,pluginsDir){
 	this.fileList = fileList;
 	this.persistent = persistent;
 	this.startServer = startServer;
 	this.pluginsDir = pluginsDir;
+	this.logger = new Logger();
+	fileList.logger = this.logger;
+	if(persistent) this.logger.setPrefix('watcher ','purpleBold');
 	
 	
 };
@@ -65,7 +69,7 @@ SpringbokWatcher.prototype = {
 				log+="\n"+path+": "+S.isObj(error) ? error.stack : error;
 			});
 		}
-		console.log(log);
+		this.logger.log(log);
 		if(this.persistent){
 			this.fileList.emit('done');
 		}else{
@@ -76,7 +80,7 @@ SpringbokWatcher.prototype = {
 		}
 	},
 	reload: function(reInstall){
-		console.log("RELOAD");
+		this.logger.log("RELOAD");
 		this.watcher.close();
 		this.close(function(){
 			this.fileList.reset(function(){
@@ -85,8 +89,8 @@ SpringbokWatcher.prototype = {
 		}.bind(this));
 	},
 	restartServer: function(){
-		console.log('='.repeat(80));
-		console.log('restartServer');
+		this.logger.log('='.repeat(80));
+		this.logger.log('restartServer');
 		this.server.restart();
 	},
 	close: function(callback){

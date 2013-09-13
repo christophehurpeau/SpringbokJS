@@ -3,11 +3,28 @@ var loadConfig=function(configName){
 			modelName:'User',login:'_id',password:'pwd',auth:'',authConditions:{}
 		},App.config(configName)));
 };
-var checkAuth = function(headers){
+var queryAuth = function(headers){
 	if(!headers['x-sauth']) return false;
 	return M.UserToken.find.value('user_id').query({
 		token: headers['x-sauth'],
 		userAgent: USecure.sha1WithSalt(headers['user-agent'])
+	});
+};
+
+var login = function(headers, user, callback){
+	if(!headers['user-agent']) return callback(false, false);
+	var query = {}, config = this.config;
+	
+	query[config.login] = user.get(config.login);
+	query[config.password] = this.hashPassword(user.get(config.password));
+	
+	user.self.find.value().field('_id').query(query).fetch(function(res){
+		if(!res) return callback(false, false);
+		M.UserToken.create( query[config.login], headers['user-agent'])
+			.success(function(item){
+				var token=this.model.get('token');
+				callback(query[config.login],token);
+			});
 	});
 };
 
@@ -19,7 +36,7 @@ var CSecureRest=S.newClass({
 	checkAuth:function(callback){
 		if(this.connected !== undefined) return callback(!! this.connected);
 		
-		checkAuth(this.req.headers)
+		queryAuth(this.req.headers)
 			.fetch(function(connected){
 				this.connected = connected || false;
 				callback(!!connected);
@@ -28,28 +45,11 @@ var CSecureRest=S.newClass({
 			});
 	},
 	
-	connect:function(user,callback){
-		if(!this.req.headers['user-agent']) callback(false);
-		var query = {}, config = this.self.config;
-		
-		query[config.login] = user.get(config.login);
-		query[config.password] = this.hashPassword(user.get(config.password));
-		
-		user.self.find.value().field('_id').query(query).fetch(function(res){
-			S.log('result=',res);
-			if(!res) return callback(false);
-			S.log('Create a new Token !');
-			M.UserToken.create( this.connected = query[config.login], this.req.headers['user-agent'])
-				.success(function(item){
-					var token=this.model.get('token');
-					S.log('UserToken.create: '+token);
-					callback(token);
-				});
-		}.bind(this));
-	},
-	
-	hashPassword:function(password){
-		return USecure.sha512WithSalt(password);
+	connect:function(user, callback){
+		login(this.req.headers, user, function(connected, token){
+			this.connected = connected;
+			return callback(token);
+		}.bind(this)).bind(this.self);
 	}
 	
 },{
@@ -62,7 +62,20 @@ var CSecureRest=S.newClass({
 	},
 	loadConfig: loadConfig,
 	config: loadConfig('secure'),
-	checkAuth: checkAuth
+	
+	login: login,
+	checkAuth: function(headers, callback){
+		queryAuth(headers)
+			.fetch(function(connected){
+				callback(null, connected);
+			},function(){
+				callback('DB error');
+			});
+	},
+	
+	hashPassword:function(password){
+		return USecure.sha512WithSalt(password);
+	}
 });
 
 module.exports=CSecureRest;
