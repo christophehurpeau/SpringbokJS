@@ -32,6 +32,28 @@
       <section>
         <h3>SpringbokJS</h3>
         <p>SpringbokJS is an experimental framework for NodeJS and can be used for Single-Page Applications</p>
+        
+        <h3>Hello World</h3>
+        <p>The Hello Sample is available <a href="https://github.com/christophehurpeau/SpringbokJS/tree/master/samples/hello">here</a>.</p>
+        
+        <h4>main/controllers/Site.js</h4>
+        <p>The controller receive a request and render a result</p>
+        <pre><code>
+App.Controller({
+	Index:App.Controller.Action(function(req,res){
+		var v=req.validator(), name=v.str('name',1).notEmpty().val;
+		res.end(this.H.t('Hello %s!',[ v.isValid() ? name : 'World' ]));
+	}),
+});
+        </code></pre>
+        
+        <h4>config/routes.yml</h4>
+        <p>This configuration file tell the Router where a request should go</p>
+        <pre><code>
+main:
+	"/": ["Site.Index"]
+        </code></pre>
+        
       </section>
     </div>
       <!--
