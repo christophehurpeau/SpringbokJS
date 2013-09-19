@@ -196,6 +196,8 @@ UObj.extend(Elt,{
 	
 	
 	is:function(elt,selectors){
+		///*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setAttr not allowed on non-element nodes'); /*#/if*/
+		if(elt.nodeType === NodeTypes.DOCUMENT) return false;
 		var matchesSelector=elt.webkitMatchesSelector || elt.mozMatchesSelector || elt.oMatchesSelector || elt.matchesSelector || elt.matches;
 		if (matchesSelector) return matchesSelector.call(elt, selectors);
 		// fall back to performing a selector: TODO : this doesnt work

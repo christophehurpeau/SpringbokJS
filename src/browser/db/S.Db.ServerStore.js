@@ -21,8 +21,8 @@ S.Db.ServerStore=S.newClass({
 	},
 	deleteByKey:function(key,options,r){
 	},
-	cursor:function(callback,range,direction){
-		S.WebSocket.emit('db cursor',this.db.dbName,this.model.modelName,range,direction,function(idCursor){
+	cursor:function(callback,query,options){
+		S.WebSocket.emit('db cursor',this.db.dbName,this.model.modelName,query,options,function(idCursor){
 			callback(idCursor && new S.Db.ServerStore.Cursor(idCursor,this));
 		}.bind(this));
 	},

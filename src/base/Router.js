@@ -135,7 +135,8 @@ App.Router.prototype={
 					var countMatches=m.length;
 					if(countMatches !== 0){
 						r[':'].forEach(function(v){
-							params.set(v, m.shift());
+							var param =  m.shift();
+							if(param) params.set(v,param);
 						});
 					}
 					'controller action'.split(' ').forEach(function(v,k){

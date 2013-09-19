@@ -5,6 +5,7 @@ includeCore('base/Model.QFind');
 	exec:function(callback){ this.cursor(callback); },
 	forEach:function(callback){
 		this.cursor(function(cursor){
+			console.log(cursor);
 			cursor.forEach(callback);
 		});
 	},

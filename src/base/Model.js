@@ -167,6 +167,7 @@ App.Model=(function(){
 	var createF=function createF(Model){
 		var f=function(modelName,properties/*#if DEV*/,arg3/*#/if*/){/*#if DEV*/if(arg3) throw new Error;/*#/if*/ return Model.extend(modelName,properties); };
 		f.Model=Model;
+		f.Request=Model.Request;
 		f.extend=function(){
 			var c=S.extClass.apply(Model,arguments);
 			return createF(c);

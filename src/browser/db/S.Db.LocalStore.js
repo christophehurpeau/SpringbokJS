@@ -49,31 +49,36 @@ S.Db.LocalDbStore=S.newClass({
 		};
 		r.fire('started');
 	},
+	findByKey:function(key,options,r){
+		return this.store().get(key).onsuccess = function(event){
+			r.fire('success',event.target.result);
+		};
+	},
 	findOne:function(query,options,r){
-		if(query._id) return this.store().get(query._id).onsuccess = function(event){
-				r.fire('success',event.target.result);
-			};
+		if(query[this.model.keyPath]) return this.findByKey(query[this.model.keyPath],options,r);
 		return this.cursor(function(cursor){
 			r.fire('success',cursor ? cursor.value : null);
 		});
 	},
-	cursor:function(query,options,callback){
-		/*#if DEV*/ if(query) throw new Error('Query is not yet supported'); /*#/if*/
+	cursor:function(callback,query,options){
+		/*#if DEV*/ if(query && Object.keys(query).length) throw new Error('Query is not yet supported'); /*#/if*/
+		if(!options) options = {};
 		this.store().openCursor(options.range || null, options.direction || "next")
 			.onsuccess = function(event){
-				callback(event.target.result);
-			};
+				callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
+			}.bind(this);
 	},
-	cursorIndex:function(indexName,options,callback){
+	cursorIndex:function(indexName,callback,query,options){
 		var store=this.store(), index = store.index(indexName);;
+		if(!options) options = {};
 		index.openCursor(options.range || null, options.direction || "next").onsuccess = function(event) {
 			callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
-		};
+		}.bind(this);
 	},
 	byIndex:function(indexName,key,callback){
 		this.store().index(indexName).get(key).onsuccess=function(event){
 			callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
-		};
+		}.bind(this);
 	},
 	
 	toModel: function(result){
@@ -85,22 +90,24 @@ S.Db.LocalDbStore=S.newClass({
 			this._cursor = cursor;
 			this._store = store;
 			this.key = this._cursor.key;
+			console.log('key=',this.key);
 			
 			//because cursor in IndexedDB already contains the first result
-			this.next = function(callback){
-				delete this.next;
+			Object.defineProperty(this,'next',{ configurable:true, value:function(callback){
+				Object.defineProperty(this,'next',{ value: function(callback){
+					this._cursor['continue']();
+					this.key = this._cursor.key;
+					console.log('key=',this.key);
+					callback(this.key);
+				}.bind(this) });
 				callback(this.key);
-			};
+			}.bind(this) });
 		},
 		advance: function(count){
 			this._cursor.advance(count);
 			return this;
 		},
-		next: function(callback){
-			this._cursor['continue']();
-			this.key = this._cursor.key;
-			callback(this.key);
-		},
+		/*next: ,*/
 		result: function(callback){
 			var r = new App.Model.Request;
 			this._store.findByKey(this.key,{},r);
@@ -112,8 +119,9 @@ S.Db.LocalDbStore=S.newClass({
 			return r;
 		},
 		forEachResults: function(callback,onEnd){
-			var nbResults = 0,_callback = function _callback(){
+			var nbResults = 0,_callback = function(){
 				this.result(function(){
+					console.log(nbResults,this.key);
 					if(!this.key){
 						this.close();
 						return onEnd && onEnd(nbResults);

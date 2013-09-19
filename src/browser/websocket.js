@@ -6,7 +6,7 @@ S.WebSocket = (function(){
 				var socket = io.connect('http/*#if PROD*/s/*#/if*/://' + window.location.hostname + ':/*#if app.websocketPort*//*#val app.websocketPort*//*#else*/3300/*#/if*//',{
 					'reconnection limit': 3000,
 					'max reconnection attempts': Infinity,
-					'sync disconnect on unload': true,
+					//'sync disconnect on unload': true,
 				});
 				var secure = window.App && App.secure && App.secure(), connectedFn, connectedFirstTime = true;;
 				socket.on('connect',function(){

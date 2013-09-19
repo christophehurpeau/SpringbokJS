@@ -4,11 +4,13 @@
 UObj.extend(Elt,(function(){
 	var _callback = function(event){
 		var type = event.type, target = event.target, //event.srcElement for IE is not necessary because handled by base2 in es5.js
-			$elt = this, $target = event.$target = target && S.Elt(target),
-			handlers= $elt._events;
-		//console.log('Event: '+type,target,handlers);
+			$elt = this, handlers= $elt._events;
+		console.log('Event: '+type,target,handlers);
 		
 		if(!handlers || !handlers.has(type)) return;
+		
+		if(target && target.nodeType === NodeTypes.ELEMENT)
+			event.$target = S.Elt(target);
 		
 		// stopPropagation() fails to set cancelBubble to true in Webkit
 		// @see http://code.google.com/p/chromium/issues/detail?id=162270

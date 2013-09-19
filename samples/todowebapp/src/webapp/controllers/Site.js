@@ -29,7 +29,7 @@ S.require('vL/default','m/todos',function(){
 				).appendTo(ul);
 				l.title('todos').content(ul);
 				M.Todo.find.all()
-					.each(function(todo){
+					.forEach(function(todo){
 						ul.append(todo.toLi());
 					});
 			});
