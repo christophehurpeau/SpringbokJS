@@ -51,6 +51,7 @@ S.Db.LocalDbStore=S.newClass({
 	},
 	findByKey:function(key,options,r){
 		return this.store().get(key).onsuccess = function(event){
+			console.log('findByKey success',event);
 			r.fire('success',event.target.result);
 		};
 	},
@@ -93,12 +94,11 @@ S.Db.LocalDbStore=S.newClass({
 			console.log('key=',this.key);
 			
 			//because cursor in IndexedDB already contains the first result
-			Object.defineProperty(this,'next',{ configurable:true, value:function(callback){
+			Object.defineProperty(this,'next',{ configurable:true, value: function(callback){
+				console.trace && console.trace();
 				Object.defineProperty(this,'next',{ value: function(callback){
 					this._cursor['continue']();
-					this.key = this._cursor.key;
-					console.log('key=',this.key);
-					callback(this.key);
+					callback(this.key = this._cursor.key);
 				}.bind(this) });
 				callback(this.key);
 			}.bind(this) });
@@ -113,29 +113,26 @@ S.Db.LocalDbStore=S.newClass({
 			this._store.findByKey(this.key,{},r);
 			r.success(callback).failed(callback.bind(null,undefined));
 		},
+		model: function(callback){
+			this.result(function(result){
+				callback(this._store.toModel(result));
+			}.bind(this));
+		},
 		remove: function(callback){
 			var r = new App.Model.Request;
 			this._store.deleteByKey(this.primaryKey,r);
 			return r;
 		},
-		forEachResults: function(callback,onEnd){
-			var nbResults = 0,_callback = function(){
-				this.result(function(){
-					console.log(nbResults,this.key);
-					if(!this.key){
-						this.close();
-						return onEnd && onEnd(nbResults);
-					}
-					callback.apply(null,arguments);
-					nbResults++;
-					this.next(_callback);
-				}.bind(this));
-			}.bind(this);
-			_callback();
+		forEachKeys: function(callback,onEnd){
+			//because next function is changing, we can't go this.next.bind(this)
+			S.asyncWhile(function(){ this.next.apply(null,arguments); }.bind(this),callback,function(){
+				this.close();
+				onEnd && onEnd();
+			}.bind(this));
 		},
 		forEach: function(callback,onEnd){
-			this.forEachResults(function(result){
-				callback(this._store.toModel(result));
+			this.forEachKeys(function(){
+				this.model(callback);
 			}.bind(this),onEnd);
 		},
 		close: function(callback){
@@ -194,24 +191,10 @@ S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend(
 		result: function(callback){
 			callback(this._result);
 		},
-		model: function(callback){
-			throw new Error('TODO : result to object');
-		},
 		remove: function(callback){
 			var r = new App.Model.Request;
 			this._store.deleteByKey(this.key,r);
 			return r;
-		},
-		forEachResults: function(callback,onEnd){
-			var nbResults = 0;
-			this._results.forEach(onEnd ? function(result){ nbResults++; callback.call(null,result); } : callback); //TODO to Model
-			this.close();
-			onEnd && onEnd(nbResults);
-		},
-		forEach: function(callback,onEnd){
-			this.forEachResults(function(result){
-				callback(this._store.toModel(result));
-			}.bind(this),onEnd);
 		},
 		close: function(callback){
 			this._iterator = this._store = this._prefix = undefined;

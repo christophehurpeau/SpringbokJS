@@ -63,13 +63,12 @@ S.Db.ServerStore=S.newClass({
 			return r;
 		},
 		forEachResults: function(callback,onEnd){
-			var nbResults = 0, cursor = this;
+			var cursor = this;
 			(function _callback(){
 				cursor.next(function(key){
-					if(!key) return cursor.close(), onEnd && onEnd(nbResults);
+					if(!key) return cursor.close(), onEnd && onEnd();
 					cursor.result(function(){
 						callback.apply(null,arguments);
-						nbResults++;
 						_callback();
 					});
 				});

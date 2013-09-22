@@ -3,6 +3,7 @@ var mongodb=require('mongodb'); /* https://github.com/kissjs/node-mongoskin/blob
 /*#else*/
 includeCore('browser/base/S.Watcher');
 /*#/if*/
+includeCore('base/ValidatableObject');
 
 App.Model=(function(){
 	/*#if NODE*/var Request=/*#/if*/
@@ -23,6 +24,8 @@ App.Model=(function(){
 			});
 		return request;
 	},Model=/*#ifelse NODE*/(S.newClass||S.Watcher.extend)/*#/if*/({
+		mixins: [ S.ValidatableObject ],
+		
 		// STATES: 'new', 'unchanged', 'saved', 'unsaved' (retrieved/inserted into db then modified), 'pending'
 		// EVENTS: 'request.started','request.success', 'synced'
 		ctor:function(data,state){

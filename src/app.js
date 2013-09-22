@@ -151,10 +151,10 @@ App._start=function(port){
 			App.debug('Initializing models...');
 			//series because Parent/Child
 			UObj.forEachSeries(t.models,function(modelName,model,onEnd){
-				App.debug('Initialize model: '+modelName);
+				model.init && App.debug('Initialize model: '+modelName);
 				//model.init(onEnd);
 				model.beforeInit && model.beforeInit();
-				model.init(function(){
+				model.init && model.init(function(){
 					App.debug('Initialize model: '+modelName+' ended');
 					onEnd.apply(null,arguments);
 				});

@@ -7,6 +7,83 @@
  * IE < 10
  */
 (function(){
+	var Elt = S.Elt;
+	
+	/* Override Elt.dom.js methods */
+	
+	
+	if(!window.getComputedStyle){
+		
+	}
+	
+	
+	S.defineProperty(Elt,'attrHooks',{});
+	
+	S.defineProperty(Elt,'getAttr', function(elt,name){
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('getAttr not allowed on non-element nodes'); /*#/if*/
+		if(Elt.attrHooks[name] && Elt.attrHooks[name].get) return Elt.attrHooks[name].get(elt);
+		return elt.getAttribute(name) || null;
+	});
+	
+	S.defineProperty(Elt,'setAttr', function(elt,name,value){
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setAttr not allowed on non-element nodes'); /*#/if*/
+		if(Elt.attrHooks[name] && Elt.attrHooks[name].set) return Elt.attrHooks[name].set(elt,value);
+		if(value===null) elt.removeAttribute(name);
+		else elt.setAttribute(name,value);
+	});
+	
+	S.defineProperty(Elt,'propHooks',{});
+	
+	S.defineProperty(Elt,'getProp',function(elt,name){
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT && elt.nodeType !== NodeTypes.DOCUMENT) throw new Error('getProp not allowed on non-element nodes'); /*#/if*/
+		if(Elt.propHooks[name] && Elt.propHooks[name].get) return Elt.propHooks[name].get(elt);
+		return elt[name];
+	});
+	S.defineProperty(Elt,'setProp',function(elt,name,value){
+		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setProp not allowed on non-element nodes'); /*#/if*/
+		if(Elt.propHooks[name] && Elt.propHooks[name].set) return Elt.propHooks[name].set(elt,value);
+		return elt[name]=value;
+	});
+	
+	if(!document.documentElement.classList || !document.documentElement.classList.add || !document.documentElement.classList.remove){
+		S.defineProperty(Elt,'addClass',function(elt,_class){
+			var _e_class=Elt.getAttr(elt,'class');
+			Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
+		});
+		
+		S.defineProperty(Elt,'removeClass',function(elt,_class){
+			if(Elt.hasClass(elt,_class)){
+				elt.className = elt.className.replace(new RegExp("(^|\\s)" + _class + "(\\s|$)"), " ").replace(/\s$/, "");
+				return true;
+			}
+			return false;
+		});
+	}
+	if(!document.documentElement.classList || !document.documentElement.classList.contains){
+		S.defineProperty(Elt,'hasClass',function(elt,_class){
+			/*#if DEV*/
+			if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
+			if(!S.isString(_class)) throw new Error('className must be a string');
+			if(_class.contains(' ')) throw new Error('className must have no spaces');
+			/*#/if*/
+			if( elt.className && (' ' + elt.className + ' ').indexOf(' ' + _class + ' ') >= 0 )
+				return true;
+		});
+	}
+	
+	if(!document.documentElement.classList || !document.documentElement.classList.toggle){
+		S.defineProperty(Elt,'toggleClass',document.documentElement.classList &&  document.documentElement.classList.contains ? function(elt,_class){
+			return !(elt.classList.contains(_class) ? Elt.removeClass(elt,_class) : Elt.addClass(elt,_class));
+		} : function(elt,_class){
+			return !(Elt.removeClass(elt,_class) || Elt.addClass(elt,_class));
+		});
+	}
+	
+	/* Hacks */
+	
+	
+	
+	
 	
 	var div =  document.createElement('div'),
 		a, input,
