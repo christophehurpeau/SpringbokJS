@@ -2,18 +2,18 @@ S.Elt.Table=S.Elt.WithContent.extend({
 	tagName:'table',
 	
 	tr: function(){
-		return $.tr().appendTo(this).setOrigin(this);
+		return $.tr().appendTo(this);
 	}
 });
 S.Elt.Table.R=S.Elt.WithContent.extend({
 	tagName:'tr',
 	
 	td: function(){
-		return $.td().appendTo(this).setOrigin(this);
+		return $.td().appendTo(this);
 	},
 	
 	th: function(){
-		return $.th().appendTo(this).setOrigin(this);
+		return $.th().appendTo(this);
 	}
 });
 S.Elt.Table.D=S.Elt.WithContent.extend({

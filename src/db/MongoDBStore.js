@@ -90,6 +90,13 @@ module.exports = S.Db.MongoDBStore = S.newClass({
 				callback(this.key);
 			}.bind(this));
 		},
+		limit: function(limit,callback){
+			this._cursor.limit(limit,callback);
+		},
+		count: function(applyLimit,callback){
+			this._cursor.count(applyLimit,callback);
+		},
+		
 		result: function(callback){
 			callback(this._result);
 		},

@@ -43,8 +43,9 @@ App.Controller = (function(){
 		f.Controller=Controller;
 		f.Action=Action;
 		f.extend=function(props){
-			var c=Controller.extend.apply(Controller,arguments);
-			return createF(UObj.union(props,Controller));
+			var c = Object.create(Controller);
+			c = S.defineProperties(c,props);
+			return createF(c);
 		};
 		return f;
 	};

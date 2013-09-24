@@ -3,13 +3,13 @@ S.Elt.Div = S.Elt.WithContent.extend({
 	tagName:'div',
 	
 	div: function(){
-		return $.div().appendTo(this).setOrigin(this);
+		return $.div().appendTo(this);
 	},
 	content:function(){
-		return $.div().setClass('content').appendTo(this).setOrigin(this);
+		return $.div().setClass('content').appendTo(this);
 	},
 	ul: function(){
-		return $.ul().appendTo(this).setOrigin(this);
+		return $.ul().appendTo(this);
 	}
 });
 

@@ -55,6 +55,7 @@ S.Widget.Element = S.Widget.extend({
 		S.Widget.call(this);
 		if(!$elt) $elt = $.widget();
 		this.$elt = $elt;
+		//TODO : $elt._springbokWidgets
 		
 		var fnDisposeWidget, fnDisposeElt;
 		this.on('dispose',fnDisposeWidget = (function(){
@@ -74,7 +75,7 @@ S.Widget.Element = S.Widget.extend({
 	},
 	
 	elt: function(){
-		return this.$elt.setOrigin(this);
+		return this.$elt;
 	}
 });
 
@@ -107,10 +108,10 @@ S.Elt.WidgetBox = S.Elt.Widget.extend({
 });
 S.Elt.WidgetWrapper = S.Elt.Fragment.extend({
 	widget:function(){
-		return $.widget().appendTo(this).setOrigin(this);
+		return $.widget().appendTo(this);
 	},
 	widgetBox:function(){
-		return $.widgetBox().appendTo(this).setOrigin(this);
+		return $.widgetBox().appendTo(this);
 	}
 });
 $.widget = function(){ return new S.Elt.Widget; };

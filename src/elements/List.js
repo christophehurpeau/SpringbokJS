@@ -3,12 +3,12 @@ S.Elt.List = S.Elt.WithContent.extend({
 	tagName:'ul',
 	
 	li: function(){
-		return $.li().appendTo(this).setOrigin(this);
+		return $.li().appendTo(this);
 	},
 	
 	link: function(){
 		var li = $.li().appendTo(this);
-		return li.link.apply(li,arguments).setOrigin(this);
+		return li.link.apply(li,arguments);
 	},
 	
 	fromArray: function(array,callback){
@@ -28,7 +28,7 @@ S.Elt.ListItem = S.Elt.WithContent.extend({
 	link: function(title,url,options){
 		options = options || {};
 		if(options.escape === undefined) options.escape = true;
-		return App.helpers.linkHtml(title,url,options).appendTo(this).setOrigin(this);
+		return App.helpers.linkHtml(title,url,options).appendTo(this);
 	}
 });
 

@@ -57,16 +57,25 @@ io.sockets.on('connection', function(socket){
 		App.debug('IO.socket db cursor '+dbName+' '+modelName+' '+range+' '+direction+' ; connected='+connected);
 		var idCursor = nextIdCursor++, cursor = M[modelName].restCursor(connected,function(cursor){
 			if(!cursor) return response();
-			socket.on('db cursor '+idCursor,function(instruction,response){
-				App.debug('db cursor '+idCursor+' '+instruction);
-				if(instruction==='next') cursor.next(function(key){ !key ? response() : cursor.result(function(object){ response(object); }); });
-				else if(instruction==='close'){ App.debug('IO.socket db cursor '+idCursor+' closed'); cursor.close(); response(); }
+			App.debug(cursor);
+			// TODO in db because can depends on implementations !! cursor.isEmpty(function(){ })
+			cursor.limit(1,function(err){
+				var count = cursor.count(true,function(err,count){
+					if(err || !count) return response();
+					cursor.limit(0,function(){
+						socket.on('db cursor '+idCursor,function(instruction,response){
+							App.debug('db cursor '+idCursor+' '+instruction);
+							if(instruction==='next') cursor.next(function(key){ !key ? response() : cursor.result(function(object){ response(object); }); });
+							else if(instruction==='close'){ App.debug('IO.socket db cursor '+idCursor+' closed'); cursor.close(); response(); }
+						});
+						socket.on('db cursor '+idCursor+' advance',function(count){
+							cursor.advance(count);
+						});
+						
+						response(idCursor);
+					});
+				});
 			});
-			socket.on('db cursor '+idCursor+' advance',function(count){
-				cursor.advance(count);
-			});
-			
-			response(idCursor);
 		});
 	});
 	

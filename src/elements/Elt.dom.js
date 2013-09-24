@@ -1,23 +1,16 @@
 /* https://raw.github.com/julienw/dollardom/master/dollardom-full.debug.js */
 
 var _regexp_get_alias = /-(\w)/g, _regexp_singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
-var _getStyle = window.getComputedStyle ?
-		function (elm, property) {
-			var prop = _getStyleAlias(property), handler = Elt.styleHooks[property];
-			if(handler && handler.get) return handler.get(elm);
-			var computed = getComputedStyle(elm, null);
-			return computed.getPropertyValue(property) || computed[property];
-		}
-	:
-		function (elm, property) {
-			var prop = _getStyleAlias(property), handler = Elt.styleHooks[prop];
-			return ((handler && handler.get) ? handler.get(elm) : elm.currentStyle[prop]);
-		}
-	,
-	styleAlias = {  },
-	_getStyleAlias=function(property){
-		return styleAlias[property] || (styleAlias[property] = property.replace(_regexp_get_alias, function (m, l) { return l.toUpperCase(); }));
-	};
+
+Elt._getStyle = function (elm, property) {
+	var prop = Elt._getStyleAlias(property), handler = Elt.styleHooks[property];
+	if(handler && handler.get) return handler.get(elm);
+	var computed = getComputedStyle(elm, null);
+	return computed.getPropertyValue(property) || computed[property];
+};
+Elt._getStyleAlias=function(property){
+	return Elt.styleAlias[property] || (Elt.styleAlias[property] = property.replace(_regexp_get_alias, function (m, l) { return l.toUpperCase(); }));
+};
 
 var optionValue=function(){
 	var val=Elt.getAttr(elt,'value');
@@ -25,26 +18,8 @@ var optionValue=function(){
 };
 
 
-Elt.attrHooks={};
-Elt.propHooks={};
 Elt.styleAlias={ 'float': "cssFloat" in document.documentElement.style ? "cssFloat" : "styleFloat"};
-Elt.styleHooks={
-	borderWidth: {
-		get: function(e){
-			return _getStyle(e, "border-left-width");
-		}
-	},
-	padding: {
-		get: function (e) {
-			return _getStyle(e, "padding-left");
-		}
-	},
-	margin: {
-		get: function (e) {
-			return _getStyle(e, "margin-left");
-		}
-	}
-};
+Elt.styleHooks={};
 
 //var eventChange=new Event('change');
 
@@ -57,24 +32,24 @@ UObj.extend(Elt,{
 	attrs:function(elt,attrs){
 		for(var key in attrs) Elt.setAttr(elt,key,attrs[key]);
 	},
+	/** Overrided in dom.js */
 	getAttr:function(elt,name){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('getAttr not allowed on non-element nodes'); /*#/if*/
-		if(Elt.attrHooks[name] && Elt.attrHooks[name].get) return Elt.attrHooks[name].get(elt);
 		return elt.getAttribute(name) || null;
 	},
+	/** Overrided in dom.js */
 	setAttr:function(elt,name,value){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setAttr not allowed on non-element nodes'); /*#/if*/
-		if(value===null) elt.removeAttribute(name);
-		else elt.setAttribute(name,value);
+		value===null ? elt.removeAttribute(name) : elt.setAttribute(name,value);
 	},
+	/** Overrided in dom.js */
 	getProp:function(elt,name){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT && elt.nodeType !== NodeTypes.DOCUMENT) throw new Error('getProp not allowed on non-element nodes'); /*#/if*/
-		if(Elt.propHooks[name] && Elt.propHooks[name].get) return Elt.propHooks[name].get(elt);
 		return elt[name];
 	},
+	/** Overrided in dom.js */
 	setProp:function(elt,name,value){
 		/*#if DEV*/if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('setProp not allowed on non-element nodes'); /*#/if*/
-		if(Elt.propHooks[name] && Elt.propHooks[name].set) return Elt.propHooks[name].set(elt,value);
 		return elt[name]=value;
 	},
 	
@@ -88,44 +63,26 @@ UObj.extend(Elt,{
 	id:function(elt,id){
 		Elt.setAttr(elt,'id',id);
 	},
-	addClass: document.documentElement.classList && document.documentElement.classList.add ? function(elt,_class){
+	
+	/** Overrided in dom.js */
+	addClass: function(elt,_class){
 		elt.classList.add.apply(elt.classList,_class.split(' '));
-	} : function(elt,_class){
-		var _e_class=Elt.getAttr(elt,'class');
-		Elt.setAttr(elt,'class',_e_class ? _e_class+' '+_class : _class);
 	},
-	hasClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
+	/** Overrided in dom.js */
+	hasClass: function(elt,_class){
 		return elt.classList.contains(_class);
-	} : function(elt,_class){
-		/*#if DEV*/
-		if(elt.nodeType !== NodeTypes.ELEMENT) throw new Error('hasClass not allowed on non-element nodes');
-		if(!S.isString(_class)) throw new Error('className must be a string');
-		if(_class.contains(' ')) throw new Error('className must have no spaces');
-		/*#/if*/
-		if( elt.className && (' ' + elt.className + ' ').indexOf(' ' + _class + ' ') >= 0 )
-			return true;
-	}),
-	removeClass: (document.documentElement.classList && document.documentElement.classList.contains ? function(elt,_class){
+	},
+	/** Overrided in dom.js */
+	removeClass: function(elt,_class){
 		var oldLength = elt.classList.length;
 		elt.classList.remove(_class);
 		return oldLength !== elt.classList.length;
-	} : function(elt,_class){
-		if(Elt.hasClass(elt,_class)){
-			elt.className = elt.className.replace(new RegExp("(^|\\s)" + _class + "(\\s|$)"), " ").replace(/\s$/, "");
-			return true;
-		}
-		return false;
-	}),
+	},
 	
-	// return true if added, false if removed
-	toggleClass: (document.documentElement.classList && document.documentElement.classList.toggle ? function(elt,_class){
+	/** Overrided in dom.js | return true if added, false if removed */
+	toggleClass: function(elt,_class){
 		elt.classList.toggle(_class);
-	} : (document.documentElement.classList &&  document.documentElement.classList.contains ? function(elt,_class){
-			return !(elt.classList.contains(_class) ? Elt.removeClass(elt,_class) : Elt.addClass(elt,_class));
-		} : function(elt,_class){
-			return !(Elt.removeClass(elt,_class) || Elt.addClass(elt,_class));
-		})
-	),
+	},
 	
 	getVal:function(elt){
 		switch(Elt.nodeName(elt)){
@@ -183,14 +140,14 @@ UObj.extend(Elt,{
 	},
 	
 	getStyle:function(elt,prop){
-		return _getStyle(elt,prop) || 0;
+		return Elt._getStyle(elt,prop);
 	},
 	getIntStyle: function(elt,prop){
-		return parseInt(_getStyle(elt,prop) || 0,10);
+		return parseInt(Elt._getStyle(elt,prop) || 0,10);
 	},
 	
 	setStyle:function(elt,prop,value){
-		var prop = _getStyleAlias(prop), hook = Elt.styleHooks[prop];
+		var prop = Elt._getStyleAlias(prop), hook = Elt.styleHooks[prop];
 		return (hook && hook.set) ? hook.set(elt, value) : elt.style[prop] = value;
 	},
 	

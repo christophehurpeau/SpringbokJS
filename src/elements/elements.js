@@ -114,6 +114,10 @@ $.text=S.Elt.textNode;
 	//Elt[v]=function(){ return Elt.create(v); };
 	$[v]=S.Elt.create.bind(null,v);
 });
+'1 2 3 4 5 6'.split(' ').forEach(function(i){
+	$['h'+i] = function(title){ return S.Elt.create('h'+i).text(title); };
+});
+
 
 includeJsCore('elements/Div');
 includeJsCore('elements/List');

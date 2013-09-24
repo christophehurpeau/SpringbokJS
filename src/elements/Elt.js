@@ -70,16 +70,6 @@ S.Elt=(function(){
 			Elt.setVal(this[0],value);
 			return this;
 		},
-		setOrigin:function(value){
-			this._origin=value;
-			return this;
-		},
-		end:function(){
-			var origin=this._origin;
-			/*#if DEV*/ if( !origin ) throw new Error('Missing origin'); /*#/if*/
-			delete this._origin;
-			return origin;
-		},
 		/*#/if*/
 		
 	};

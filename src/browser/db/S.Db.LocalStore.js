@@ -1,4 +1,6 @@
 includeCore('browser/db/S.Db');
+includeCore('browser/db/S.Db.AbstractStore');
+includeCore('browser/db/S.Db.Cursor');
 includeCore('browser/base/S.store');
 
 if( !window.indexedDB ){
@@ -10,7 +12,7 @@ if( !window.indexedDB ){
 		window.alert("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");*/
 }
 
-S.Db.LocalDbStore=S.newClass({
+S.Db.LocalDbStore=S.Db.AbstractStore.extend({
 	ctor:function(model){
 		this.model=model;
 		this.db=model.db;/*db.db is not defined yet*/
@@ -64,76 +66,64 @@ S.Db.LocalDbStore=S.newClass({
 	cursor:function(callback,query,options){
 		/*#if DEV*/ if(query && Object.keys(query).length) throw new Error('Query is not yet supported'); /*#/if*/
 		if(!options) options = {};
-		this.store().openCursor(options.range || null, options.direction || "next")
-			.onsuccess = function(event){
-				callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
-			}.bind(this);
+		var cursor = new S.Db.LocalDbStore.Cursor(this);
+		var dbCursor = this.store().openCursor(options.range || null, options.direction || "next");
+		dbCursor.onsuccess = function(event){
+			dbCursor.onsuccess = function(event){
+				cursor._onNext(event.target.result);
+			};
+			cursor._onNext(event.target.result);
+			callback(cursor);
+		};
 	},
 	cursorIndex:function(indexName,callback,query,options){
+		throw new Error('TODO');
 		var store=this.store(), index = store.index(indexName);;
 		if(!options) options = {};
-		index.openCursor(options.range || null, options.direction || "next").onsuccess = function(event) {
+		index.openCursor(options.range || null, options.direction || "next").onsuccess = function(event){
 			callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
 		}.bind(this);
 	},
 	byIndex:function(indexName,key,callback){
+		throw new Error('TODO');
 		this.store().index(indexName).get(key).onsuccess=function(event){
 			callback(new S.Db.LocalDbStore.Cursor(event.target.result,this));
 		}.bind(this);
 	},
-	
-	toModel: function(result){
-		return result && new this.model(result,'unchanged');
-	}
 },{
-	Cursor: S.newClass({
-		ctor: function(cursor,store){
-			this._cursor = cursor;
+	Cursor: S.Db.Cursor.extend({
+		ctor: function(store){
 			this._store = store;
-			this.key = this._cursor.key;
-			console.log('key=',this.key);
 			
 			//because cursor in IndexedDB already contains the first result
 			Object.defineProperty(this,'next',{ configurable:true, value: function(callback){
-				console.trace && console.trace();
 				Object.defineProperty(this,'next',{ value: function(callback){
+					this._onNextCallback = callback;
 					this._cursor['continue']();
-					callback(this.key = this._cursor.key);
+					this._cursor = undefined;
 				}.bind(this) });
 				callback(this.key);
 			}.bind(this) });
 		},
+		_onNext: function(cursor){
+			this._cursor = cursor;
+			this.key = cursor && cursor.key;
+			this._onNextCallback && this._onNextCallback(this.key);
+		},
+		
+		
 		advance: function(count){
+			throw new Error('TODO')	;
 			this._cursor.advance(count);
 			return this;
 		},
 		/*next: ,*/
-		result: function(callback){
-			var r = new App.Model.Request;
-			this._store.findByKey(this.key,{},r);
-			r.success(callback).failed(callback.bind(null,undefined));
-		},
-		model: function(callback){
-			this.result(function(result){
-				callback(this._store.toModel(result));
-			}.bind(this));
-		},
-		remove: function(callback){
-			var r = new App.Model.Request;
-			this._store.deleteByKey(this.primaryKey,r);
-			return r;
-		},
 		forEachKeys: function(callback,onEnd){
 			//because next function is changing, we can't go this.next.bind(this)
 			S.asyncWhile(function(){ this.next.apply(null,arguments); }.bind(this),callback,function(){
 				this.close();
 				onEnd && onEnd();
 			}.bind(this));
-		},
-		forEach: function(callback,onEnd){
-			this.forEachKeys(function(){
-				this.model(callback);
-			}.bind(this),onEnd);
 		},
 		close: function(callback){
 			this._cursor = this._store = this.key = undefined;
@@ -160,10 +150,6 @@ S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend(
 		var prefix = this.model.modelName+'___';
 		setTimeout(callback.bind(null,new S.Db.LocalDbStore.Cursor(S.store.iterator(), this, prefix)));
 	},
-	
-	toModel: function(result){
-		return result && new this.model(result,'unchanged');
-	}
 },{
 	Cursor: S.newClass({
 		ctor: function(iterator,store,prefix){
@@ -172,7 +158,7 @@ S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend(
 			this._prefix = prefix;
 		},
 		advance: function(count){
-			while(count--) this.next();
+			while(count--) this.next(function(){});
 			return this;
 		},
 		next: function(callback){
