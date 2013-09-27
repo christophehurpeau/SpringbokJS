@@ -12,15 +12,15 @@ App.Model=(function(){
 	/*#if NODE*/var Find=/*#/if*/
 	includeCore('base/Model.Find');
 	
-	var _call=function(fn,data,options){
+	var _call=function(fn,options){
 		/*#if BROWSER*/ this.listen(); /*#/if*/
 		var model=this,Model=this.self,request=new Request.Model(model);
 		UArray.forEachSeries(Model['before'+UString.ucFirst(fn)],
-			function(c,onEnd){ c(data,onEnd); },
+			function(c,onEnd){ c(options.data,onEnd); },
 			function(err){
 				if(err) return request.fire('failed');
 				//setTimeout(function(){  }); // return request before !
-				Model.store[fn](data,options,request);
+				Model.store[fn](options,request);
 			});
 		return request;
 	},Model=/*#ifelse NODE*/(S.newClass||S.Watcher.extend)/*#/if*/({
@@ -76,17 +76,23 @@ App.Model=(function(){
 		},
 		
 		insert:function(options){
-			return _call.call(this,'insert',this.data,options);
+			options || (options = {});
+			options.data = this.data;
+			return _call.call(this,'insert',options);
 		},
-		update:function(options){
-			return _call.call(this,'update',this.data,options);
+		update:function(fields,options){
+			options || (options = {});
+			if(!options.data){
+				if(fields){
+				}else{
+					options.data = this.data;
+					delete options.data._id;
+				}
+			}
+			return _call.call(this,'updateByKey',this.data[this.self.keyPath],options);
 		},
 		remove:function(options){
-			/*#if NODE*/
-				return _call.call(this,'remove',{_id:this._id},options);
-			/*#else*/
-				return _call.call(this,'deleteByKey',this.data[this.self.keyPath],options);
-			/*#/if*/
+			return _call.call(this,'deleteByKey',this.data[this.self.keyPath],options);
 		},
 		/*#if NODE*/
 		insertWait:function(callback){ this.insert({w:1}).success(callback); },
@@ -96,6 +102,10 @@ App.Model=(function(){
 		/*#/if*/
 		
 		
+		updateFields: function(data){
+			this.data = UObj.extend(this.data,data);
+			return this.update(null,{ data: data });
+		},
 		
 		/*#if NODE*/
 		// same as S.Watcher
@@ -128,7 +138,7 @@ App.Model=(function(){
 			properties.static.modelName=modelName;
 			
 			/* */
-			'beforeInsert,beforeUpdate,beforeFind'.split(',').forEach(function(cName){
+			'beforeInsert beforeUpdate beforeFind'.split(' ').forEach(function(cName){
 				if(!properties.static[cName]) properties.static[cName]=[];
 			});
 			

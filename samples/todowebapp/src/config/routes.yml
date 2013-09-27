@@ -1,6 +1,6 @@
 main:
  "/": ["Site.Index"]
  '/api/models/:modelName/:method': ['Models.Index']
- '/api/:controller(/:action/*)?': ["!.!"]
+ '/api/:controller(/:action/*)?': ["Site.Index"]
  '/*': ['Site.Index']
- "/:controller(/:action/*)?": ["!.!"]
+ "/:controller(/:action/*)?": ["Site.Index"]

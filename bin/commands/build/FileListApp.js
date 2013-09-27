@@ -38,7 +38,7 @@ module.exports = FileList.extend({
 	},
 	
 	_ignored: function(path,basename){
-		if(path==='package.json' || path.startsWith('src/tests/') || path.contains('/.git/')) return true;
+		if(path==='package.json' || path==='src/package.json' || path.startsWith('src/tests/') || path.contains('/.git/')) return true;
 		if(path.substr(0,11)==='src/config/') return false;
 		return basename.startsWith('.');
 	},

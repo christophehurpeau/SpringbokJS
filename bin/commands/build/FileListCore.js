@@ -10,7 +10,7 @@ var FileListCore = FileList.extend({
 		return path.startsWith(this.rootPath+'bin/');
 	},
 	_ignored: function(path,basename){
-		return path.startsWith('bin/') || path.startsWith('src/tests/') || path.contains('/.git/') || basename.startsWith('.');
+		return path.startsWith('bin/') || path==='src/package.json' || path.startsWith('src/tests/') || path.contains('/.git/') || basename.startsWith('.');
 	},
 	_notcompilable: function(path,basename){
 		return path.startsWith('src/browser/') || path.startsWith('includes/') || path.startsWith('src/defaultConfigs/');

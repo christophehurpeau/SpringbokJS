@@ -46,10 +46,10 @@ var CSecureRest=S.newClass({
 	},
 	
 	connect:function(user, callback){
-		login(this.req.headers, user, function(connected, token){
+		this.self.login(this.req.headers, user, function(connected, token){
 			this.connected = connected;
 			return callback(token);
-		}.bind(this)).bind(this.self);
+		}.bind(this));
 	}
 	
 },{

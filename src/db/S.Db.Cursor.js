@@ -1,5 +1,3 @@
-includeCore('browser/db/S.Db');
-
 S.Db.Cursor=S.newClass({
 		result: function(callback){
 			var r = new App.Model.Request;

@@ -28,6 +28,9 @@ module.exports={
 				mkdirp(path,onEnd);
 			},function(err){
 				if(err) return callback(err);
+				if(!outputPath.length){
+					return callback('no output path: '+require('util').inspect(file.fileList.outputsType));
+				}
 					
 				/*
 				var sprite = new StylusSprite({

@@ -140,12 +140,9 @@ App.Router.prototype={
 						});
 					}
 					'controller action'.split(' ').forEach(function(v,k){
-						if(c_a[k]==='!'){
-							if(!params.has(v)) c_a[k] = DEFAULT[v];
-							else{
-								c_a[k] = UString.ucFirst(t.untranslate(lang,params.get(v)));
-								params['delete'](v);
-							} 
+						if(params.has(v)){
+							c_a[k] = UString.ucFirst(t.untranslate(lang,params.get(v)));
+							params['delete'](v);
 						}
 					});
 				}

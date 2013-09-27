@@ -1,7 +1,7 @@
 main:
 	"/": ["Page.Index"]
-	"/:controller(/:action/*)?": ["!.!"]
+	"/:controller(/:action/*)?": ["Site.Index"]
 
 admin:
 	"/": ["Site.Index"]
-	"/:controller(/:action/*)?": ["!.!"]
+	"/:controller(/:action/*)?": ["Site.Index"]

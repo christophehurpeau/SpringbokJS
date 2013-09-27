@@ -8,17 +8,21 @@ S.Db.LocalSyncedStore=!window.indexedDB ? S.Db.ServerStore : S.newClass({
 		this._localStore=new S.Db.LocalDbStore(model);
 		this._serverStore=new S.Db.ServerStore(model);
 	},
-	insert:function(data,options,r){
+	insert:function(options,r){
 		var failed = false, serverRequest = new App.Model.Model.Request, localRequest = new App.Model.Model.Request;
 		serverRequest.success(function(){ !failed && r.fire('synced'); });
 		localRequest.success(function(){ r.fire('success'); });
 		localRequest.failed(function(){ failed = true; r.fire('failed'); });
-		this._localStore.insert(data,options,localRequest);
-		this._serverStore.insert(data,options,serverRequest);
+		
+		this._localStore.insert(options,localRequest);
+		// <!> _id !!! 
+		this._serverStore.insert(options,serverRequest);
 	},
-	update:function(data,options,r){
+	updateByKey:function(key,options,r){
+		throw new Error;
 	},
 	deleteByKey:function(key,options,r){
+		throw new Error;
 	},
 	cursor:function(callback,range,direction){
 	},

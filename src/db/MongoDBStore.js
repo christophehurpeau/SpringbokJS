@@ -1,5 +1,9 @@
 var mongodb=require('mongodb');
-module.exports = S.Db.MongoDBStore = S.newClass({
+
+includeCore('db/S.Db.AbstractStore');
+includeCore('db/S.Db.Cursor');
+
+module.exports = S.Db.MongoDBStore = S.Db.AbstractStore.extend({
 	ctor:function(model){
 		this.model = model;
 		this.db = model.db;
@@ -15,23 +19,23 @@ module.exports = S.Db.MongoDBStore = S.newClass({
 	store:function(){
 		return this.model.collection;
 	},
-	insert:function(data,options,r){
-		this.model.collection.insert(data,options,function(err, item){
+	insert:function(options,r){
+		this.model.collection.insert(options.data,options,function(err, item){
 			if(err) return r.fire('failed',err);
 			console.log('successful insert',item);
 			r.fire('success',item);
 		});
 		r.fire('started');
 	},
-	update:function(data,options,r){
-		this.model.collection.insert(data,options,function(err, item){
+	update:function(options,r){
+		this.model.collection.update(options.criteria,options.data,options,function(err, count){
 			if(err) return r.fire('failed',err);
-			console.log('successful update',item);
+			console.log('successful update',count);
 			r.fire('success',item);
 		});
 		r.fire('started');
 	},
-	'delete':function(key,options,r){
+	'delete':function(options,r){
 		request.onsuccess=function(err){
 			if(err) return r.fire('failed',err);
 			console.log('successful delete',err);
@@ -74,7 +78,7 @@ module.exports = S.Db.MongoDBStore = S.newClass({
 			onEnd();
 		});
 	},
-	Cursor: S.newClass({
+	Cursor: S.Db.Cursor.extend({
 		ctor: function(cursor,store){
 			this._cursor = cursor;
 			this._store = store;

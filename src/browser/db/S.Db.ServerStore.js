@@ -1,6 +1,6 @@
 includeCore('browser/db/S.Db');
-includeCore('browser/db/S.Db.AbstractStore');
-includeCore('browser/db/S.Db.Cursor');
+includeCore('db/S.Db.AbstractStore');
+includeCore('db/S.Db.Cursor');
 includeJsCore('browser/websocket');
 
 //TODO : common Cursor and Store abstract class
@@ -13,16 +13,18 @@ S.Db.ServerStore=S.Db.AbstractStore.extend({
 		//connexion permanente vers le serveur pour dialoguer avec la base : S.WebSocket
 		return this;
 	},
-	insert:function(data,options,r){
-		S.WebSocket.emit('db insert',this.db.dbName,this.model.modelName,data,function(modelData){
+	insert:function(options,r){
+		S.WebSocket.emit('db insert',this.db.dbName,this.model.modelName,options,function(modelData){
 			if(modelData) r.model.data = modelData;
 			r.fire('success');
 		});
 		r.fire('started');
 	},
-	update:function(data,options,r){
+	updateByKey:function(key,options,r){
+		throw new Error;
 	},
 	deleteByKey:function(key,options,r){
+		throw new Error;
 	},
 	cursor:function(callback,query,options){
 		S.WebSocket.emit('db cursor',this.db.dbName,this.model.modelName,query,options,function(idCursor){

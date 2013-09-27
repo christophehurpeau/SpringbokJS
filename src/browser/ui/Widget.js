@@ -69,7 +69,7 @@ S.Widget.Element = S.Widget.extend({
 		
 		this.$elt.on('dispose',fnDisposeElt = (function(){
 			this.off('dispose',fnDisposeWidget);
-			setTimeout(this.remove.bind(this));
+			S.nextTick(this.remove.bind(this));
 			console.log('S.Widget.Element element disposed',this,' : ',this.$elt);
 		}.bind(this)));
 	},
@@ -104,6 +104,7 @@ S.Elt.WidgetBox = S.Elt.Widget.extend({
 		$document.on('click',function(){
 			this.hide();
 		}.bind(this));
+		return this;
 	}
 });
 S.Elt.WidgetWrapper = S.Elt.Fragment.extend({

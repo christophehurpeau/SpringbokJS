@@ -1,6 +1,6 @@
 includeCore('browser/db/S.Db');
-includeCore('browser/db/S.Db.AbstractStore');
-includeCore('browser/db/S.Db.Cursor');
+includeCore('db/S.Db.AbstractStore');
+includeCore('db/S.Db.Cursor');
 includeCore('browser/base/S.store');
 
 if( !window.indexedDB ){
@@ -27,16 +27,17 @@ S.Db.LocalDbStore=S.Db.AbstractStore.extend({
 			data[this.model.keyPath]=S.alphaNumber.html.encode(Date.now())+'-'+/*TODO : session id ? or something unique for this browser / client ?*/'0';
 		return data;
 	},
-	insert:function(data,options,r){
-		var request=this.store('readwrite').add(this._beforeInsert(data));
+	insert:function(options,r){
+		var data = this._beforeInsert(options.data);
+		var request=this.store('readwrite').add(data, data[this.model.keyPath]);
 		request.onsuccess=function(event){
 			console.log('successful insert',event);
 			r.fire('success');
 		};
 		r.fire('started');
 	},
-	update:function(data,options,r){
-		var request=this.store('readwrite').put(data);
+	updateByKey:function(key,options,r){
+		var request=this.store('readwrite').put(options.data,key);
 		request.onsuccess=function(event){
 			console.log('successful update',event);
 			r.fire('success');
@@ -135,20 +136,24 @@ S.Db.LocalDbStore=S.Db.AbstractStore.extend({
 S.Db.LocalStore=window.indexedDB ? S.Db.LocalDbStore : S.Db.LocalDbStore.extend({
 	store:null,
 	insert:function(data,options,r){
-		r.fire('started');
 		data=this._beforeInsert(data);
-		store.set(this.model.modelName+'___'+data[this.model.keyPath],data);
-		r.fire('success');
+		this.updateByKey(data[this.model.keyPath],data);
 	},
 	deleteByKey:function(key,options,r){
 		r.fire('started');
 		store.remove(this.model.modelName+'___'+key);
 		r.fire('success');
 	},
+	updateByKey:function(key,options,r){
+		r.fire('started');
+		store.set(this.model.modelName+'___'+key,data);
+		r.fire('success');
+	},
 	cursor:function(callback,range,direction){
 		if(range||direction) throw new Error('range or direction is not supported');
 		var prefix = this.model.modelName+'___';
-		setTimeout(callback.bind(null,new S.Db.LocalDbStore.Cursor(S.store.iterator(), this, prefix)));
+		var it = S.store.iterator(); 
+		setTimeout(callback.bind(null,it.hasNext() ? new S.Db.LocalDbStore.Cursor(it, this, prefix) : null));
 	},
 },{
 	Cursor: S.newClass({

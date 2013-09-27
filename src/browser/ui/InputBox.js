@@ -53,7 +53,9 @@ S.ui.InputBox=S.ui.InputFollow.extend({
 		return this.$div.hide();
 	},
 	dispose: function(){
-		this.$div && this.$div.remove();
+		try{
+			this.$div && this.$div.remove();
+		}catch(err){}
 		S.ui.InputBox.super_.dispose.call(this);
 	}
 });

@@ -155,7 +155,6 @@ module.exports={
 					var path = paths.get(output);
 					var result = results[output];
 					
-					file.log('optimize');
 					var slicedPath=path.slice(0,-3),srcPath=slicedPath+'.src.js',oldIePath=slicedPath+'.oldIe.js';
 					
 					module.exports.callUglifyJs(file,!module.exports.compileOldIE?'':result,defs,true,function(err,ieResult){

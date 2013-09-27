@@ -85,11 +85,12 @@ App._start=function(port){
 	});
 	
 	
-	var forEachDir=function(folderName,ext,onEnd,callback){
+	var forEachDir=function(folderName,ext,onEnd,callback,withoutEntry){
+		var withoutEntry = ext === false;
 		var test=new RegExp('\.'+(ext||'js')+'$');
 		UObj.forEachSeries(paths,function(pluginName,dir_,onEnd){
 			UObj.forEach(App.entries,function(entryName,entry){
-				var dir=dir_+(folderName==='models'?'':entryName+'/')+folderName;
+				var dir=dir_+(withoutEntry?'':entryName+'/')+folderName;
 				if(fs.existsSync(dir)) diveSync(dir,function(err,path){
 					if(err) console.error(err.stack);
 					else if(test.test(path)){
@@ -139,7 +140,7 @@ App._start=function(port){
 		},
 		function(onEnd){
 			App.debug('Loading models...');
-			forEachDir('models',null,onEnd,function(dir,path){
+			forEachDir('models',false,onEnd,function(dir,path){
 				var name = sysPath.basename(path).slice(0,-3), c = require(path);
 				App.debug('Loading model: '+name);
 				//if(S.isFunc(c)) c=c(t);
@@ -266,6 +267,13 @@ App._start=function(port){
 					
 					fs.exists(App.appDir+'app.js',function(exists){
 						exists && require(App.appDir+'app.js');
+						
+						forEachDir('daemons',false,function(){
+							App.info("App fully started");
+						},function(dir,path,entryName){
+							var daemon = require(path);
+							if(daemon.start) S.nextTick(daemon.start);
+						});
 					});
 				});
 			
