@@ -30,7 +30,6 @@ S.require('vL/default','m/todos',function(){
 				l.title('todos').content(ul);
 				M.Todo.find.all()
 					.forEach(function(todo){
-						console.log('todo = ',todo);
 						ul.append(todo.toLi());
 					});
 			});

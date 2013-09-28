@@ -29,32 +29,32 @@ S.Db.LocalDbStore=S.Db.AbstractStore.extend({
 	},
 	insert:function(options,r){
 		var data = this._beforeInsert(options.data);
-		var request=this.store('readwrite').add(data, data[this.model.keyPath]);
+		var request=this.store('readwrite').add(data/*, data[this.model.keyPath]*/);
 		request.onsuccess=function(event){
-			console.log('successful insert',event);
+			console&&console.log('successful insert',event);
 			r.fire('success');
 		};
 		r.fire('started');
 	},
-	updateByKey:function(key,options,r){
-		var request=this.store('readwrite').put(options.data,key);
+	updateByKey:function(options,r){
+		var request=this.store('readwrite').put(options.fullData);
 		request.onsuccess=function(event){
-			console.log('successful update',event);
+			console&&console.log('successful update',event);
 			r.fire('success');
 		};
 		r.fire('started');
 	},
-	deleteByKey:function(key,options,r){
-		var request=this.store('readwrite')['delete'](key);
+	deleteByKey:function(options,r){
+		var request=this.store('readwrite')['delete'](options.key);
 		request.onsuccess=function(event){
-			console.log('successful delete',event);
+			console&&console.log('successful delete',event);
 			r.fire('success');
 		};
 		r.fire('started');
 	},
 	findByKey:function(key,options,r){
 		return this.store().get(key).onsuccess = function(event){
-			console.log('findByKey success',event);
+			console&&console.log('findByKey success',event);
 			r.fire('success',event.target.result);
 		};
 	},

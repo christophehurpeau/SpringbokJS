@@ -85,14 +85,17 @@ App.Model=(function(){
 			if(!options.data){
 				if(fields){
 				}else{
-					options.data = this.data;
+					options.fullData = options.data = this.data;
 					delete options.data._id;
 				}
-			}
-			return _call.call(this,'updateByKey',this.data[this.self.keyPath],options);
+			}else options.fullData = this.data;
+			options.key = this.data[this.self.keyPath];
+			return _call.call(this,'updateByKey',options);
 		},
 		remove:function(options){
-			return _call.call(this,'deleteByKey',this.data[this.self.keyPath],options);
+			options || (options = {});
+			options.key = this.data[this.self.keyPath];
+			return _call.call(this,'deleteByKey',options);
 		},
 		/*#if NODE*/
 		insertWait:function(callback){ this.insert({w:1}).success(callback); },
@@ -104,6 +107,12 @@ App.Model=(function(){
 		
 		updateFields: function(data){
 			this.data = UObj.extend(this.data,data);
+			return this.update(null,{ data: data });
+		},
+		updateField: function(fieldName,value){
+			//console.log('updateField:',fieldName,value);
+			var data = {};
+			data[fieldName] = this.data[fieldName] = value;
 			return this.update(null,{ data: data });
 		},
 		
