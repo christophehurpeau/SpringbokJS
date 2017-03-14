@@ -1,5 +1,7 @@
 ## Dependencies
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/christophehurpeau/SpringbokJS.svg)](https://greenkeeper.io/)
+
   * **imagemagick**, **pngcrush**, and java JRE - in debian based distribution install with
   
         apt-get install imagemagick pngcrush && sudo add-apt-repository ppa:webupd8team/java && sudo apt-get update && sudo apt-get install oracle-java7-installer
